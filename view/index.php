@@ -12,6 +12,30 @@ if (isset($_GET['keyword']) && !empty(trim($_GET['keyword']))) {
 ?>
 
 <?php
+include_once("model/mConnect.php");
+$con = new connect();
+$mysqli = $con->connect();
+
+function getBanners() {
+    global $mysqli;
+    $banners = [];
+
+    $sql = "SELECT * FROM banners WHERE status = 'active' ORDER BY display_order ASC";
+    if ($result = $mysqli->query($sql)) {
+        while ($row = $result->fetch_assoc()) {
+            $banners[] = $row;
+        }
+        $result->free();
+    }
+    
+    return $banners;
+}
+
+
+$banners = getBanners();
+?>
+
+<?php
 include_once("view/header.php");
 ?>
 
@@ -374,38 +398,55 @@ include_once("view/header.php");
 <div class="container-fluid mb-4">
     <div class="row px-xl-5">
         <!-- Main Banner -->
-        <div class="col-lg-8">
-            <div id="hero-carousel" class="carousel slide carousel-fade mb-3 mb-lg-0" data-ride="carousel" data-interval="4000">
-                <ol class="carousel-indicators">
-                    <li data-target="#hero-carousel" data-slide-to="0" class="active"></li>
-                    <li data-target="#hero-carousel" data-slide-to="1"></li>
-                    <li data-target="#hero-carousel" data-slide-to="2"></li>
-                </ol>
-                <div class="carousel-inner">
-                    <div class="carousel-item position-relative active" style="height: 431px; border-radius: 10px; overflow: hidden;">
-                        <img class="position-absolute w-100 h-100" src="img/carousel-1.jpg" style="object-fit: cover;">
-                        <div class="carousel-caption d-none d-md-block" style="background: rgba(0,0,0,0.4); border-radius: 8px; padding: 20px;">
-                            <h3 class="text-white font-weight-bold">Mua bán đồ cũ uy tín</h3>
-                            <p class="text-white">Hàng ngàn sản phẩm chất lượng với giá tốt nhất</p>
+        <div class="row px-xl-5">
+            <div class="col-lg-8">
+                <div id="mainCarousel" class="carousel slide carousel-fade mb-30 mb-lg-0" data-bs-ride="carousel" data-bs-interval="4000">
+                    <?php if (!empty($banners)): ?>
+                        <div class="carousel-indicators">
+                            <?php foreach ($banners as $index => $banner): ?>
+                                <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="<?= $index ?>" 
+                                        class="<?= $index === 0 ? 'active' : '' ?>"></button>
+                            <?php endforeach; ?>
                         </div>
-                    </div>
-                    <div class="carousel-item position-relative" style="height: 431px; border-radius: 10px; overflow: hidden;">
-                        <img class="position-absolute w-100 h-100" src="img/carousel-2.jpg" style="object-fit: cover;">
-                        <div class="carousel-caption d-none d-md-block" style="background: rgba(0,0,0,0.4); border-radius: 8px; padding: 20px;">
-                            <h3 class="text-white font-weight-bold">Livestream mua sắm</h3>
-                            <p class="text-white">Xem trực tiếp và mua ngay trong livestream</p>
+                        
+                        <div class="carousel-inner">
+                            <?php foreach ($banners as $index => $banner): ?>
+                                <div class="carousel-item <?= $index === 0 ? 'active' : '' ?> position-relative">
+                                    <img class="d-block w-100 banner-image" src="<?= htmlspecialchars($banner['image_url']) ?>" 
+                                         alt="<?= htmlspecialchars($banner['title']) ?>">
+                                    <div class="carousel-caption d-none d-md-block">
+                                        <h3 class="banner-title"><?= htmlspecialchars($banner['title']) ?></h3>
+                                        <p class="banner-description"><?= htmlspecialchars($banner['description']) ?></p>
+                                        <?php if (!empty($banner['button_text']) && !empty($banner['button_link'])): ?>
+                                            <a href="<?= htmlspecialchars($banner['button_link']) ?>" class="btn btn-banner">
+                                                <?= htmlspecialchars($banner['button_text']) ?>
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
-                    </div>
-                    <div class="carousel-item position-relative" style="height: 431px; border-radius: 10px; overflow: hidden;">
-                        <img class="position-absolute w-100 h-100" src="img/carousel-3.jpg" style="object-fit: cover;">
-                        <div class="carousel-caption d-none d-md-block" style="background: rgba(0,0,0,0.4); border-radius: 8px; padding: 20px;">
-                            <h3 class="text-white font-weight-bold">Giao dịch an toàn</h3>
-                            <p class="text-white">Hệ thống bảo vệ người mua và người bán</p>
+                        
+                        <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    <?php else: ?>
+                        <!-- Default banner when no banners in database -->
+                        <div class="carousel-inner">
+                            <div class="carousel-item active position-relative">
+                                <img class="d-block w-100 banner-image" src="img/carousel-2.jpg?height=430&width=800" alt="Default Banner">
+                                <div class="carousel-caption d-none d-md-block">
+                                    <h3 class="banner-title">Chào mừng đến với Website</h3>
+                                    <p class="banner-description">Khám phá các sản phẩm tuyệt vời của chúng tôi</p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
-        </div>
 
         <!-- Live Stream Panel -->
         <div class="col-lg-4">
