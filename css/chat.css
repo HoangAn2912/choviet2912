@@ -1,0 +1,59 @@
+/* Scroll cho danh sách hội thoại */
+.col-md-4 {
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  
+  .col-md-4::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .col-md-4::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 5px;
+  }
+  
+  /* Hover hiệu ứng cho từng hội thoại */
+  .hover-shadow:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+  
+  /* Ảnh avatar */
+  .media img {
+    object-fit: cover;
+    border: 2px solid #ddd;
+  }
+  
+  /* Tin nhắn trái/phải */
+  #chatMessages .text-left span {
+    background-color: #f1f1f1;
+    color: #333;
+  }
+  
+  #chatMessages .text-right span {
+    background-color: #ffc107;
+    color: white;
+  }
+  
+  /* Input gửi tin nhắn */
+  form.d-flex input.form-control {
+    border-radius: 25px;
+    padding-left: 20px;
+  }
+  
+  form.d-flex button.btn {
+    border-radius: 25px;
+    padding: 0 20px;
+    font-weight: bold;
+  }
+  
+  /* Placeholder khi chưa chọn hội thoại */
+  #placeholderChat img {
+    filter: grayscale(70%);
+    opacity: 0.8;
+  }
+
+  
+  

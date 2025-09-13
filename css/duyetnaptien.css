@@ -1,0 +1,442 @@
+/* General Styles */
+body {
+  background-color: #f8f9fa;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Statistics Cards */
+.stats-card {
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+}
+
+.stats-card .stats-icon {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2.5rem;
+  opacity: 0.3;
+}
+
+.stats-card .stats-content h3 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0;
+  line-height: 1;
+}
+
+.stats-card .stats-content p {
+  margin: 5px 0 0 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Filter Section */
+.filter-section {
+  border: 1px solid #e9ecef;
+}
+
+.filter-section .form-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Table Styles */
+.table {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table thead th {
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Transaction Image */
+.transaction-image {
+  width: 60px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.transaction-image:hover {
+  transform: scale(1.1);
+}
+
+/* Status Badges */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.5em 0.75em;
+  border-radius: 6px;
+}
+
+/* Button Styles */
+.btn {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-group-vertical .btn {
+  margin-bottom: 2px;
+}
+
+.btn-group-vertical .btn:last-child {
+  margin-bottom: 0;
+}
+
+/* Bulk Actions */
+.bulk-actions {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Transaction Details */
+.transaction-details {
+  border: 1px solid #e9ecef;
+}
+
+.transaction-details table td {
+  padding: 8px 0;
+  border: none;
+}
+
+.transaction-details table td:first-child {
+  width: 150px;
+  color: #6c757d;
+}
+
+/* Pagination */
+.pagination .page-link {
+  border-radius: 6px;
+  margin: 0 2px;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  transition: all 0.2s ease;
+}
+
+.pagination .page-link:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Modal Styles */
+.modal-content {
+  border-radius: 10px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  border-radius: 10px 10px 0 0;
+}
+
+.modal-footer {
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  border-radius: 0 0 10px 10px;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-content {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Alert Styles */
+.alert {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-success {
+  background-color: #d1edff;
+  color: #0c5460;
+  border-left: 4px solid #17a2b8;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+/* Form Styles */
+.form-control,
+.form-select {
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Checkbox Styles */
+.form-check-input {
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.form-check-input:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stats-card {
+    margin-bottom: 15px;
+  }
+
+  .stats-card .stats-content h3 {
+    font-size: 2rem;
+  }
+
+  .btn-group-vertical {
+    width: 100%;
+  }
+
+  .table-responsive {
+    font-size: 0.9rem;
+  }
+
+  .transaction-image {
+    width: 40px;
+    height: 30px;
+  }
+
+  .filter-section .row {
+    margin-bottom: 0;
+  }
+
+  .filter-section .col-md-4 {
+    margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 576px) {
+  .container-fluid {
+    padding: 15px;
+  }
+
+  .card-body {
+    padding: 15px;
+  }
+
+  .stats-card {
+    padding: 15px;
+  }
+
+  .stats-card .stats-content h3 {
+    font-size: 1.5rem;
+  }
+
+  .btn-sm {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .modal-dialog {
+    margin: 10px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .btn,
+  .pagination,
+  .filter-section,
+  .bulk-actions {
+    display: none !important;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+
+  .table {
+    font-size: 12px;
+  }
+
+  .badge {
+    border: 1px solid #000;
+    color: #000 !important;
+    background: transparent !important;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation for new alerts */
+.alert-new {
+  animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Tooltip styles */
+[title] {
+  position: relative;
+}
+
+/* Focus styles for accessibility */
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .card {
+    border: 2px solid #000;
+  }
+
+  .btn {
+    border: 2px solid;
+  }
+
+  .table {
+    border: 2px solid #000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

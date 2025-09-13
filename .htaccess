@@ -1,0 +1,17 @@
+RewriteEngine On
+RewriteBase /choviet29/
+
+# Nếu truy cập /choviet29/ad/abc → rewrite về admin.php?abc
+RewriteRule ^ad/([a-zA-Z0-9_-]+)$ admin.php?$1 [QSA,L]
+
+# Nếu chỉ là /choviet29/ad → vào admin.php
+RewriteRule ^ad/?$ admin.php [L]
+
+# Bỏ qua file/thư mục có thật (css, js, ảnh, vendor, v.v.)
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule . - [L]
+
+# URL thân thiện cho trang cá nhân: /choviet29/username 
+# Cho phép chữ, số, gạch nối, gạch dưới (phù hợp với createSlug)
+RewriteRule ^([A-Za-z0-9_-]+)/?$ index.php?username=$1 [QSA,L]

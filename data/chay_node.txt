@@ -1,0 +1,4 @@
+tắt node hiện tại :taskkill /F /IM node.exe gõ trong Power
+lấy PID: netstat -ano | findstr :3000 gõ trong Power
+lấy PID để dung: taskkill /PID 2024 /F gõ trong Power
+CHẠY TRONG VISUAL: node js/server.js

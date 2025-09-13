@@ -1,0 +1,138 @@
+
+    .btn a {
+        text-decoration: none;
+        color: #ffffff;
+    }
+    .status-pending {
+        color: #ffc107;
+        font-weight: bold;
+    }
+    .status-approved {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .status-rejected {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .transaction-image {
+        max-width: 50px;
+        max-height: 50px;
+        cursor: pointer;
+    }
+    .badge-pending {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    .filter-section {
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    .transaction-details {
+        margin-bottom: 20px;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+    }
+    .transaction-details p {
+        margin-bottom: 8px;
+    }
+    .transaction-details strong {
+        display: inline-block;
+        min-width: 150px;
+    }
+    button.btn.btn-primary.mr-2 {
+        margin-right: 20px;
+    }
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+    }
+    .alert-success {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+    }
+    .alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+    .action-confirm {
+        display: none;
+        margin-top: 5px;
+    }
+    .detail-image {
+        max-width: 100%;
+        max-height: 300px;
+        margin-top: 15px;
+    }
+    .stats-card {
+        background-color: #fff;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .stats-card h5 {
+        margin-bottom: 15px;
+        color: #333;
+    }
+    .stats-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .stats-item:last-child {
+        border-bottom: none;
+    }
+    .stats-label {
+        font-weight: bold;
+    }
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    .pagination a, .pagination span {
+        padding: 8px 16px;
+        text-decoration: none;
+        border: 1px solid #ddd;
+        margin: 0 4px;
+        color: #333;
+    }
+    .pagination a:hover {
+        background-color: #f1f1f1;
+    }
+    .pagination .active {
+        background-color: #6c7ae0;
+        color: white;
+        border: 1px solid #6c7ae0;
+    }
+    .pagination .disabled {
+        color: #aaa;
+        cursor: not-allowed;
+    }
+    .bulk-actions {
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+    }
+    .bulk-actions select {
+        margin-right: 10px;
+    }
+    .search-box {
+        margin-bottom: 15px;
+    }
+    .export-btn {
+        margin-left: auto;
+    }

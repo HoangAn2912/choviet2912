@@ -1,0 +1,135 @@
+#tabTinDang {
+  display: flex;
+  gap: 0; /* Không cần khoảng trống */
+  border-bottom: 2px solid #ddd;
+  font-weight: bold;
+}
+
+#tabTinDang .nav-item {
+  display: flex;
+  align-items: center;
+}
+
+#tabTinDang .nav-link {
+  color: #000; /* Màu đen toàn bộ */
+  font-weight: bold; /* In đậm */
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-size: 16px;
+  position: relative;
+}
+
+#tabTinDang .nav-link.active {
+  border-bottom: 3px solid #000; /* Active sẽ có gạch đậm đen */
+}
+
+#tabTinDang .nav-link:not(:last-child)::after {
+  content: "|"; /* Tạo dấu | */
+  margin-left: 20px;
+  margin-right: 10px;
+  color: #999; /* Dấu | màu xám nhẹ */
+  font-weight: normal;
+}
+
+.product-image {
+  width: 100%;
+  height: 220px;
+  max-height: auto; /* Giữ kích thước ảnh luôn đúng */
+  object-fit: cover;
+  object-position: center;
+  border-radius: 8px;
+}
+
+.card-body {
+  padding: 10px 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px; /* ➡ thêm */
+  height: 100%;
+}
+
+.row.no-gutters {
+  margin: 0;
+}
+
+.d-flex.gap-2 > * {
+  margin-right: 10px;
+}
+
+.d-flex.gap-2 {
+  margin-top: 4px; /* Giảm nhẹ */
+}
+
+.border-left {
+  border-left: 2px solid #ddd;
+}
+
+.col-md-3 .btn-success {
+  border-radius: 50px;
+  font-weight: bold;
+}
+
+.col-md-3 p.text-muted {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#profileUser img.rounded-circle {
+  object-fit: cover;
+}
+
+#profileUser .text-primary {
+  font-size: 13px;
+}
+
+#profileUser .btn-success {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.pd{
+  padding-left: 1rem;
+  padding-bottom: 1rem;
+  padding-right: 1rem;
+}
+
+/* Style chung cho 2 nút trắng: cập nhật + sửa tin */
+/* Style mặc định */
+.btn-action, .btn-edit {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #ffc107; /* viền vàng */
+  font-weight: bold;
+  border-radius: 50px;
+}
+
+/* Khi hover */
+.btn-action:hover, .btn-edit:hover {
+  background-color: #ffc107; /* nền vàng */
+  color: #000 !important; /* chữ đen */
+  border: 1px solid #ffc107;
+}
+
+
+/* Nút đẩy tin giữ nguyên */
+.btn-push {
+  background: #28a745; /* xanh */
+  color: #ffffff;
+  font-weight: bold;
+  border: none;
+}
+.btn-push:hover {
+  background: #218838;
+  color: #ffffff !important;
+}
+
+.modal-header-custom {
+  position: relative;
+  padding: 20px 20px 10px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 20px;
+  border-bottom: 1px solid #ddd;
+}

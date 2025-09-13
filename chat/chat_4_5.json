@@ -1,0 +1,248 @@
+[
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T08:03:40.892Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T08:03:56.601Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T08:20:48.999Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T08:20:53.737Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Còn bạn.",
+    "timestamp": "2025-09-11T08:21:05.511Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Còn bạn.",
+    "timestamp": "2025-09-11T08:26:46.282Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T08:26:55.769Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Cho tôi xin địa chỉ được không?",
+    "timestamp": "2025-09-11T08:29:55.609Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T08:31:28.679Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T08:32:30.926Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Cho tôi xin địa chỉ được không?",
+    "timestamp": "2025-09-11T08:32:34.185Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Còn bạn.",
+    "timestamp": "2025-09-11T08:33:23.675Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T08:37:06.617Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T08:37:14.931Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Còn bạn.",
+    "timestamp": "2025-09-11T08:37:20.694Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T08:37:37.593Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Cho tôi xin địa chỉ được không?",
+    "timestamp": "2025-09-11T08:42:40.725Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": " Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?",
+    "timestamp": "2025-09-11T08:43:35.143Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?",
+    "timestamp": "2025-09-11T08:46:44.183Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Còn bạn.",
+    "timestamp": "2025-09-11T09:05:46.744Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Cho tôi xin địa chỉ được không?",
+    "timestamp": "2025-09-11T09:05:54.849Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:08:17.315Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:15:29.797Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Cho tôi xin địa chỉ được không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:15:55.113Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Còn bạn.",
+    "timestamp": "2025-09-11T09:27:56.989Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:28:26.373Z"
+  },
+  {
+    "from": 5,
+    "to": 4,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:28:38.330Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Còn bạn.",
+    "timestamp": "2025-09-11T09:28:44.131Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T09:29:14.879Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Cho tôi xin địa chỉ được không?",
+    "timestamp": "2025-09-11T09:29:32.600Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Cho tôi xin địa chỉ được không?",
+    "timestamp": "2025-09-11T09:30:05.038Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T09:34:29.897Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Cho tôi xin địa chỉ được không?",
+    "timestamp": "2025-09-11T09:38:36.095Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:38:44.528Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:41:29.769Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T09:43:58.468Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:44:09.329Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:49:16.832Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:49:21.928Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Giá có thương lượng không?",
+    "timestamp": "2025-09-11T09:52:30.772Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "noi_dung": "Sản phẩm này còn không?",
+    "timestamp": "2025-09-11T09:52:37.161Z"
+  }
+]
