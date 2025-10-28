@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th9 26, 2025 lúc 12:31 PM
+-- Thời gian đã tạo: Th10 01, 2025 lúc 06:38 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -97,31 +97,9 @@ INSERT INTO `livestream` (`id`, `user_id`, `title`, `description`, `start_time`,
 (16, 5, 'sdfasdfas', 'sadfasdf', '2025-09-20 02:39:00', '2025-09-02 02:38:00', 'da_ket_thuc', 'livestream_68cdb14c245d6.jpg', '2025-09-20 02:38:52', NULL, NULL, 0, 0, 0.00, 0),
 (17, 5, 'Bán điện thoại giá rẻ abc', 'Bán điện thoại giá rẻ abc', '2025-09-20 09:13:00', '2025-09-20 10:13:00', 'da_ket_thuc', 'livestream_68ce0df3f2d69.jpg', '2025-09-20 09:14:11', NULL, NULL, 0, 0, 0.00, 0),
 (18, 4, 'Bán điện thoại giá rẻá', 'Bán điện thoại giá rẻá', '2025-09-26 15:51:00', '2025-09-27 15:52:00', 'chua_bat_dau', 'livestream_68d6543cbf971.jpg', '2025-09-26 15:52:12', NULL, NULL, 0, 0, 0.00, 0),
-(19, 5, 'Bán điện thoại giá rẻ abc', 'Bán điện thoại giá rẻ abc', '2025-09-26 16:02:00', '2025-09-26 16:03:00', 'dang_live', 'livestream_68d656c30eb1e.jpg', '2025-09-26 16:02:59', NULL, NULL, 0, 0, 0.00, 0);
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `livestream_cart`
---
-
-CREATE TABLE `livestream_cart` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `product_id` int(11) NOT NULL,
-  `livestream_id` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 1,
-  `created_date` datetime NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Đang đổ dữ liệu cho bảng `livestream_cart`
---
-
-INSERT INTO `livestream_cart` (`id`, `user_id`, `product_id`, `livestream_id`, `quantity`, `created_date`) VALUES
-(1, 2, 1, 1, 1, '2025-01-01 20:30:00'),
-(2, 3, 2, 2, 1, '2025-01-02 19:15:00'),
-(3, 1, 3, 1, 2, '2025-01-03 20:45:00');
+(19, 5, 'Bán điện thoại giá rẻ abc', 'Bán điện thoại giá rẻ abc', '2025-09-26 16:02:00', '2025-09-26 16:03:00', 'dang_live', 'livestream_68d656c30eb1e.jpg', '2025-09-26 16:02:59', NULL, NULL, 5, 0, 0.00, 0),
+(20, 5, 'Bán điện thoại giá rẻ nà ní', 'Bán điện thoại giá rẻ nà ní', '2025-09-17 23:15:00', '2025-09-18 23:16:00', 'dang_live', 'livestream_68d6bc4c694f6.jpg', '2025-09-26 23:16:12', NULL, NULL, 0, 0, 0.00, 0),
+(21, 5, 'hoang an live', 'hoang an live', '2025-09-27 07:17:00', '2025-09-27 08:17:00', 'dang_live', 'livestream_68d72d2fc390f.jpg', '2025-09-27 07:17:51', NULL, NULL, 0, 0, 0.00, 0);
 
 -- --------------------------------------------------------
 
@@ -136,16 +114,19 @@ CREATE TABLE `livestream_cart_items` (
   `product_id` int(11) NOT NULL,
   `quantity` int(11) NOT NULL DEFAULT 1,
   `price` decimal(10,2) NOT NULL,
-  `added_at` datetime DEFAULT current_timestamp()
+  `added_at` datetime DEFAULT current_timestamp(),
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `livestream_cart_items`
 --
 
-INSERT INTO `livestream_cart_items` (`id`, `user_id`, `livestream_id`, `product_id`, `quantity`, `price`, `added_at`) VALUES
-(1, 4, 10, 8, 1, 25000000.00, '2025-09-20 01:50:45'),
-(10, 4, 19, 6, 1, 190000.00, '2025-09-26 16:35:43');
+INSERT INTO `livestream_cart_items` (`id`, `user_id`, `livestream_id`, `product_id`, `quantity`, `price`, `added_at`, `created_at`) VALUES
+(1, 4, 10, 8, 1, 25000000.00, '2025-09-20 01:50:45', '2025-09-26 17:34:22'),
+(13, 4, 19, 5, 1, 190000.00, '2025-09-26 18:03:31', '2025-09-26 18:03:31'),
+(32, 4, 20, 5, 3, 190000.00, '2025-09-27 01:03:53', '2025-09-27 01:03:53'),
+(33, 4, 20, 6, 1, 0.00, '2025-09-27 01:08:39', '2025-09-27 01:08:39');
 
 -- --------------------------------------------------------
 
@@ -203,16 +184,23 @@ CREATE TABLE `livestream_orders` (
   `payment_method` varchar(50) DEFAULT NULL,
   `vnpay_txn_ref` varchar(50) DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `delivery_name` varchar(255) DEFAULT NULL,
+  `delivery_phone` varchar(20) DEFAULT NULL,
+  `delivery_province` varchar(255) DEFAULT NULL,
+  `delivery_district` varchar(255) DEFAULT NULL,
+  `delivery_ward` varchar(255) DEFAULT NULL,
+  `delivery_street` varchar(255) DEFAULT NULL,
+  `delivery_address` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `livestream_orders`
 --
 
-INSERT INTO `livestream_orders` (`id`, `order_code`, `user_id`, `livestream_id`, `total_amount`, `status`, `payment_method`, `vnpay_txn_ref`, `created_at`, `updated_at`) VALUES
-(1, 'LIVE202509263726', 4, 19, 190000.00, 'pending', NULL, NULL, '2025-09-26 16:26:15', '2025-09-26 16:26:15'),
-(2, 'LIVE202509262987', 4, 19, 190000.00, 'pending', NULL, NULL, '2025-09-26 16:26:57', '2025-09-26 16:26:57');
+INSERT INTO `livestream_orders` (`id`, `order_code`, `user_id`, `livestream_id`, `total_amount`, `status`, `payment_method`, `vnpay_txn_ref`, `created_at`, `updated_at`, `delivery_name`, `delivery_phone`, `delivery_province`, `delivery_district`, `delivery_ward`, `delivery_street`, `delivery_address`) VALUES
+(18, 'LIVE202509275579', 4, 20, 190000.00, 'confirmed', 'wallet', NULL, '2025-09-27 00:27:59', '2025-09-27 00:27:59', 'hoangandeptraisomot', '0934838366', '22', '195', '6793', '1233', '1233, Phường Cẩm Trung, Thành phố Cẩm Phả, Tỉnh Quảng Ninh'),
+(19, 'LIVE202509278840', 4, 21, 190000.00, 'cancelled', 'wallet', NULL, '2025-09-27 07:19:54', '2025-09-27 07:20:14', 'hoangandeptraisomot', '0934838366', '11', '95', '3148', '123', '123, Phường Sông Đà, Thị xã Mường Lay, Tỉnh Điện Biên');
 
 -- --------------------------------------------------------
 
@@ -235,7 +223,24 @@ CREATE TABLE `livestream_order_items` (
 
 INSERT INTO `livestream_order_items` (`id`, `order_id`, `product_id`, `quantity`, `price`, `created_at`) VALUES
 (1, 1, 5, 1, 190000.00, '2025-09-26 16:26:16'),
-(2, 2, 6, 1, 190000.00, '2025-09-26 16:26:57');
+(2, 2, 6, 1, 190000.00, '2025-09-26 16:26:57'),
+(3, 3, 6, 1, 190000.00, '2025-09-26 17:36:53'),
+(4, 4, 6, 1, 190000.00, '2025-09-26 17:38:29'),
+(5, 5, 6, 1, 190000.00, '2025-09-26 17:45:57'),
+(6, 6, 5, 1, 190000.00, '2025-09-26 23:18:36'),
+(7, 7, 5, 1, 190000.00, '2025-09-26 23:49:50'),
+(8, 8, 5, 1, 190000.00, '2025-09-26 23:50:58'),
+(9, 9, 5, 2, 190000.00, '2025-09-26 23:52:06'),
+(10, 10, 5, 1, 190000.00, '2025-09-26 23:55:30'),
+(11, 11, 5, 1, 190000.00, '2025-09-26 23:57:00'),
+(12, 12, 5, 2, 190000.00, '2025-09-27 00:00:16'),
+(13, 13, 5, 1, 190000.00, '2025-09-27 00:03:26'),
+(14, 14, 5, 1, 190000.00, '2025-09-27 00:07:54'),
+(15, 15, 5, 1, 190000.00, '2025-09-27 00:09:38'),
+(16, 16, 5, 1, 190000.00, '2025-09-27 00:10:05'),
+(17, 17, 5, 1, 190000.00, '2025-09-27 00:15:25'),
+(18, 18, 5, 1, 190000.00, '2025-09-27 00:27:59'),
+(19, 19, 6, 1, 190000.00, '2025-09-27 07:19:54');
 
 -- --------------------------------------------------------
 
@@ -260,29 +265,6 @@ INSERT INTO `livestream_packages` (`id`, `package_name`, `description`, `price`,
 (1, 'Gói cơ bản', 'Gói livestream cơ bản 30 ngày', 500000.00, 30, 1),
 (2, 'Gói nâng cao', 'Gói livestream nâng cao 60 ngày', 800000.00, 60, 1),
 (3, 'Gói VIP', 'Gói livestream VIP 90 ngày', 1200000.00, 90, 1);
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `livestream_payment_history`
---
-
-CREATE TABLE `livestream_payment_history` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `package_id` int(11) NOT NULL,
-  `amount` decimal(10,2) NOT NULL,
-  `payment_date` datetime NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Đang đổ dữ liệu cho bảng `livestream_payment_history`
---
-
-INSERT INTO `livestream_payment_history` (`id`, `user_id`, `package_id`, `amount`, `payment_date`) VALUES
-(1, 2, 1, 500000.00, '2025-01-01 10:00:00'),
-(2, 3, 2, 800000.00, '2025-01-02 14:30:00'),
-(3, 1, 3, 1200000.00, '2025-01-03 09:15:00');
 
 -- --------------------------------------------------------
 
@@ -328,31 +310,14 @@ INSERT INTO `livestream_products` (`id`, `livestream_id`, `product_id`, `order_s
 (20, 17, 5, 0, '2025-09-20 09:14:12', 1, '2025-09-20 09:14:48', NULL, NULL, '2025-09-20 09:14:12'),
 (21, 17, 8, 0, '2025-09-20 09:14:12', 0, NULL, NULL, NULL, '2025-09-20 09:14:12'),
 (22, 19, 6, 0, '2025-09-26 16:02:59', 0, NULL, NULL, NULL, '2025-09-26 16:02:59'),
-(23, 19, 5, 0, '2025-09-26 16:02:59', 0, NULL, NULL, NULL, '2025-09-26 16:02:59');
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `livestream_registrations`
---
-
-CREATE TABLE `livestream_registrations` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `package_id` int(11) NOT NULL,
-  `registration_date` datetime NOT NULL DEFAULT current_timestamp(),
-  `expiry_date` datetime NOT NULL,
-  `status` varchar(20) NOT NULL DEFAULT 'active' COMMENT 'active, expired, cancelled'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Đang đổ dữ liệu cho bảng `livestream_registrations`
---
-
-INSERT INTO `livestream_registrations` (`id`, `user_id`, `package_id`, `registration_date`, `expiry_date`, `status`) VALUES
-(1, 2, 1, '2025-01-01 10:00:00', '2025-01-31 10:00:00', 'active'),
-(2, 3, 2, '2025-01-02 14:30:00', '2025-03-03 14:30:00', 'active'),
-(3, 1, 3, '2025-01-03 09:15:00', '2025-04-03 09:15:00', 'active');
+(23, 19, 5, 0, '2025-09-26 16:02:59', 0, NULL, NULL, NULL, '2025-09-26 16:02:59'),
+(24, 19, 8, 0, '2025-09-26 18:33:22', 1, '2025-09-26 19:10:14', 189000.00, 0, '2025-09-26 18:33:22'),
+(25, 20, 8, 0, '2025-09-26 23:16:12', 0, NULL, NULL, 1, '2025-09-26 23:16:12'),
+(26, 20, 6, 0, '2025-09-26 23:17:34', 1, '2025-09-27 01:11:42', 0.00, 0, '2025-09-26 23:17:34'),
+(27, 20, 5, 0, '2025-09-26 23:18:12', 0, NULL, 190000.00, 0, '2025-09-26 23:18:12'),
+(28, 21, 6, 0, '2025-09-27 07:17:52', 1, '2025-09-27 07:19:17', NULL, 1, '2025-09-27 07:17:52'),
+(29, 21, 5, 0, '2025-09-27 07:17:52', 0, NULL, NULL, 1, '2025-09-27 07:17:52'),
+(30, 21, 8, 0, '2025-09-27 07:19:01', 0, NULL, 123000.00, 0, '2025-09-27 07:19:01');
 
 -- --------------------------------------------------------
 
@@ -367,6 +332,14 @@ CREATE TABLE `livestream_viewers` (
   `joined_at` datetime DEFAULT current_timestamp(),
   `last_activity` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `livestream_viewers`
+--
+
+INSERT INTO `livestream_viewers` (`id`, `livestream_id`, `user_id`, `joined_at`, `last_activity`) VALUES
+(1, 19, 5, '2025-09-26 19:39:30', '2025-09-26 19:43:35'),
+(2, 19, 0, '2025-09-26 19:43:35', '2025-09-26 19:43:35');
 
 -- --------------------------------------------------------
 
@@ -394,36 +367,6 @@ INSERT INTO `messages` (`id`, `sender_id`, `receiver_id`, `product_id`, `content
 (2, 3, 2, 1, 'Còn bạn ơi, bạn có muốn xem hàng không?', '2025-01-01', '2025-01-01 15:35:00', 1),
 (3, 2, 3, 2, 'Laptop này có thể giảm giá không?', '2025-01-02', '2025-01-02 10:20:00', 0),
 (4, 5, 4, 4, 'chat_4_5.json', '2025-09-11', '2025-09-11 15:03:40', 0);
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `notifications`
---
-
-CREATE TABLE `notifications` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `type` varchar(50) NOT NULL COMMENT 'post_created, post_approved, post_rejected, post_hidden, post_sold, topup_success, topup_pending, review_received',
-  `title` varchar(255) NOT NULL,
-  `message` text NOT NULL,
-  `data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Dữ liệu bổ sung (ID sản phẩm, số tiền, etc.)' CHECK (json_valid(`data`)),
-  `is_read` tinyint(1) NOT NULL DEFAULT 0,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `read_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Đang đổ dữ liệu cho bảng `notifications`
---
-
-INSERT INTO `notifications` (`id`, `user_id`, `type`, `title`, `message`, `data`, `is_read`, `created_at`, `read_at`) VALUES
-(1, 5, 'post_created', 'Tin đăng đã được tạo', 'Tin đăng \'Áo Polo Nam Revvour Floral Luxe\' đã được tạo thành công. Vui lòng chờ duyệt.', '{\"product_id\":true}', 0, '2025-09-13 01:02:44', NULL),
-(14, 1, 'post_created', 'Tin đăng đã được tạo', 'Tin đăng \"Áo Polo Nam\" đã được tạo thành công. Vui lòng chờ duyệt.', NULL, 0, '2025-09-13 01:13:27', NULL),
-(15, 1, 'post_approved', 'Tin đăng đã được duyệt', 'Tin đăng \"Quần Jean Nữ\" đã được duyệt và đang hiển thị trên website.', NULL, 0, '2025-09-13 01:13:27', NULL),
-(16, 1, 'topup_success', 'Nạp tiền thành công', 'Bạn đã nạp thành công 100,000 VNĐ vào tài khoản.', NULL, 0, '2025-09-13 01:13:27', NULL),
-(17, 1, 'review_received', 'Nhận được đánh giá mới', 'Sản phẩm \"Điện thoại iPhone\" đã nhận được đánh giá 5 sao.', NULL, 0, '2025-09-13 01:13:27', NULL),
-(18, 1, 'post_rejected', 'Tin đăng bị từ chối', 'Tin đăng \"Sản phẩm test\" đã bị từ chối. Lý do: Nội dung không phù hợp.', NULL, 0, '2025-09-13 01:13:27', NULL);
 
 -- --------------------------------------------------------
 
@@ -761,8 +704,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `phone`, `address`, `role_id`, `account_type`, `avatar`, `birth_date`, `created_date`, `updated_date`, `is_active`, `is_verified`, `balance`) VALUES
 (1, 'admin01', 'admin@choviet.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '0123456789', 'Hà Nội', 1, 'ca_nhan', 'avatar1.jpg', '1990-01-01', '2025-01-01', '2025-09-05 14:11:36', 1, 1, 0.00),
 (2, 'user01', 'user1@test.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '0987654321', 'TP.HCM', 2, 'ca_nhan', 'avatar2.jpg', '1995-05-15', '2025-01-02', '2025-09-05 14:11:36', 1, 1, 0.00),
-(3, 'admin', 'test1757019822@example.com', '126cfbcd4d16ae6d25c9bfcae76d8ee4', NULL, NULL, 2, 'ca_nhan', NULL, NULL, '2025-09-05', '2025-09-05 11:14:15', 1, 1, 0.00),
-(4, 'hoangandeptraisomot', 'hoangan2711.npha@gmail.com', '787a1458649a2df9166ebabf580ac665', '0934838366', '58 đường số 15 phường Linh Chiểu, Tp Thủ Đức, 12', 2, 'ca_nhan', '1757577336_68c28078bebc4.jpg', '2003-11-27', '2025-09-05', '2025-09-26 17:07:18', 1, 1, 1000000.00),
+(3, 'admin', 'test1757019822@example.com', '787a1458649a2df9166ebabf580ac665', NULL, NULL, 2, 'ca_nhan', NULL, NULL, '2025-09-05', '2025-09-26 19:33:37', 1, 1, 0.00),
+(4, 'hoangandeptraisomot', 'hoangan2711.npha@gmail.com', '787a1458649a2df9166ebabf580ac665', '0934838366', '58 đường số 15 phường Linh Chiểu, Tp Thủ Đức, 12', 2, 'ca_nhan', '1757577336_68c28078bebc4.jpg', '2003-11-27', '2025-09-05', '2025-09-26 23:58:10', 1, 1, 810000.00),
 (5, 'hoangan2', 'hoangan2912.npha@gmail.com', '787a1458649a2df9166ebabf580ac665', NULL, NULL, 2, 'ca_nhan', NULL, NULL, '2025-09-05', '2025-09-05 13:16:45', 1, 1, 0.00);
 
 -- --------------------------------------------------------
@@ -821,15 +764,6 @@ ALTER TABLE `livestream`
   ADD KEY `user_id` (`user_id`);
 
 --
--- Chỉ mục cho bảng `livestream_cart`
---
-ALTER TABLE `livestream_cart`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`),
-  ADD KEY `product_id` (`product_id`),
-  ADD KEY `livestream_id` (`livestream_id`);
-
---
 -- Chỉ mục cho bảng `livestream_cart_items`
 --
 ALTER TABLE `livestream_cart_items`
@@ -880,28 +814,12 @@ ALTER TABLE `livestream_packages`
   ADD PRIMARY KEY (`id`);
 
 --
--- Chỉ mục cho bảng `livestream_payment_history`
---
-ALTER TABLE `livestream_payment_history`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`),
-  ADD KEY `package_id` (`package_id`);
-
---
 -- Chỉ mục cho bảng `livestream_products`
 --
 ALTER TABLE `livestream_products`
   ADD PRIMARY KEY (`id`),
   ADD KEY `livestream_id` (`livestream_id`),
   ADD KEY `product_id` (`product_id`);
-
---
--- Chỉ mục cho bảng `livestream_registrations`
---
-ALTER TABLE `livestream_registrations`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`),
-  ADD KEY `package_id` (`package_id`);
 
 --
 -- Chỉ mục cho bảng `livestream_viewers`
@@ -920,16 +838,6 @@ ALTER TABLE `messages`
   ADD KEY `sender_id` (`sender_id`),
   ADD KEY `receiver_id` (`receiver_id`),
   ADD KEY `product_id` (`product_id`);
-
---
--- Chỉ mục cho bảng `notifications`
---
-ALTER TABLE `notifications`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_user_id` (`user_id`),
-  ADD KEY `idx_type` (`type`),
-  ADD KEY `idx_is_read` (`is_read`),
-  ADD KEY `idx_created_at` (`created_at`);
 
 --
 -- Chỉ mục cho bảng `otp_verification`
@@ -1039,19 +947,13 @@ ALTER TABLE `banners`
 -- AUTO_INCREMENT cho bảng `livestream`
 --
 ALTER TABLE `livestream`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
-
---
--- AUTO_INCREMENT cho bảng `livestream_cart`
---
-ALTER TABLE `livestream_cart`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT cho bảng `livestream_cart_items`
 --
 ALTER TABLE `livestream_cart_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT cho bảng `livestream_interactions`
@@ -1069,13 +971,13 @@ ALTER TABLE `livestream_messages`
 -- AUTO_INCREMENT cho bảng `livestream_orders`
 --
 ALTER TABLE `livestream_orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT cho bảng `livestream_order_items`
 --
 ALTER TABLE `livestream_order_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT cho bảng `livestream_packages`
@@ -1084,40 +986,22 @@ ALTER TABLE `livestream_packages`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT cho bảng `livestream_payment_history`
---
-ALTER TABLE `livestream_payment_history`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
 -- AUTO_INCREMENT cho bảng `livestream_products`
 --
 ALTER TABLE `livestream_products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
-
---
--- AUTO_INCREMENT cho bảng `livestream_registrations`
---
-ALTER TABLE `livestream_registrations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT cho bảng `livestream_viewers`
 --
 ALTER TABLE `livestream_viewers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT cho bảng `messages`
 --
 ALTER TABLE `messages`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT cho bảng `notifications`
---
-ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT cho bảng `otp_verification`
@@ -1135,7 +1019,7 @@ ALTER TABLE `parent_categories`
 -- AUTO_INCREMENT cho bảng `posting_fee_history`
 --
 ALTER TABLE `posting_fee_history`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT cho bảng `products`
@@ -1202,14 +1086,6 @@ ALTER TABLE `livestream`
   ADD CONSTRAINT `livestream_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
--- Các ràng buộc cho bảng `livestream_cart`
---
-ALTER TABLE `livestream_cart`
-  ADD CONSTRAINT `livestream_cart_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `livestream_cart_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
-  ADD CONSTRAINT `livestream_cart_ibfk_3` FOREIGN KEY (`livestream_id`) REFERENCES `livestream` (`id`);
-
---
 -- Các ràng buộc cho bảng `livestream_messages`
 --
 ALTER TABLE `livestream_messages`
@@ -1217,25 +1093,11 @@ ALTER TABLE `livestream_messages`
   ADD CONSTRAINT `livestream_messages_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
--- Các ràng buộc cho bảng `livestream_payment_history`
---
-ALTER TABLE `livestream_payment_history`
-  ADD CONSTRAINT `livestream_payment_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `livestream_payment_history_ibfk_2` FOREIGN KEY (`package_id`) REFERENCES `livestream_packages` (`id`);
-
---
 -- Các ràng buộc cho bảng `livestream_products`
 --
 ALTER TABLE `livestream_products`
   ADD CONSTRAINT `livestream_products_ibfk_1` FOREIGN KEY (`livestream_id`) REFERENCES `livestream` (`id`),
   ADD CONSTRAINT `livestream_products_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
-
---
--- Các ràng buộc cho bảng `livestream_registrations`
---
-ALTER TABLE `livestream_registrations`
-  ADD CONSTRAINT `livestream_registrations_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `livestream_registrations_ibfk_2` FOREIGN KEY (`package_id`) REFERENCES `livestream_packages` (`id`);
 
 --
 -- Các ràng buộc cho bảng `messages`

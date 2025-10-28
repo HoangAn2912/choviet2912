@@ -3,6 +3,10 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+// Livestream WebSocket variables
+let livestreamClients = {};
+let livestreamRooms = {};
+
 // Cấu hình động - có thể thay đổi theo môi trường
 let CONFIG = {
   hostname: process.env.HOSTNAME || 'localhost',
@@ -28,7 +32,11 @@ try {
 
 console.log('🔧 Config hiện tại:', CONFIG);
 
+// Tạo WebSocket server trên port riêng
 const wss = new WebSocket.Server({ port: CONFIG.wsPort || 3000 });
+
+console.log(`🚀 WebSocket server đang chạy trên port ${CONFIG.wsPort || 3000}`);
+console.log(`🔌 WebSocket server sẵn sàng nhận kết nối`);
 let clients = {};
 
 wss.on('connection', function connection(ws) {
@@ -218,6 +226,24 @@ wss.on('connection', function connection(ws) {
       }
       return;
     }
+    
+    // Xử lý livestream messages
+    if (data.type && (data.type.startsWith('join_livestream') || 
+                     data.type.startsWith('leave_livestream') || 
+                     data.type.startsWith('livestream_') || 
+                     data.type.startsWith('pin_') || 
+                     data.type.startsWith('unpin_') || 
+                     data.type.startsWith('add_to_cart') || 
+                     data.type.startsWith('remove_from_cart') || 
+                     data.type.startsWith('update_cart_') || 
+                     data.type.startsWith('livestream_stats') ||
+                     data.type.startsWith('webrtc_') ||
+                     data.type.startsWith('request_') ||
+                     data.type.startsWith('get_'))) {
+      console.log('🎯 Processing livestream message:', data.type, 'for livestream:', data.livestream_id);
+      handleLivestreamMessage(ws, data);
+      return;
+    }
   });
 
   ws.on('close', () => {
@@ -225,5 +251,336 @@ wss.on('connection', function connection(ws) {
       delete clients[ws.user_id];
       console.log(`🔴 User ${ws.user_id} đã ngắt kết nối`);
     }
+    
+    // Xóa client khỏi livestream rooms
+    Object.keys(livestreamRooms).forEach(roomId => {
+      if (livestreamRooms[roomId]) {
+        const index = livestreamRooms[roomId].indexOf(ws);
+        if (index > -1) {
+          livestreamRooms[roomId].splice(index, 1);
+        }
+      }
+    });
   });
 });
+
+// =============================================
+// LIVESTREAM WEBSOCKET HANDLERS
+// =============================================
+
+function handleLivestreamMessage(ws, data) {
+  switch (data.type) {
+    case 'join_livestream':
+      joinLivestream(ws, data);
+      break;
+    case 'leave_livestream':
+      leaveLivestream(ws, data);
+      break;
+    case 'livestream_chat':
+      handleLivestreamChat(ws, data);
+      break;
+    case 'pin_product':
+      handlePinProduct(ws, data);
+      break;
+    case 'unpin_product':
+      handleUnpinProduct(ws, data);
+      break;
+    case 'add_to_cart':
+      handleAddToCart(ws, data);
+      break;
+    case 'remove_from_cart':
+      handleRemoveFromCart(ws, data);
+      break;
+    case 'update_cart_quantity':
+      handleUpdateCartQuantity(ws, data);
+      break;
+    case 'livestream_stats':
+      handleLivestreamStats(ws, data);
+      break;
+    // WebRTC signaling bridge
+    case 'webrtc_offer':
+    case 'webrtc_answer':
+    case 'webrtc_ice':
+    case 'request_offer':
+      forwardWebRTCSignal(ws, data);
+      break;
+    case 'livestream_status_update':
+      handleLivestreamStatusUpdate(ws, data);
+      break;
+    case 'get_livestream_status':
+      handleGetLivestreamStatus(ws, data);
+      break;
+    default:
+      console.log('❓ Unknown livestream message type:', data.type);
+  }
+}
+
+function joinLivestream(ws, data) {
+  const { livestream_id, user_id, user_type } = data;
+  
+  if (!livestreamRooms[livestream_id]) {
+    livestreamRooms[livestream_id] = [];
+  }
+  
+  if (!livestreamRooms[livestream_id].includes(ws)) {
+    livestreamRooms[livestream_id].push(ws);
+  }
+  
+  ws.livestream_id = livestream_id;
+  ws.user_id = user_id;
+  ws.user_type = user_type || 'viewer';
+  
+  // Lưu vào livestreamClients
+  const clientId = `${user_id}_${livestream_id}`;
+  livestreamClients[clientId] = {
+    ws: ws,
+    livestream_id: livestream_id,
+    user_id: user_id,
+    type: user_type || 'viewer'
+  };
+  
+  console.log(`🎥 User ${user_id} đã tham gia livestream ${livestream_id}`);
+  
+  // Gửi thông tin phòng cho client
+  ws.send(JSON.stringify({
+    type: 'livestream_joined',
+    livestream_id: livestream_id,
+    viewers_count: livestreamRooms[livestream_id].length
+  }));
+  
+  // Thông báo cho các client khác
+  broadcastToLivestream(livestream_id, {
+    type: 'viewer_joined',
+    user_id: user_id,
+    viewers_count: livestreamRooms[livestream_id].length
+  }, ws);
+}
+
+function leaveLivestream(ws, data) {
+  const { livestream_id } = data;
+  
+  if (livestreamRooms[livestream_id]) {
+    const index = livestreamRooms[livestream_id].indexOf(ws);
+    if (index > -1) {
+      livestreamRooms[livestream_id].splice(index, 1);
+    }
+  }
+  
+  console.log(`🎥 User đã rời livestream ${livestream_id}`);
+  
+  // Thông báo cho các client khác
+  broadcastToLivestream(livestream_id, {
+    type: 'viewer_left',
+    viewers_count: livestreamRooms[livestream_id] ? livestreamRooms[livestream_id].length : 0
+  }, ws);
+}
+
+function handleLivestreamChat(ws, data) {
+  const { livestream_id, user_id, message, username } = data;
+  
+  const chatMessage = {
+    type: 'livestream_chat',
+    livestream_id: livestream_id,
+    user_id: user_id,
+    username: username,
+    message: message,
+    timestamp: new Date().toISOString()
+  };
+  
+  // Broadcast tin nhắn đến tất cả client trong livestream
+  broadcastToLivestream(livestream_id, chatMessage);
+  
+  console.log(`💬 Chat trong livestream ${livestream_id}: ${username}: ${message}`);
+}
+
+function handlePinProduct(ws, data) {
+  const { livestream_id, product_id, product_info } = data;
+  
+  const pinMessage = {
+    type: 'product_pinned',
+    livestream_id: livestream_id,
+    product_id: product_id,
+    product_info: product_info,
+    timestamp: new Date().toISOString()
+  };
+  
+  // Broadcast sản phẩm được ghim đến tất cả client
+  broadcastToLivestream(livestream_id, pinMessage);
+  
+  console.log(`📌 Sản phẩm ${product_id} được ghim trong livestream ${livestream_id}`);
+}
+
+function handleUnpinProduct(ws, data) {
+  const { livestream_id } = data;
+  
+  const unpinMessage = {
+    type: 'product_unpinned',
+    livestream_id: livestream_id,
+    timestamp: new Date().toISOString()
+  };
+  
+  // Broadcast sản phẩm bỏ ghim đến tất cả client
+  broadcastToLivestream(livestream_id, unpinMessage);
+  
+  console.log(`📌 Sản phẩm đã bỏ ghim trong livestream ${livestream_id}`);
+}
+
+function handleAddToCart(ws, data) {
+  const { livestream_id, user_id, product_id, quantity, price } = data;
+  
+  const cartMessage = {
+    type: 'cart_updated',
+    livestream_id: livestream_id,
+    user_id: user_id,
+    product_id: product_id,
+    quantity: quantity,
+    price: price,
+    action: 'add',
+    timestamp: new Date().toISOString()
+  };
+  
+  // Chỉ gửi cho user cụ thể
+  ws.send(JSON.stringify(cartMessage));
+  
+  console.log(`🛒 User ${user_id} thêm sản phẩm ${product_id} vào giỏ hàng livestream ${livestream_id}`);
+}
+
+function handleRemoveFromCart(ws, data) {
+  const { livestream_id, user_id, product_id } = data;
+  
+  const cartMessage = {
+    type: 'cart_updated',
+    livestream_id: livestream_id,
+    user_id: user_id,
+    product_id: product_id,
+    action: 'remove',
+    timestamp: new Date().toISOString()
+  };
+  
+  // Chỉ gửi cho user cụ thể
+  ws.send(JSON.stringify(cartMessage));
+  
+  console.log(`🛒 User ${user_id} xóa sản phẩm ${product_id} khỏi giỏ hàng livestream ${livestream_id}`);
+}
+
+function handleUpdateCartQuantity(ws, data) {
+  const { livestream_id, user_id, product_id, quantity } = data;
+  
+  const cartMessage = {
+    type: 'cart_updated',
+    livestream_id: livestream_id,
+    user_id: user_id,
+    product_id: product_id,
+    quantity: quantity,
+    action: 'update',
+    timestamp: new Date().toISOString()
+  };
+  
+  // Chỉ gửi cho user cụ thể
+  ws.send(JSON.stringify(cartMessage));
+  
+  console.log(`🛒 User ${user_id} cập nhật số lượng sản phẩm ${product_id} trong giỏ hàng livestream ${livestream_id}`);
+}
+
+function handleLivestreamStats(ws, data) {
+  const { livestream_id, stats } = data;
+  
+  const statsMessage = {
+    type: 'livestream_stats',
+    livestream_id: livestream_id,
+    stats: stats,
+    timestamp: new Date().toISOString()
+  };
+  
+  // Broadcast thống kê đến tất cả client
+  broadcastToLivestream(livestream_id, statsMessage);
+  
+  console.log(`📊 Cập nhật thống kê livestream ${livestream_id}`);
+}
+
+function broadcastToLivestream(livestream_id, message, excludeWs = null) {
+  if (livestreamRooms[livestream_id]) {
+    livestreamRooms[livestream_id].forEach(client => {
+      if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(message));
+      }
+    });
+  }
+}
+
+// Forward WebRTC signaling messages between streamer and viewers in the same room
+function forwardWebRTCSignal(ws, data) {
+  const { livestream_id, type } = data;
+  console.log(`🔄 Forwarding ${type} for livestream ${livestream_id}`);
+  
+  if (!livestream_id) {
+    console.log('❌ No livestream_id in WebRTC signal');
+    return;
+  }
+
+  // Relay to everyone else in the same room
+  if (livestreamRooms[livestream_id]) {
+    console.log(`📡 Found ${livestreamRooms[livestream_id].length} clients in room ${livestream_id}`);
+    livestreamRooms[livestream_id].forEach((client, index) => {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
+        console.log(`📤 Sending ${type} to client ${index} (readyState: ${client.readyState})`);
+        try {
+          client.send(JSON.stringify(data));
+        } catch (error) {
+          console.log(`❌ Error sending to client ${index}:`, error.message);
+        }
+      } else {
+        console.log(`❌ Client ${index} not ready (readyState: ${client.readyState})`);
+      }
+    });
+  } else {
+    console.log(`❌ No room found for livestream ${livestream_id}`);
+  }
+}
+
+function handleLivestreamStatusUpdate(ws, data) {
+  const { livestream_id, status } = data;
+  
+  // Tìm tất cả viewers của livestream này
+  const viewers = Object.values(livestreamClients).filter(client => 
+    client.livestream_id === livestream_id && client.type === 'viewer'
+  );
+  
+  // Gửi thông báo status update cho tất cả viewers
+  viewers.forEach(viewer => {
+    const statusMessage = {
+      type: status === 'dang_live' ? 'livestream_started' : 'livestream_stopped',
+      livestream_id: livestream_id,
+      status: status,
+      timestamp: new Date().toISOString()
+    };
+    
+    viewer.ws.send(JSON.stringify(statusMessage));
+  });
+  
+  console.log(`📺 Livestream ${livestream_id} status updated to ${status}, notified ${viewers.length} viewers`);
+}
+
+function handleGetLivestreamStatus(ws, data) {
+  const { livestream_id } = data;
+  
+  // Kiểm tra xem livestream có đang live không
+  const streamer = Object.values(livestreamClients).find(client => 
+    client.livestream_id === livestream_id && client.type === 'streamer'
+  );
+  
+  if (streamer) {
+    // Gửi thông báo livestream đã bắt đầu
+    const statusMessage = {
+      type: 'livestream_started',
+      livestream_id: livestream_id,
+      status: 'dang_live',
+      timestamp: new Date().toISOString()
+    };
+    
+    ws.send(JSON.stringify(statusMessage));
+    console.log(`📺 Sent livestream status to viewer for livestream ${livestream_id}`);
+  } else {
+    console.log(`📺 No active streamer found for livestream ${livestream_id}`);
+  }
+}

@@ -468,8 +468,8 @@ include_once("view/header.php");
                         <small style="color: #3D464D; opacity: 0.8;">Thời trang nam nữ</small>
                     </div>
                 </div>
-                <a href="index.php?livestream=all" class="btn btn-sm mt-2 w-100" style="background-color: #3D464D; color: white; font-weight: 600; border: none;">
-                    <i class="fas fa-play mr-1"></i>Xem tất cả
+                <a href="index.php?livestream" class="btn btn-sm mt-2 w-100" style="background-color: #3D464D; color: white; font-weight: 600; border: none;">
+                    <i class="fas fa-play mr-1"></i>Xem tất cả Live
                 </a>
             </div>
             

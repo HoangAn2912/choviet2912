@@ -1,0 +1,5 @@
+[27-Sep-2025 07:20:14 Asia/Ho_Chi_Minh] Starting cancel order transaction for order_id: 19, user_id: 4
+[27-Sep-2025 07:20:14 Asia/Ho_Chi_Minh] Order status updated to cancelled for order_id: 19
+[27-Sep-2025 07:20:14 Asia/Ho_Chi_Minh] Processing wallet refund for order_id: 19, amount: 190000.00
+[27-Sep-2025 07:20:14 Asia/Ho_Chi_Minh] Transfer account refund successful for user_id: 4, amount: 190000.00
+[27-Sep-2025 07:20:14 Asia/Ho_Chi_Minh] Cancel order successful for order_id: 19, user_id: 4

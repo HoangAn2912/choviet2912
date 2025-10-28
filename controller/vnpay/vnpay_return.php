@@ -126,12 +126,12 @@ try {
                         $_SESSION['payment_txn'] = $vnp_TxnRef;
                     }
                     
-                    header('Location: nap_tien.php?success=1');
+                    header('Location: index.php?nap-tien&success=1');
                     exit();
                 } else {
                     error_log("[v0] Transaction not found in database");
                     $_SESSION['payment_error'] = "Giao dịch không tồn tại trong hệ thống.";
-                    header('Location: nap_tien.php?error=1');
+                    header('Location: index.php?nap-tien&error=1');
                     exit();
                 }
 
@@ -141,7 +141,7 @@ try {
                 }
                 error_log("[v0] Exception occurred: " . $e->getMessage());
                 $_SESSION['payment_error'] = "Lỗi xử lý giao dịch: " . $e->getMessage();
-                header('Location: nap_tien.php?error=1');
+                header('Location: index.php?nap-tien&error=1');
                 exit();
             }
         } else {
@@ -153,13 +153,13 @@ try {
             }
             
             $_SESSION['payment_error'] = "Giao dịch thất bại. Mã lỗi: " . $vnp_ResponseCode;
-            header('Location: nap_tien.php?error=1');
+            header('Location: index.php?nap-tien&error=1');
             exit();
         }
     } else {
         error_log("[v0] Invalid secure hash");
         $_SESSION['payment_error'] = "Chữ ký không hợp lệ";
-        header('Location: nap_tien.php?error=1');
+        header('Location: index.php?nap-tien&error=1');
         exit();
     }
 
@@ -169,7 +169,7 @@ try {
     echo "<p><strong>Chi tiết lỗi:</strong> " . htmlspecialchars($e->getMessage()) . "</p>";
     echo "<p><strong>File:</strong> " . $e->getFile() . "</p>";
     echo "<p><strong>Dòng:</strong> " . $e->getLine() . "</p>";
-    echo "<p><a href='nap_tien.php'>Quay lại trang nạp tiền</a></p>";
+    echo "<p><a href='index.php?nap-tien'>Quay lại trang nạp tiền</a></p>";
     
     // Also set session error for fallback
     $_SESSION['payment_error'] = "Lỗi hệ thống: " . $e->getMessage();

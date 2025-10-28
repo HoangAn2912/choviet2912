@@ -68,7 +68,7 @@ class mCategory {
     }
 
     public function getUserById($id) {
-        $sql = "SELECT id, username, avatar FROM users WHERE id = ?";
+        $sql = "SELECT id, username, email, phone, address, avatar, balance FROM users WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $id);
         $stmt->execute();

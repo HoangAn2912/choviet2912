@@ -1,8 +1,14 @@
 <?php
 include_once("view/header.php");
 include_once("controller/cCategory.php");
+include_once("model/mLivestream.php");
+
 $cCategory = new cCategory();
 $categories = $cCategory->index();
+
+// Lấy danh sách livestream từ database
+$mLivestream = new mLivestream();
+$allLivestreams = $mLivestream->getLivestreams(null, 50); // Lấy tối đa 50 livestream
 ?>
 
 <div class="container-fluid pt-4">
@@ -50,214 +56,169 @@ $categories = $cCategory->index();
 
     <!-- Live Stream Grid - Layout ngang -->
     <div class="row px-xl-5" id="livestream-grid">
-        <!-- Live Stream Card 1 -->
-        <div class="col-12 mb-4 livestream-card" data-category="1" data-status="live">
-            <div class="live-card bg-white border rounded-lg overflow-hidden shadow-sm">
-                <div class="row no-gutters">
-                    <div class="col-md-4">
-                        <div class="position-relative" style="height: 200px;">
-                            <img src="img/dienthoai.jpg" alt="Live Stream" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                            <div class="position-absolute top-0 left-0 m-2">
-                                <span class="badge animate-pulse" style="background-color: #FF69B4; color: white; padding: 4px 8px; border-radius: 4px;">
-                                    <i class="fas fa-circle text-white mr-1" style="font-size: 8px;"></i>LIVE
-                                </span>
-                            </div>
-                            <div class="position-absolute top-0 right-0 m-2">
-                                <span class="badge" style="background-color: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px;">
-                                    <i class="fas fa-user mr-1"></i>1.2K
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <img src="img/user.jpg" alt="Avatar" class="rounded-circle mr-3" style="width: 40px; height: 40px; object-fit: cover;">
-                                <div>
-                                    <h5 class="mb-1 font-weight-bold text-dark">Shop điện thoại cũ</h5>
-                                    <small class="text-muted">Đang live • 1.2K người xem</small>
+        <?php if (empty($allLivestreams)): ?>
+            <!-- Empty State -->
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Chưa có livestream nào</h4>
+                    <p class="text-muted">Hiện tại chưa có livestream nào đang diễn ra. Hãy quay lại sau!</p>
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <a href="index.php?create-livestream" class="btn btn-primary">
+                            <i class="fas fa-plus mr-2"></i>Tạo livestream đầu tiên
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php else: ?>
+            <?php foreach ($allLivestreams as $livestream): ?>
+                <?php
+                // Xác định trạng thái và màu sắc
+                $statusClass = '';
+                $statusText = '';
+                $statusIcon = '';
+                $badgeColor = '';
+                
+                switch($livestream['status']) {
+                    case 'dang_dien_ra':
+                    case 'dang_live':
+                        $statusClass = 'live';
+                        $statusText = 'Đang live';
+                        $statusIcon = 'fas fa-circle';
+                        $badgeColor = '#FF69B4';
+                        break;
+                    case 'chua_bat_dau':
+                        $statusClass = 'upcoming';
+                        $statusText = 'Sắp live';
+                        $statusIcon = 'fas fa-clock';
+                        $badgeColor = '#28a745';
+                        break;
+                    case 'da_ket_thuc':
+                        $statusClass = 'ended';
+                        $statusText = 'Đã kết thúc';
+                        $statusIcon = 'fas fa-stop';
+                        $badgeColor = '#6c757d';
+                        break;
+                }
+                
+                // Xử lý ảnh
+                $livestreamImage = !empty($livestream['image']) ? $livestream['image'] : 'default-live.jpg';
+                $userAvatar = !empty($livestream['avatar']) ? $livestream['avatar'] : 'default-avatar.jpg';
+                
+                // Kiểm tra file ảnh có tồn tại không
+                if (!file_exists('img/' . $livestreamImage)) {
+                    $livestreamImage = 'default-live.jpg';
+                }
+                if (!file_exists('img/' . $userAvatar)) {
+                    $userAvatar = 'default-avatar.jpg';
+                }
+                
+                // Format số lượng viewers
+                $viewerCount = $livestream['current_viewers'] ?? 0;
+                $viewerText = $viewerCount > 1000 ? number_format($viewerCount/1000, 1) . 'K' : $viewerCount;
+                ?>
+                
+                <div class="col-12 mb-4 livestream-card" data-category="1" data-status="<?= $statusClass ?>">
+                    <div class="live-card bg-white border rounded-lg overflow-hidden shadow-sm">
+                        <div class="row no-gutters">
+                            <div class="col-md-4">
+                                <div class="position-relative" style="height: 200px;">
+                                    <img src="img/<?= htmlspecialchars($livestreamImage) ?>" 
+                                         alt="<?= htmlspecialchars($livestream['title']) ?>" 
+                                         class="img-fluid w-100 h-100" 
+                                         style="object-fit: cover;">
+                                    
+                                    <!-- Status Badge -->
+                                    <div class="position-absolute top-0 left-0 m-2">
+                                        <span class="badge <?= $statusClass === 'live' ? 'animate-pulse' : '' ?>" 
+                                              style="background-color: <?= $badgeColor ?>; color: white; padding: 4px 8px; border-radius: 4px;">
+                                            <i class="<?= $statusIcon ?> text-white mr-1" style="font-size: 8px;"></i><?= $statusText ?>
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Viewer Count -->
+                                    <div class="position-absolute top-0 right-0 m-2">
+                                        <span class="badge" style="background-color: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px;">
+                                            <i class="fas fa-user mr-1"></i><?= $viewerText ?>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <h4 class="font-weight-bold text-dark mb-2">iPhone 13 Pro Max 128GB - Giá sốc chỉ 18.5M</h4>
-                            <p class="text-muted mb-3">Điện thoại iPhone 13 Pro Max 128GB màu xanh, tình trạng 95%, còn bảo hành Apple. Giá tốt nhất thị trường, giao hàng tận nơi.</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <button class="btn btn-danger">
-                                    <i class="fas fa-play mr-1"></i>Xem ngay
-                                </button>
+                            
+                            <div class="col-md-8">
+                                <div class="p-3">
+                                    <!-- Streamer Info -->
+                                    <div class="d-flex align-items-center mb-2">
+                                        <img src="img/<?= htmlspecialchars($userAvatar) ?>" 
+                                             alt="<?= htmlspecialchars($livestream['username']) ?>" 
+                                             class="rounded-circle mr-3" 
+                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                        <div>
+                                            <h5 class="mb-1 font-weight-bold text-dark"><?= htmlspecialchars($livestream['username'] ?? 'Streamer') ?></h5>
+                                            <small class="text-muted">
+                                                <?= $statusText ?> • <?= $viewerText ?> người xem
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Livestream Title -->
+                                    <h4 class="font-weight-bold text-dark mb-2"><?= htmlspecialchars($livestream['title']) ?></h4>
+                                    
+                                    <!-- Description -->
+                                    <p class="text-muted mb-3">
+                                        <?= htmlspecialchars(substr($livestream['description'], 0, 150)) ?>
+                                        <?= strlen($livestream['description']) > 150 ? '...' : '' ?>
+                                    </p>
+                                    
+                                    <!-- Action Button -->
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <?php if ($statusClass === 'live'): ?>
+                                            <a href="index.php?watch&id=<?= $livestream['id'] ?>" class="btn btn-danger">
+                                                <i class="fas fa-play mr-1"></i>Xem ngay
+                                            </a>
+                                        <?php elseif ($statusClass === 'upcoming'): ?>
+                                            <button class="btn btn-outline-warning" onclick="setReminder(<?= $livestream['id'] ?>)">
+                                                <i class="fas fa-bell mr-1"></i>Nhắc nhở
+                                            </button>
+                                        <?php else: ?>
+                                            <a href="index.php?watch&id=<?= $livestream['id'] ?>" class="btn btn-outline-primary">
+                                                <i class="fas fa-eye mr-1"></i>Xem lại
+                                            </a>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Product Count -->
+                                        <?php if ($livestream['product_count'] > 0): ?>
+                                            <small class="text-muted">
+                                                <i class="fas fa-box mr-1"></i><?= $livestream['product_count'] ?> sản phẩm
+                                            </small>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Live Stream Card 2 -->
-        <div class="col-12 mb-4 livestream-card" data-category="3" data-status="upcoming">
-            <div class="live-card bg-white border rounded-lg overflow-hidden shadow-sm">
-                <div class="row no-gutters">
-                    <div class="col-md-4">
-                        <div class="position-relative" style="height: 200px;">
-                            <img src="img/ao.jpg" alt="Live Stream" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                            <div class="position-absolute top-0 left-0 m-2">
-                                <span class="badge" style="background-color: #28a745; color: white; padding: 4px 8px; border-radius: 4px;">
-                                    <i class="fas fa-clock text-white mr-1"></i>Sắp live
-                                </span>
-                            </div>
-                            <div class="position-absolute top-0 right-0 m-2">
-                                <span class="badge" style="background-color: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px;">
-                                    <i class="fas fa-user mr-1"></i>21
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <img src="img/user1.jpg" alt="Avatar" class="rounded-circle mr-3" style="width: 40px; height: 40px; object-fit: cover;">
-                                <div>
-                                    <h5 class="mb-1 font-weight-bold text-dark">Thời trang nam nữ</h5>
-                                    <small class="text-muted">Sắp live • 21 người quan tâm</small>
-                                </div>
-                            </div>
-                            <h4 class="font-weight-bold text-dark mb-2">Áo polo Tesla chính hãng - Thời trang cao cấp</h4>
-                            <p class="text-muted mb-3">Bộ sưu tập áo polo Tesla chính hãng, chất liệu cao cấp, thiết kế sang trọng. Phù hợp cho nam nữ, nhiều size và màu sắc.</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <button class="btn btn-outline-warning">
-                                    <i class="fas fa-bell mr-1"></i>Nhắc nhở
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Live Stream Card 3 -->
-        <div class="col-12 mb-4 livestream-card" data-category="4" data-status="live">
-            <div class="live-card bg-white border rounded-lg overflow-hidden shadow-sm">
-                <div class="row no-gutters">
-                    <div class="col-md-4">
-                        <div class="position-relative" style="height: 200px;">
-                            <img src="img/banghe.jpg" alt="Live Stream" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                            <div class="position-absolute top-0 left-0 m-2">
-                                <span class="badge animate-pulse" style="background-color: #FF69B4; color: white; padding: 4px 8px; border-radius: 4px;">
-                                    <i class="fas fa-circle text-white mr-1" style="font-size: 8px;"></i>LIVE
-                                </span>
-                            </div>
-                            <div class="position-absolute top-0 right-0 m-2">
-                                <span class="badge" style="background-color: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px;">
-                                    <i class="fas fa-user mr-1"></i>14
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <img src="img/user2.jpg" alt="Avatar" class="rounded-circle mr-3" style="width: 40px; height: 40px; object-fit: cover;">
-                                <div>
-                                    <h5 class="mb-1 font-weight-bold text-dark">Nội thất gia đình</h5>
-                                    <small class="text-muted">Đang live • 14 người xem</small>
-                                </div>
-                            </div>
-                            <h4 class="font-weight-bold text-dark mb-2">Bàn ghế hiện đại - Nội thất cao cấp</h4>
-                            <p class="text-muted mb-3">Bộ bàn ghế hiện đại, thiết kế tối giản, chất liệu gỗ cao cấp. Phù hợp cho phòng khách, văn phòng. Giá tốt, giao hàng miễn phí.</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <button class="btn btn-danger">
-                                    <i class="fas fa-play mr-1"></i>Xem ngay
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Live Stream Card 4 -->
-        <div class="col-12 mb-4 livestream-card" data-category="1" data-status="upcoming">
-            <div class="live-card bg-white border rounded-lg overflow-hidden shadow-sm">
-                <div class="row no-gutters">
-                    <div class="col-md-4">
-                        <div class="position-relative" style="height: 200px;">
-                            <img src="img/xemay.jpg" alt="Live Stream" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                            <div class="position-absolute top-0 left-0 m-2">
-                                <span class="badge" style="background-color: #ffc107; color: #3D464D; padding: 4px 8px; border-radius: 4px;">
-                                    <i class="fas fa-clock mr-1"></i>Hôm nay
-                                </span>
-                            </div>
-                            <div class="position-absolute top-0 right-0 m-2">
-                                <span class="badge" style="background-color: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px;">
-                                    <i class="fas fa-user mr-1"></i>13
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <img src="img/user3.jpg" alt="Avatar" class="rounded-circle mr-3" style="width: 40px; height: 40px; object-fit: cover;">
-                                <div>
-                                    <h5 class="mb-1 font-weight-bold text-dark">Xe máy cũ giá rẻ</h5>
-                                    <small class="text-muted">Hôm nay • 13 người quan tâm</small>
-                                </div>
-                            </div>
-                            <h4 class="font-weight-bold text-dark mb-2">Honda Vision 2020 - Xe máy tay ga tiết kiệm</h4>
-                            <p class="text-muted mb-3">Honda Vision 2020 màu đỏ, máy êm, tiết kiệm xăng. Xe đã qua sử dụng nhưng còn rất mới, đầy đủ giấy tờ, bảo dưỡng định kỳ.</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <button class="btn btn-outline-warning">
-                                    <i class="fas fa-bell mr-1"></i>Nhắc nhở
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Live Stream Card 5 -->
-        <div class="col-12 mb-4 livestream-card" data-category="2" data-status="live">
-            <div class="live-card bg-white border rounded-lg overflow-hidden shadow-sm">
-                <div class="row no-gutters">
-                    <div class="col-md-4">
-                        <div class="position-relative" style="height: 200px;">
-                            <img src="img/laptop.jpg" alt="Live Stream" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                            <div class="position-absolute top-0 left-0 m-2">
-                                <span class="badge animate-pulse" style="background-color: #FF69B4; color: white; padding: 4px 8px; border-radius: 4px;">
-                                    <i class="fas fa-circle text-white mr-1" style="font-size: 8px;"></i>LIVE
-                                </span>
-                            </div>
-                            <div class="position-absolute top-0 right-0 m-2">
-                                <span class="badge" style="background-color: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px;">
-                                    <i class="fas fa-user mr-1"></i>7
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <img src="img/user4.jpg" alt="Avatar" class="rounded-circle mr-3" style="width: 40px; height: 40px; object-fit: cover;">
-                                <div>
-                                    <h5 class="mb-1 font-weight-bold text-dark">Laptop cũ giá tốt</h5>
-                                    <small class="text-muted">Đang live • 7 người xem</small>
-                                </div>
-                            </div>
-                            <h4 class="font-weight-bold text-dark mb-2">Dell XPS 15 - Laptop cao cấp cho công việc</h4>
-                            <p class="text-muted mb-3">Dell XPS 15 màn hình 15.6 inch, Intel i7, RAM 16GB, SSD 512GB. Laptop cao cấp phù hợp cho công việc, thiết kế, gaming.</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <button class="btn btn-danger">
-                                    <i class="fas fa-play mr-1"></i>Xem ngay
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 </div>
 
 <script>
+// Function để đặt nhắc nhở
+function setReminder(livestreamId) {
+    if (confirm('Bạn có muốn nhận thông báo khi livestream này bắt đầu không?')) {
+        // Lưu vào localStorage hoặc gửi request đến server
+        let reminders = JSON.parse(localStorage.getItem('livestream_reminders') || '[]');
+        if (!reminders.includes(livestreamId)) {
+            reminders.push(livestreamId);
+            localStorage.setItem('livestream_reminders', JSON.stringify(reminders));
+            alert('Đã đặt nhắc nhở thành công!');
+        } else {
+            alert('Bạn đã đặt nhắc nhở cho livestream này rồi!');
+        }
+    }
+}
+
 function filterLiveStream(status) {
     // Remove active class from all buttons and reset styles
     document.querySelectorAll('.btn-group .btn').forEach(btn => {
@@ -303,6 +264,14 @@ function filterByCategory(categoryId) {
         }
     });
 }
+
+// Auto refresh livestream data every 30 seconds
+setInterval(function() {
+    // Chỉ refresh nếu đang ở trang livestream
+    if (window.location.href.includes('livestream')) {
+        location.reload();
+    }
+}, 30000);
 </script>
 
 <?php include_once("view/footer.php"); ?>

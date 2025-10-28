@@ -14,7 +14,7 @@
 include_once 'controller/vnpay/connection.php';
 // Kiểm tra đăng nhập
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: index.php?login');
     exit();
 }
 
@@ -53,7 +53,7 @@ if (isset($_GET['error']) && isset($_SESSION['payment_error'])) {
     unset($_SESSION['payment_error']);
 }
 
-// Lấy thông tin số dư hiện tại
+// Lấy thông tin số dư hiện tại từ transfer_accounts
 try {
     $stmt = $pdo->prepare("SELECT balance FROM transfer_accounts WHERE user_id = ?");
     $stmt->execute([$user_id]);
@@ -61,6 +61,7 @@ try {
     $current_balance = $account ? $account['balance'] : 0;
 } catch(PDOException $e) {
     $error = "Lỗi truy vấn database: " . $e->getMessage();
+    $current_balance = 0;
 }
 
 // Xử lý form nạp tiền
@@ -71,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "Số tiền nạp tối thiểu là 50,000 VND";
     } else {
         // Chuyển hướng đến trang tạo thanh toán VNPay
-        header("Location: controller/vnpay/vnpay_create_payment.php?amount=" . $amount);
+        header("Location: index.php?vnpay-create&amount=" . $amount);
         exit();
     }
 }
@@ -146,6 +147,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-radius: 5px;
             margin-bottom: 20px;
         }
+        .balance-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .balance-label {
+            font-weight: bold;
+            color: #333;
+        }
+        .balance-value {
+            font-weight: bold;
+            color: #28a745;
+            font-size: 18px;
+        }
         .quick-amounts {
             display: flex;
             gap: 10px;
@@ -183,7 +198,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <h2>Nạp tiền vào tài khoản</h2>
         
         <div class="balance">
-            <strong>Số dư hiện tại: <?php echo number_format($current_balance); ?> VND</strong>
+            <div class="balance-row">
+                <span class="balance-label">Số dư hiện tại:</span>
+                <span class="balance-value"><?php echo number_format($current_balance); ?> VND</span>
+            </div>
         </div>
 
         <?php if ($error): ?>

@@ -163,6 +163,55 @@ if (isset($_SESSION['user_id'])) {
                             <a href="?nap-tien" class="nav-item nav-link d-flex align-items-center">
                                 <i class="fas fa-coins mr-2"></i> Nạp tiền
                             </a>
+
+                            <?php if (isset($_SESSION['user_id'])): ?>
+                            <!-- Dropdown Đơn hàng -->
+                            <div class="dropdown">
+                                <a href="#" class="nav-item nav-link d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-shopping-bag mr-2"></i> Đơn hàng
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="?my-orders">
+                                        <i class="fas fa-list mr-2"></i>Tất cả đơn hàng
+                                    </a>
+                                    <a class="dropdown-item" href="?my-orders&status=pending">
+                                        <i class="fas fa-clock mr-2"></i>Chờ xác nhận
+                                    </a>
+                                    <a class="dropdown-item" href="?my-orders&status=confirmed">
+                                        <i class="fas fa-check mr-2"></i>Đã xác nhận
+                                    </a>
+                                    <a class="dropdown-item" href="?my-orders&status=shipping">
+                                        <i class="fas fa-truck mr-2"></i>Đang giao hàng
+                                    </a>
+                                    <a class="dropdown-item" href="?my-orders&status=delivered">
+                                        <i class="fas fa-check-circle mr-2"></i>Đã giao hàng
+                                    </a>
+                                    <a class="dropdown-item" href="?my-orders&status=cancelled">
+                                        <i class="fas fa-times mr-2"></i>Đã hủy
+                                    </a>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Dropdown Live Stream -->
+                            <div class="dropdown">
+                                <a href="#" class="nav-item nav-link d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-video mr-2"></i> Live Stream
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="?livestream">
+                                        <i class="fas fa-list mr-2"></i>Tất cả Live Stream
+                                    </a>
+                                    <?php if (isset($_SESSION['user_id'])): ?>
+                                        <a class="dropdown-item" href="?create-livestream">
+                                            <i class="fas fa-plus mr-2"></i>Tạo Livestream
+                                        </a>
+                                        <a class="dropdown-item" href="?my-livestreams">
+                                            <i class="fas fa-user mr-2"></i>Livestream của tôi
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
                             
                         </div>
 
@@ -194,6 +243,7 @@ if (isset($_SESSION['user_id'])) {
                                 <div class="dropdown-menu dropdown-menu-right"> 
                                     <?php if (isset($_SESSION['user_id'])): ?>
                                         <a class="dropdown-item" href="<?= urlencode($userHeader['username'] ?? '') ?>">Quản lý thông tin</a>
+                                        <div class="dropdown-divider"></div>
                                         <a class="dropdown-item" href="?action=logout">Đăng xuất</a>
                                     <?php else: ?>
                                         <a class="dropdown-item" href="?login">Đăng nhập</a>

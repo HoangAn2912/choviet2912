@@ -89,6 +89,54 @@ class mProduct {
         return $data;
     }
     
+    // Lấy sản phẩm theo user_id
+    public function getSanPhamByUserId($user_id) {
+        $sql = "SELECT * FROM products WHERE user_id = ? AND status = 'Đã duyệt' ORDER BY created_date DESC";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = [];
+
+        while ($row = $result->fetch_assoc()) {
+            // Nếu có nhiều ảnh, tách lấy ảnh đầu tiên
+            if (!empty($row['image'])) {
+                $dsAnh = array_map('trim', explode(',', $row['image']));
+                $row['anh_dau'] = $dsAnh[0] ?? ''; // ảnh đầu tiên
+            } else {
+                $row['anh_dau'] = '';
+            }
+            $data[] = $row;
+        }
+        return $data;
+    }
+
+    // Lấy sản phẩm của user
+    public function getProductsByUserId($user_id) {
+        $sql = "SELECT id, title, price, image, description, sale_status, status
+                FROM products 
+                WHERE user_id = ? AND status = 'Đã duyệt'
+                ORDER BY created_date DESC";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = [];
+
+        while ($row = $result->fetch_assoc()) {
+            // Xử lý ảnh sản phẩm
+            if (!empty($row['image'])) {
+                $dsAnh = array_map('trim', explode(',', $row['image']));
+                $row['anh_dau'] = $dsAnh[0] ?? ''; // ảnh đầu tiên
+            } else {
+                $row['anh_dau'] = '';
+            }
+            $data[] = $row;
+        }
+        
+        return $data;
+    }
+    
     
 }
 ?>

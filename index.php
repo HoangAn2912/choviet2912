@@ -97,16 +97,16 @@ $controller = new cDetailProduct();
         } else if (isset($_GET['category'])) {
             include_once("view/category.php");
         }else if(isset($_GET['shop'])){
-            include_once("view/shop.html");
+            include_once("view/index.php");
         } else if(isset($_GET['cart'])){
-            include_once("view/cart.html");
+            include_once("view/index.php");
         } else if(isset($_GET['checkout'])){
-            include_once("view/checkout.html");
+            include_once("checkout.php");
         } else if (isset($_GET['detail']) && isset($_GET['id'])) {
             $id = $_GET['id'];
             $controller->showDetail($id); 
         } else if(isset($_GET['contact'])){
-            include_once("view/contact.html");
+            include_once("view/index.php");
         } else if(isset($_GET['login'])){
             include_once("loginlogout/login.php");
         } else if(isset($_GET['signup'])){
@@ -126,7 +126,36 @@ $controller = new cDetailProduct();
                 include_once("view/index.php");
             }
         } else if(isset($_GET['livestream'])){
-            include_once("view/livestream.php");
+            if(isset($_GET['id'])){
+                // Hiển thị livestream chi tiết
+                include_once("controller/cLivestream.php");
+                $cLivestream = new cLivestream();
+                $cLivestream->showLivestream();
+            } else {
+                // Hiển thị danh sách livestream
+                include_once("view/livestream.php");
+            }
+        } else if(isset($_GET['create-livestream'])){
+            // Trang tạo livestream mới
+            include_once("view/create_livestream.php");
+        } else if(isset($_GET['my-livestreams'])){
+            // Trang quản lý livestream của user
+            include_once("view/my_livestreams.php");
+        } else if(isset($_GET['streamer'])){
+            // Panel quản lý livestream cho streamer
+            include_once("view/streamer_panel.php");
+        } else if(isset($_GET['broadcast'])){
+            // Trang phát sóng livestream cho doanh nghiệp
+            include_once("view/livestream_broadcast.php");
+        } else if(isset($_GET['watch'])){
+            // Trang xem livestream cho người dùng
+            include_once("view/livestream_viewer.php");
+        } else if(isset($_GET['my-orders'])){
+            // Trang quản lý đơn hàng
+            include_once("my_orders.php");
+        } else if(isset($_GET['vnpay-create'])){
+            // Tạo thanh toán VNPay
+            include_once("controller/vnpay/vnpay_create_payment.php");
         } else {
             include_once("view/index.php");
         }
