@@ -122,7 +122,7 @@ $chartDataJson = json_encode(array_values($chartData));
               <button type="submit" class="btn btn-primary">
                 <i class="mdi mdi-filter"></i> Lọc
               </button>
-              <?php require_once '../helpers/url_helper.php'; ?>
+              <?php require_once __DIR__ . '/../helpers/url_helper.php'; ?>
               <a href="<?= getBasePath() ?>/ad/qldoanhthu" class="btn btn-outline-secondary">
                 <i class="mdi mdi-refresh"></i> Đặt lại
               </a>

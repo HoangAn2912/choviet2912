@@ -1,23 +1,38 @@
 <?php
-// Suppress warnings to prevent JSON corruption
-error_reporting(E_ERROR | E_PARSE);
-
 // Log all errors to file
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/api_errors.log');
+error_reporting(E_ALL);
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, X-CSRF-Token');
 
-session_start();
+// Include Security helpers
+include_once __DIR__ . "/../helpers/Security.php";
+include_once __DIR__ . "/../helpers/RateLimiter.php";
+
+// Khởi tạo session bảo mật
+Security::initSecureSession();
+
+// Rate limiting cho API - 100 requests/phút
+RateLimiter::middleware('livestream_api', 100, 60);
 
 try {
     include_once __DIR__ . "/../model/mLivestream.php";
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Model Error: ' . $e->getMessage()]);
     exit;
+}
+
+// Validate CSRF token cho POST requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (!Security::validateCSRFToken($token)) {
+        echo json_encode(['success' => false, 'message' => 'CSRF token không hợp lệ. Vui lòng refresh trang.']);
+        exit;
+    }
 }
 
 $model = new mLivestream();

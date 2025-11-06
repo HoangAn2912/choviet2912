@@ -33,7 +33,7 @@ if (isset($_POST['btn_duyet'])) {
     $p->getduyetbai($_POST['idbv']);
     
     // Preserve pagination and filter parameters
-    require_once '../helpers/url_helper.php';
+    require_once __DIR__ . '/../helpers/url_helper.php';
     $redirectUrl = getBasePath() . "/ad/kdbaidang?status=approved";
     if (!empty($filter_status)) $redirectUrl .= "&status={$filter_status}";
     if (!empty($filter_product)) $redirectUrl .= "&product_type={$filter_product}";
@@ -105,7 +105,7 @@ foreach($all_data as $item) {
     <link rel="stylesheet" href="../admin/src/assets/css/style.css">
     <!-- endinject -->
     <link rel="shortcut icon" href="../admin/src/assets/images/favicon.ico" />
-    <?php require_once '../helpers/url_helper.php'; ?>
+    <?php require_once __DIR__ . '/../helpers/url_helper.php'; ?>
     <link rel="stylesheet" href="<?= getBasePath() ?>/css/kdbaidang.css">
     <style>
         /* Pagination styles */

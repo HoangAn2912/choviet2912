@@ -75,7 +75,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Quản lý giao dịch nạp tiền</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <?php require_once '../helpers/url_helper.php'; ?>
+    <?php require_once __DIR__ . '/../helpers/url_helper.php'; ?>
     <link rel="stylesheet" href="<?= getBasePath() ?>/css/duyetnaptien.css">
 </head>
 <body>

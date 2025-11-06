@@ -32,8 +32,9 @@ class mPost {
         $soLuong = (int)$rowCount['quantity'];
         $stmtCount->close();
     
-        // Bước 2: Nếu đã có từ 3 bài trở lên => trừ phí và lưu lịch sử
-        if ($soLuong >= 3) {
+        // Bước 2: ✅ FIXED - 2 bài đầu miễn phí, từ bài thứ 3 trở đi tính phí
+        // Nếu đã có >= 2 bài (tức đang đăng bài thứ 3 trở lên) => trừ phí
+        if ($soLuong >= 2) {
             // Trừ số dư trong tài khoản
     
             // Kiểm tra số dư hiện tại
@@ -68,7 +69,7 @@ class mPost {
         $stmtInsert->close();
     
         // Bước 4: Ghi vào lịch sử phí nếu đã trừ tiền
-        if ($soLuong >= 3 && $result) {
+        if ($soLuong >= 2 && $result) {
             $sqlLichSu = "INSERT INTO posting_fee_history (product_id, user_id, amount, created_date) 
                           VALUES (?, ?, ?, CURDATE())";
             $stmtLichSu = $this->conn->prepare($sqlLichSu);

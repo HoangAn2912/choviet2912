@@ -229,7 +229,7 @@ if (isset($_GET['edit'])) {
                                                 <td><?= date('d/m/Y H:i', strtotime($banner['created_at'])) ?></td>
                                                 <td>
                                                     <div class="btn-group" role="group">
-                                                        <a href="/choviet2912/ad/edit-banner?edit=<?= $banner['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                                        <a href="edit-banner?edit=<?= $banner['id'] ?>" class="btn btn-sm btn-outline-primary">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
                                                         <form method="POST" style="display: inline;" 

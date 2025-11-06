@@ -1,9 +1,17 @@
 <?php
-session_start();
+// Include Security helper
+include_once("helpers/Security.php");
+
+// Khởi tạo session bảo mật
+Security::initSecureSession();
+
+// Validate session
+Security::validateSession();
+
 //xử lý đăng xuất
 if (isset($_GET['action']) && $_GET['action'] == 'logout') {
     session_destroy();
-    header('Location: index.php');
+    header('Location: index.php?login');
     exit;
 }
 include_once("controller/cCategory.php");
@@ -92,6 +100,43 @@ $controller = new cDetailProduct();
             include_once("view/naptien.php");
         }else if (isset($_GET['quan-ly-tin'])) {
             include_once("view/managePost.php");
+        }else if (isset($_GET['advanced-search'])) {
+            // Tìm kiếm nâng cao với filter
+            include_once("view/advanced_search.php");
+            exit;
+        }else if (isset($_GET['inventory-management'])) {
+            // Quản lý tồn kho
+            include_once("view/inventory_management.php");
+            exit;
+        }else if (isset($_GET['seller-dashboard'])) {
+            // Dashboard người bán
+            include_once("view/seller_dashboard.php");
+            exit;
+        }else if (isset($_GET['seller-update-order-status'])) {
+            // API: Cập nhật trạng thái đơn hàng
+            include_once("controller/cSellerDashboard.php");
+            $dashboard = new cSellerDashboard();
+            $dashboard->updateOrderStatus();
+        }else if (isset($_GET['seller-order-details'])) {
+            // API: Chi tiết đơn hàng
+            include_once("controller/cSellerDashboard.php");
+            $dashboard = new cSellerDashboard();
+            $dashboard->getOrderDetails();
+        }else if (isset($_GET['inventory-update-settings'])) {
+            // API: Cập nhật cài đặt tồn kho
+            include_once("controller/cInventory.php");
+            $inv = new cInventory();
+            $inv->updateSettings();
+        }else if (isset($_GET['inventory-adjust-stock'])) {
+            // API: Điều chỉnh tồn kho
+            include_once("controller/cInventory.php");
+            $inv = new cInventory();
+            $inv->adjustStock();
+        }else if (isset($_GET['inventory-history'])) {
+            // API: Lịch sử tồn kho
+            include_once("controller/cInventory.php");
+            $inv = new cInventory();
+            $inv->getHistory();
         }else if (isset($_GET['search'])) {
             include_once("view/search.php");
         } else if (isset($_GET['category'])) {
@@ -136,16 +181,143 @@ $controller = new cDetailProduct();
                 include_once("view/livestream.php");
             }
         } else if(isset($_GET['create-livestream'])){
-            // Trang tạo livestream mới
+            // Trang tạo livestream mới - CHỈ DOANH NGHIỆP
+            if (!isset($_SESSION['user_id'])) {
+                header("Location: index.php?page=login");
+                exit;
+            }
+            
+            // Kiểm tra account_type
+            require_once("model/mConnect.php");
+            $conn = new Connect();
+            $db = $conn->connect();
+            $check_sql = "SELECT account_type FROM users WHERE id = ?";
+            $check_stmt = $db->prepare($check_sql);
+            $check_stmt->bind_param("i", $_SESSION['user_id']);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            $check_user = $check_result->fetch_assoc();
+            $check_stmt->close();
+            $db->close();
+            
+            if (!$check_user || $check_user['account_type'] !== 'doanh_nghiep') {
+                // Chuyển hướng đến trang đăng ký gói
+                echo "<script>
+                    alert('Chỉ tài khoản doanh nghiệp mới được tạo livestream. Vui lòng đăng ký gói livestream để nâng cấp tài khoản!');
+                    window.location.href = 'index.php?livestream-packages';
+                </script>";
+                exit;
+            }
+            
             include_once("view/create_livestream.php");
         } else if(isset($_GET['my-livestreams'])){
-            // Trang quản lý livestream của user
+            // Trang quản lý livestream của user - CHỈ DOANH NGHIỆP
+            if (!isset($_SESSION['user_id'])) {
+                header("Location: index.php?page=login");
+                exit;
+            }
+            
+            // Kiểm tra account_type
+            require_once("model/mConnect.php");
+            $conn = new Connect();
+            $db = $conn->connect();
+            $check_sql = "SELECT account_type FROM users WHERE id = ?";
+            $check_stmt = $db->prepare($check_sql);
+            $check_stmt->bind_param("i", $_SESSION['user_id']);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            $check_user = $check_result->fetch_assoc();
+            $check_stmt->close();
+            $db->close();
+            
+            if (!$check_user || $check_user['account_type'] !== 'doanh_nghiệp') {
+                echo "<script>
+                    alert('Chỉ tài khoản doanh nghiệp mới có quyền quản lý livestream. Vui lòng đăng ký gói livestream để nâng cấp!');
+                    window.location.href = 'index.php?livestream-packages';
+                </script>";
+                exit;
+            }
+            
             include_once("view/my_livestreams.php");
+        } else if(isset($_GET['livestream-packages'])){
+            // Trang mua gói livestream
+            include_once("view/livestream_packages.php");
+            exit;
+        } else if(isset($_GET['action']) && $_GET['action'] == 'purchase-livestream-package-wallet'){
+            // Mua gói livestream bằng ví
+            include_once("controller/cLivestreamPackage.php");
+            $cPackage = new cLivestreamPackage();
+            $cPackage->purchaseByWallet();
+            exit;
+        } else if(isset($_GET['action']) && $_GET['action'] == 'purchase-livestream-package-vnpay'){
+            // Mua gói livestream bằng VNPay
+            include_once("controller/cLivestreamPackage.php");
+            $cPackage = new cLivestreamPackage();
+            $cPackage->purchaseByVNPay();
+            exit;
+        } else if(isset($_GET['livestream-package-history'])){
+            // Lịch sử mua gói livestream - CHỈ DOANH NGHIỆP
+            if (!isset($_SESSION['user_id'])) {
+                header("Location: index.php?page=login");
+                exit;
+            }
+            
+            // Kiểm tra account_type
+            require_once("model/mConnect.php");
+            $conn = new Connect();
+            $db = $conn->connect();
+            $check_sql = "SELECT account_type FROM users WHERE id = ?";
+            $check_stmt = $db->prepare($check_sql);
+            $check_stmt->bind_param("i", $_SESSION['user_id']);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            $check_user = $check_result->fetch_assoc();
+            $check_stmt->close();
+            $db->close();
+            
+            if (!$check_user || $check_user['account_type'] !== 'doanh_nghiep') {
+                echo "<script>
+                    alert('Chỉ tài khoản doanh nghiệp mới có lịch sử mua gói livestream.');
+                    window.location.href = 'index.php?livestream-packages';
+                </script>";
+                exit;
+            }
+            
+            include_once("controller/cLivestreamPackage.php");
+            $cPackage = new cLivestreamPackage();
+            $cPackage->showHistory();
+            exit;
         } else if(isset($_GET['streamer'])){
             // Panel quản lý livestream cho streamer
             include_once("view/streamer_panel.php");
         } else if(isset($_GET['broadcast'])){
-            // Trang phát sóng livestream cho doanh nghiệp
+            // Trang phát sóng livestream cho doanh nghiệp - CHỈ DOANH NGHIỆP
+            if (!isset($_SESSION['user_id'])) {
+                header("Location: index.php?page=login");
+                exit;
+            }
+            
+            // Kiểm tra account_type
+            require_once("model/mConnect.php");
+            $conn = new Connect();
+            $db = $conn->connect();
+            $check_sql = "SELECT account_type FROM users WHERE id = ?";
+            $check_stmt = $db->prepare($check_sql);
+            $check_stmt->bind_param("i", $_SESSION['user_id']);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            $check_user = $check_result->fetch_assoc();
+            $check_stmt->close();
+            $db->close();
+            
+            if (!$check_user || $check_user['account_type'] !== 'doanh_nghiep') {
+                echo "<script>
+                    alert('Chỉ tài khoản doanh nghiệp mới được phát sóng livestream. Vui lòng đăng ký gói livestream để nâng cấp!');
+                    window.location.href = 'index.php?livestream-packages';
+                </script>";
+                exit;
+            }
+            
             include_once("view/livestream_broadcast.php");
         } else if(isset($_GET['watch'])){
             // Trang xem livestream cho người dùng

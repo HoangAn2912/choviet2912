@@ -5,17 +5,17 @@ $mysqli = $con->connect();
 ?>
 
 <?php
-ob_start(); // Bắt đầu bộ đệm để tránh lỗi headers
-// error_reporting(0);
-if ($_SESSION['role'] != 1) {
-    echo "<script>
-        alert('Bạn không đủ thẩm quyền truy cập!');
+// ob_start(); // Bắt đầu bộ đệm để tránh lỗi headers
+// // error_reporting(0);
+// if (!in_array((int)($_SESSION['role'] ?? 0), [1, 4, 5], true)) {
+//     echo "<script>
+//         alert('Bạn không đủ thẩm quyền truy cập!');
         
-    </script>";
-    require_once 'helpers/url_helper.php';
-    header("refresh: 0; url='" . getBaseUrl() . "/index.php?login'");
-    exit;
-}
+//     </script>";
+//     require_once 'helpers/url_helper.php';
+//     header("refresh: 0; url='" . getBaseUrl() . "/index.php?login'");
+//     exit;
+// }
 ?>
 
 
@@ -34,13 +34,6 @@ if ($_SESSION['role'] != 1) {
     <link href="../css/admin.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Theme Toggle Button -->
-    <div class="theme-toggle-container">
-        <button id="themeToggle" class="btn theme-toggle-btn">
-            <i class="fas fa-sun" id="themeIcon"></i>
-        </button>
-    </div>
-
     <!-- Header -->
     <header class="admin-header">
         <nav class="navbar navbar-expand-lg">
@@ -50,9 +43,15 @@ if ($_SESSION['role'] != 1) {
                     <span>Chợ Việt</span>
                 </a>
                 
-                <div class="navbar-nav ms-auto">
-                    <a class="nav-link" href="/choviet2912/index.php">
+                <div class="navbar-nav ms-auto d-flex align-items-center" style="gap: 10px;">
+                    <a class="nav-link" href="/index.php">
                         <i class="fas fa-home"></i> Xem trang chủ
+                    </a>
+                    <button id="themeToggle" class="nav-link theme-toggle-btn-nav" style="background: none; border: none; cursor: pointer;">
+                        <i class="fas fa-sun" id="themeIcon"></i> Đổi theme
+                    </button>
+                    <a class="nav-link" href="/index.php?action=logout" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?');">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
             </div>
@@ -68,41 +67,71 @@ if ($_SESSION['role'] != 1) {
                         <i class="fas fa-user"></i>
                         Admin Panel
                     </h5>
-                    <ul class="nav flex-column">
+                    
+                    <?php
+                    if($_SESSION['role'] == 1){
+                        echo '<ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link" href="/choviet2912/ad">
+                            <a class="nav-link" href="/ad">
                                 <i class="fas fa-plus"></i> Thông tin cá nhân
                             </a>
                         </li>
                     </ul>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link" href="/choviet2912/ad/taikhoan">
+                            <a class="nav-link" href="/ad/taikhoan">
                                 <i class="fas fa-plus"></i> Quản lý tài khoản
                             </a>
                         </li>
                     </ul>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link" href="/choviet2912/ad/qldoanhthu">
+                            <a class="nav-link" href="/ad/qldoanhthu">
                                 <i class="fas fa-plus"></i> Quản lý doanh thu
                             </a>
                         </li>
                     </ul>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link" href="/choviet2912/ad/loaisanpham">
+                            <a class="nav-link" href="/ad/loaisanpham">
                                 <i class="fas fa-plus"></i> Quản lý danh mục
+                            </a>
+                        </li>
+                    </ul>';
+                    }
+                    if($_SESSION['role'] == 4 || $_SESSION['role'] == 1){
+                        echo '<ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/ad/edit-banner">
+                                    <i class="fas fa-list"></i> Quản lý Banner
+                                </a>
+                            </li>
+                        </ul>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/ad/kdbaidang">
+                                    <i class="fas fa-list"></i> Quản lý Bài viết
+                                </a>
+                            </li>
+                        </ul>';
+                    }elseif($_SESSION['role'] == 5 || $_SESSION['role'] == 1){
+                        echo '<ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ad/qldoanhthu">
+                                <i class="fas fa-plus"></i> Quản lý doanh thu
                             </a>
                         </li>
                     </ul>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" href="/choviet2912/ad/edit-banner">
-                                <i class="fas fa-list"></i> Quản lý Banner
+                            <a class="nav-link" href="/ad/qlgiaodich">
+                                <i class="fas fa-plus"></i> Quản lý giao dịch
                             </a>
                         </li>
-                    </ul>
+                    </ul>';
+                    }
+
+                    ?>
                 </div>
             </div>
 
@@ -132,7 +161,7 @@ if ($_SESSION['role'] != 1) {
           ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/choviet2912/js/theme-toggle.js"></script>
+    <script src="/js/theme-toggle.js"></script>
 </body>
 </html>
 

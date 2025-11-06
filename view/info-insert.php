@@ -24,7 +24,7 @@
         // Xử lý ảnh đại diện nếu có
         if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === 0) {
             if ($_FILES['avatar']['name']) {
-                require_once '../helpers/url_helper.php';
+                require_once __DIR__ . '/../helpers/url_helper.php';
                 $upload_dir = $_SERVER['DOCUMENT_ROOT'] . getBasePath() . '/img/';
                 $ext = pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION);
                 $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
@@ -72,7 +72,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <?php require_once '../helpers/url_helper.php'; ?>n    <link rel="stylesheet" href="<?= getBasePath() ?>/css/admin-them.css">
+    <?php require_once __DIR__ . '/../helpers/url_helper.php'; ?>n    <link rel="stylesheet" href="<?= getBasePath() ?>/css/admin-them.css">
     </head>
 
     <body>

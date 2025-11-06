@@ -54,6 +54,20 @@ class cLivestream {
             return;
         }
 
+        // ✅ KIỂM TRA QUYỀN LIVESTREAM
+        require_once __DIR__ . '/../model/mLivestreamPackage.php';
+        $packageModel = new mLivestreamPackage();
+        $permission = $packageModel->checkLivestreamPermission($_SESSION['user_id']);
+        
+        if (!$permission['has_permission']) {
+            echo json_encode([
+                'success' => false, 
+                'message' => $permission['message'],
+                'redirect' => 'index.php?livestream-packages'
+            ]);
+            return;
+        }
+
         // Xử lý upload ảnh
         $imageName = 'default-live.jpg';
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {

@@ -88,6 +88,125 @@ class mProduct {
         }
         return $data;
     }
+
+    /**
+     * Tìm kiếm nâng cao với filter
+     * 
+     * @param array $filters - Bộ lọc:
+     *   - keyword: Từ khóa tìm kiếm
+     *   - category_id: ID danh mục
+     *   - min_price: Giá tối thiểu
+     *   - max_price: Giá tối đa
+     *   - sort: Sắp xếp (newest, price_asc, price_desc)
+     * @return array
+     */
+    public function advancedSearch($filters = []) {
+        // Build WHERE conditions
+        $where = ["sp.sale_status = 'Đang bán'", "sp.status = 'Đã duyệt'"];
+        $params = [];
+        $types = "";
+
+        // Keyword search
+        if (!empty($filters['keyword'])) {
+            $where[] = "sp.title LIKE ?";
+            $params[] = '%' . $filters['keyword'] . '%';
+            $types .= "s";
+        }
+
+        // Category filter
+        if (!empty($filters['category_id']) && $filters['category_id'] > 0) {
+            $where[] = "sp.category_id = ?";
+            $params[] = intval($filters['category_id']);
+            $types .= "i";
+        }
+
+        // Price range filter
+        if (!empty($filters['min_price']) && $filters['min_price'] > 0) {
+            $where[] = "sp.price >= ?";
+            $params[] = floatval($filters['min_price']);
+            $types .= "d";
+        }
+
+        if (!empty($filters['max_price']) && $filters['max_price'] > 0) {
+            $where[] = "sp.price <= ?";
+            $params[] = floatval($filters['max_price']);
+            $types .= "d";
+        }
+
+        // Build ORDER BY
+        $orderBy = "sp.updated_date DESC, sp.created_date DESC"; // Default: Mới nhất
+        
+        if (!empty($filters['sort'])) {
+            switch ($filters['sort']) {
+                case 'price_asc':
+                    $orderBy = "sp.price ASC";
+                    break;
+                case 'price_desc':
+                    $orderBy = "sp.price DESC";
+                    break;
+                case 'oldest':
+                    $orderBy = "sp.created_date ASC";
+                    break;
+                case 'newest':
+                default:
+                    $orderBy = "sp.updated_date DESC, sp.created_date DESC";
+                    break;
+            }
+        }
+
+        // Build final query
+        $whereClause = implode(" AND ", $where);
+        $sql = "SELECT sp.*, nd.username, nd.avatar, nd.phone, nd.address,
+                       pc.category_name
+                FROM products sp 
+                JOIN users nd ON sp.user_id = nd.id
+                LEFT JOIN product_categories pc ON sp.category_id = pc.id
+                WHERE {$whereClause}
+                ORDER BY {$orderBy}";
+
+        $stmt = $this->conn->prepare($sql);
+
+        // Bind parameters if any
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $data = [];
+        while ($row = $result->fetch_assoc()) {
+            // Process image
+            if (!empty($row['image'])) {
+                $dsAnh = array_map('trim', explode(',', $row['image']));
+                $row['anh_dau'] = $dsAnh[0] ?? '';
+            } else {
+                $row['anh_dau'] = '';
+            }
+            $data[] = $row;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Lấy tất cả danh mục con (cho filter dropdown)
+     */
+    public function getAllCategories() {
+        $sql = "SELECT pc.*, p.parent_category_name
+                FROM product_categories pc
+                LEFT JOIN parent_categories p ON pc.parent_category_id = p.parent_category_id
+                ORDER BY p.parent_category_name, pc.category_name";
+        
+        $result = $this->conn->query($sql);
+        $data = [];
+        
+        while ($row = $result->fetch_assoc()) {
+            $data[] = $row;
+        }
+        
+        return $data;
+    }
     
     // Lấy sản phẩm theo user_id
     public function getSanPhamByUserId($user_id) {

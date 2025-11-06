@@ -41,6 +41,53 @@ include_once("view/header.php");
 
 <head>
     <style>
+        /* Fix banner image clarity - remove all blur effects */
+        .banner-image {
+            filter: none !important;
+            -webkit-filter: none !important;
+            image-rendering: -webkit-optimize-contrast !important;
+            image-rendering: crisp-edges !important;
+        }
+        .carousel-item {
+            filter: none !important;
+            -webkit-filter: none !important;
+        }
+        .carousel-inner {
+            filter: none !important;
+            -webkit-filter: none !important;
+        }
+        .carousel-caption {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* Custom carousel control buttons - smaller and more elegant */
+        .carousel-control-prev,
+        .carousel-control-next {
+            width: 38px !important;
+            height: 38px !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            border: 2px solid rgba(255, 215, 0, 0.8) !important;
+            border-radius: 50% !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+            opacity: 0.85 !important;
+            transition: all 0.3s ease !important;
+        }
+        .carousel-control-prev:hover,
+        .carousel-control-next:hover {
+            opacity: 1 !important;
+            background: rgba(255, 255, 255, 1) !important;
+            border-color: #FFD333 !important;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4) !important;
+            transform: translateY(-50%) scale(1.1) !important;
+        }
+        .carousel-control-prev {
+            left: 15px !important;
+        }
+        .carousel-control-next {
+            right: 15px !important;
+        }
+        
         .object-fit-cover {
             object-fit: cover;
         }

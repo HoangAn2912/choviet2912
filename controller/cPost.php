@@ -1,9 +1,20 @@
 <?php
 include_once("model/mPost.php");
+include_once("helpers/Security.php");
+include_once("helpers/RateLimiter.php");
 
 class cPost {
     public function dangTin() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Validate CSRF token
+            $csrfToken = $_POST['csrf_token'] ?? '';
+            if (!Security::validateCSRFToken($csrfToken)) {
+                header("Location: index.php?toast=" . urlencode("❌ CSRF token không hợp lệ!") . "&type=error");
+                exit;
+            }
+            
+            // Rate limiting - 5 bài đăng / 1 giờ
+            RateLimiter::middleware('post_create', 5, 3600);
             $idLoaiSanPham = intval($_POST['category_id'] ?? 0);
             if ($idLoaiSanPham == 0) {
                 header("Location: index.php?toast=" . urlencode("❌ Bạn chưa chọn danh mục sản phẩm!") . "&type=error");
@@ -25,20 +36,32 @@ class cPost {
             if (isset($_FILES['image'])) {
                 $total = count($_FILES['image']['name']);
                 for ($i = 0; $i < $total; $i++) {
-                    $tmpName = $_FILES['image']['tmp_name'][$i];
-                    $fileName = $_FILES['image']['name'][$i];
-
-                    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                    if (!in_array($ext, ['jpg', 'jpeg', 'png'])) {
-                        header("Location: index.php?toast=" . urlencode("❌ Chỉ cho phép tải ảnh JPG hoặc PNG!") . "&type=error");
+                    // Tạo file array format để validate
+                    $file = [
+                        'name' => $_FILES['image']['name'][$i],
+                        'type' => $_FILES['image']['type'][$i],
+                        'tmp_name' => $_FILES['image']['tmp_name'][$i],
+                        'error' => $_FILES['image']['error'][$i],
+                        'size' => $_FILES['image']['size'][$i]
+                    ];
+                    
+                    // Validate file với Security helper
+                    $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                    $maxSize = 5 * 1024 * 1024; // 5MB
+                    $validation = Security::validateUpload($file, $allowedTypes, $maxSize);
+                    
+                    if (!$validation['valid']) {
+                        $errors = implode(', ', $validation['errors']);
+                        header("Location: index.php?toast=" . urlencode("❌ " . $errors) . "&type=error");
                         exit;
                     }
 
-                    $newFileName = uniqid() . '.' . $ext;
+                    // Generate safe filename
+                    $newFileName = Security::generateSafeFilename($file['name'], 'product_');
                     $targetDir = "img/";
                     $targetFile = $targetDir . $newFileName;
 
-                    if (move_uploaded_file($tmpName, $targetFile)) {
+                    if (move_uploaded_file($file['tmp_name'], $targetFile)) {
                         $anhTenList[] = $newFileName;
                     }
                 }

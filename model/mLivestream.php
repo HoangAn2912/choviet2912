@@ -396,6 +396,10 @@ class mLivestream {
             $clear_stmt->execute();
             
             $this->conn->commit();
+            
+            // 📧 GỬI EMAIL THÔNG BÁO CHO SELLER
+            $this->sendOrderNotificationEmail($order_id, $livestream_id, $order_code, $total_amount, $cart_items, $delivery_name, $delivery_phone);
+            
             return $order_id;
             
         } catch (Exception $e) {
@@ -856,6 +860,67 @@ class mLivestream {
         return $stmt->execute();
     }
 
+    // =============================================
+    // EMAIL NOTIFICATIONS
+    // =============================================
+    
+    /**
+     * Gửi email thông báo đơn hàng mới cho seller
+     */
+    private function sendOrderNotificationEmail($order_id, $livestream_id, $order_code, $total_amount, $cart_items, $customer_name, $customer_phone) {
+        try {
+            // Lấy thông tin seller từ livestream
+            $livestream = $this->getLivestreamById($livestream_id);
+            if (!$livestream) {
+                return false;
+            }
+            
+            $seller_id = $livestream['user_id'];
+            
+            // Lấy thông tin seller
+            $seller_sql = "SELECT username, email FROM users WHERE id = ?";
+            $seller_stmt = $this->conn->prepare($seller_sql);
+            $seller_stmt->bind_param("i", $seller_id);
+            $seller_stmt->execute();
+            $seller_result = $seller_stmt->get_result();
+            $seller = $seller_result->fetch_assoc();
+            
+            if (!$seller || !$seller['email']) {
+                error_log("No seller email found for order $order_id");
+                return false;
+            }
+            
+            // Load email helper
+            require_once __DIR__ . '/../helpers/EmailNotification.php';
+            $emailer = new EmailNotification();
+            
+            // Prepare order data
+            $orderData = [
+                'order_code' => $order_code,
+                'total_amount' => $total_amount,
+                'customer_name' => $customer_name,
+                'customer_phone' => $customer_phone,
+                'items' => $cart_items
+            ];
+            
+            // Send email (queued)
+            $sent = $emailer->sendOrderNotification(
+                $seller['email'],
+                $seller['username'],
+                $orderData
+            );
+            
+            if ($sent) {
+                error_log("Order notification email queued for seller: " . $seller['email']);
+            }
+            
+            return $sent;
+            
+        } catch (Exception $e) {
+            error_log("Error sending order notification email: " . $e->getMessage());
+            return false;
+        }
+    }
 
 }
 ?>

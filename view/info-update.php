@@ -15,7 +15,7 @@
     
     // Check if user exists
     if (!$user) {
-        require_once '../helpers/url_helper.php';
+        require_once __DIR__ . '/../helpers/url_helper.php';
         header("Location: " . getBasePath() . "/ad/taikhoan");
         exit();
     }
@@ -57,7 +57,7 @@
         }
 
         if ($result) {
-            require_once '../helpers/url_helper.php';
+            require_once __DIR__ . '/../helpers/url_helper.php';
         header("Location: " . getBasePath() . "/ad/taikhoan");
             exit();
         } else {
@@ -79,7 +79,7 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Custom CSS -->
-    <?php require_once '../helpers/url_helper.php'; ?>
+    <?php require_once __DIR__ . '/../helpers/url_helper.php'; ?>
     <link rel="stylesheet" href="<?= getBasePath() ?>/css/infoad.css">
 </head>
 <body>

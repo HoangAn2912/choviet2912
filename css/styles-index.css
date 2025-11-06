@@ -137,14 +137,30 @@ body {
 .banner-image {
   height: 430px;
   object-fit: cover;
-  filter: brightness(0.8);
+  filter: none !important;
+  -webkit-filter: none !important;
+  /* Completely removed all filters to make image clear */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 .carousel-caption {
   background: rgba(0, 0, 0, 0.6);
   border-radius: 10px;
   padding: 20px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  /* Completely removed backdrop blur */
+}
+
+.carousel-item {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+.carousel-inner {
+  filter: none !important;
+  -webkit-filter: none !important;
 }
 
 .banner-title {
@@ -181,28 +197,44 @@ body {
 
 .carousel-control-prev,
 .carousel-control-next {
-  width: 50px;
-  height: 50px;
-  background: var(--gradient);
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255, 215, 0, 0.8);
   border-radius: 50%;
   top: 50%;
   transform: translateY(-50%);
-  opacity: 0.8;
+  opacity: 0.85;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .carousel-control-prev {
-  left: 20px;
+  left: 15px;
 }
 
 .carousel-control-next {
-  right: 20px;
+  right: 15px;
 }
 
 .carousel-control-prev:hover,
 .carousel-control-next:hover {
   opacity: 1;
+  background: rgba(255, 255, 255, 1);
+  border-color: #FFD333;
   transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  width: 18px;
+  height: 18px;
+  filter: brightness(0) saturate(100%) invert(75%) sepia(87%) saturate(1352%) hue-rotate(0deg) brightness(1.1) contrast(1.1);
+  -webkit-filter: brightness(0) saturate(100%) invert(75%) sepia(87%) saturate(1352%) hue-rotate(0deg) brightness(1.1) contrast(1.1);
+  opacity: 1;
 }
 
 .carousel-indicators button {

@@ -94,22 +94,95 @@ class kdbaidang {
     public function duyetBai($id) {
         $p = new Connect();
         $conn = $p->connect();
+        
+        // Lấy thông tin post trước khi update
+        $getPostSql = "SELECT p.*, u.email, u.username FROM products p 
+                       JOIN users u ON p.user_id = u.id WHERE p.id = ?";
+        $getStmt = $conn->prepare($getPostSql);
+        $getStmt->bind_param("i", $id);
+        $getStmt->execute();
+        $postResult = $getStmt->get_result();
+        $post = $postResult->fetch_assoc();
+        $getStmt->close();
+        
+        // Update status
         $query = "UPDATE products SET status = 'Đã duyệt', updated_date = NOW() WHERE id = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $stmt->close();
+        
+        // 📧 GỬI EMAIL THÔNG BÁO DUYỆT
+        if ($post && $post['email']) {
+            try {
+                require_once __DIR__ . '/../helpers/EmailNotification.php';
+                $emailer = new EmailNotification();
+                
+                $postData = [
+                    'id' => $id,
+                    'title' => $post['title']
+                ];
+                
+                $emailer->sendPostApprovedNotification(
+                    $post['email'],
+                    $post['username'],
+                    $postData
+                );
+                
+                error_log("Post approved email queued for: " . $post['email']);
+            } catch (Exception $e) {
+                error_log("Error sending post approved email: " . $e->getMessage());
+            }
+        }
+        
         $conn->close();
     }
     
     public function tuChoiBai($id, $note) {
         $p = new Connect();
         $conn = $p->connect();
+        
+        // Lấy thông tin post trước khi update
+        $getPostSql = "SELECT p.*, u.email, u.username FROM products p 
+                       JOIN users u ON p.user_id = u.id WHERE p.id = ?";
+        $getStmt = $conn->prepare($getPostSql);
+        $getStmt->bind_param("i", $id);
+        $getStmt->execute();
+        $postResult = $getStmt->get_result();
+        $post = $postResult->fetch_assoc();
+        $getStmt->close();
+        
+        // Update status
         $query = "UPDATE products SET status = 'Từ chối duyệt', updated_date = NOW(), note = ? WHERE id = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("si", $note, $id);
         $stmt->execute();
         $stmt->close();
+        
+        // 📧 GỬI EMAIL THÔNG BÁO TỪ CHỐI
+        if ($post && $post['email']) {
+            try {
+                require_once __DIR__ . '/../helpers/EmailNotification.php';
+                $emailer = new EmailNotification();
+                
+                $postData = [
+                    'id' => $id,
+                    'title' => $post['title']
+                ];
+                
+                $emailer->sendPostRejectedNotification(
+                    $post['email'],
+                    $post['username'],
+                    $postData,
+                    $note
+                );
+                
+                error_log("Post rejected email queued for: " . $post['email']);
+            } catch (Exception $e) {
+                error_log("Error sending post rejected email: " . $e->getMessage());
+            }
+        }
+        
         $conn->close();
     }
     // Get paginated and filtered posts
