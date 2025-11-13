@@ -61,6 +61,25 @@ include_once("view/header.php");
             -webkit-backdrop-filter: none !important;
         }
         
+        /* Banner overlay - Lớp mờ đen phủ full ảnh */
+        .banner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
+        }
+        
+        /* Đảm bảo caption nằm trên overlay */
+        .carousel-caption {
+            position: absolute !important;
+            z-index: 2 !important;
+        }
+        
         /* Custom carousel control buttons - smaller and more elegant */
         .carousel-control-prev,
         .carousel-control-next {
@@ -461,6 +480,7 @@ include_once("view/header.php");
                                 <div class="carousel-item <?= $index === 0 ? 'active' : '' ?> position-relative">
                                     <img class="d-block w-100 banner-image" src="<?= htmlspecialchars($banner['image_url']) ?>" 
                                          alt="<?= htmlspecialchars($banner['title']) ?>">
+                                    <div class="banner-overlay"></div>
                                     <div class="carousel-caption d-none d-md-block">
                                         <h3 class="banner-title"><?= htmlspecialchars($banner['title']) ?></h3>
                                         <p class="banner-description"><?= htmlspecialchars($banner['description']) ?></p>
@@ -485,6 +505,7 @@ include_once("view/header.php");
                         <div class="carousel-inner">
                             <div class="carousel-item active position-relative">
                                 <img class="d-block w-100 banner-image" src="img/carousel-2.jpg?height=430&width=800" alt="Default Banner">
+                                <div class="banner-overlay"></div>
                                 <div class="carousel-caption d-none d-md-block">
                                     <h3 class="banner-title">Chào mừng đến với Website</h3>
                                     <p class="banner-description">Khám phá các sản phẩm tuyệt vời của chúng tôi</p>
@@ -550,77 +571,89 @@ include_once("view/header.php");
 <!-- Hero Section End -->
 
 <!-- Quick Categories Start -->
+<?php
+// Lấy danh mục cha từ database
+include_once "controller/cCategory.php";
+$cCategory = new cCategory();
+$parentCategories = $cCategory->index();
+
+// Icon mapping cho các danh mục - Tất cả màu vàng
+$categoryIcons = [
+    'Xe cộ' => ['icon' => 'fa-car', 'color' => 'bg-warning'],
+    'Đồ điện tử' => ['icon' => 'fa-laptop', 'color' => 'bg-warning'], // Laptop
+    'Thời trang' => ['icon' => 'fa-tshirt', 'color' => 'bg-warning'],
+    'Nội thất' => ['icon' => 'fa-couch', 'color' => 'bg-warning'],
+    'Nhà cửa & Đời sống' => ['icon' => 'fa-home', 'color' => 'bg-warning'], // Ngôi nhà
+    'Nhà cửa' => ['icon' => 'fa-home', 'color' => 'bg-warning'],
+    'Đời sống' => ['icon' => 'fa-home', 'color' => 'bg-warning'],
+    'Giải trí' => ['icon' => 'fa-gamepad', 'color' => 'bg-warning'],
+    'Giải trí & Thể thao' => ['icon' => 'fa-gamepad', 'color' => 'bg-warning'], // Icon nắm tay chơi game
+    'Nhạc cụ' => ['icon' => 'fa-music', 'color' => 'bg-warning'],
+    'Thể thao' => ['icon' => 'fa-gamepad', 'color' => 'bg-warning'],
+    'Bất động sản' => ['icon' => 'fa-building', 'color' => 'bg-warning'],
+    'Việc làm' => ['icon' => 'fa-briefcase', 'color' => 'bg-warning'],
+    'Dịch vụ' => ['icon' => 'fa-tools', 'color' => 'bg-warning'],
+    'Khác' => ['icon' => 'fa-th-large', 'color' => 'bg-warning']
+];
+
+// Tất cả màu vàng
+$defaultColor = 'bg-warning';
+
+// Lấy 5 danh mục đầu tiên
+$featuredCategories = array_slice($parentCategories, 0, 5, true);
+?>
 <div class="container-fluid pt-2">
-    <div class="row px-xl-5 ">
+    <div class="row px-xl-5">
         <div class="col-12">
             <h4 class="font-weight-bold mb-3 text-dark">
                 <i class="fas fa-th-large text-primary mr-2"></i>Danh mục nổi bật
             </h4>
         </div>
-        <div class="col-6 col-md-4 col-lg-2 mb-3">
-            <a href="index.php?category=1" class="text-decoration-none">
-                <div class="quick-category-card bg-white border rounded-lg p-3 text-center h-100 shadow-sm hover-lift">
-                    <div class="category-icon bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <i class="fas fa-car fa-lg"></i>
-                    </div>
-                    <h6 class="font-weight-bold mb-1 text-dark">Xe cộ</h6>
-                    <small class="text-muted">Xe máy, ô tô, xe điện</small>
+        <?php if (!empty($featuredCategories)): ?>
+            <?php foreach ($featuredCategories as $parentId => $parent): ?>
+                <?php
+                $categoryName = $parent['ten_cha'];
+                $iconConfig = $categoryIcons[$categoryName] ?? null;
+                $iconClass = $iconConfig ? $iconConfig['icon'] : 'fa-folder';
+                $colorClass = $iconConfig ? $iconConfig['color'] : $defaultColor;
+                
+                // Lấy danh sách con để hiển thị
+                $subCategories = $parent['con'] ?? [];
+                $subText = '';
+                if (!empty($subCategories)) {
+                    $subNames = array_slice(array_column($subCategories, 'ten_con'), 0, 3);
+                    $subText = implode(', ', $subNames);
+                    if (count($subCategories) > 3) {
+                        $subText .= '...';
+                    }
+                } else {
+                    $subText = 'Xem thêm';
+                }
+                ?>
+                <div class="col-6 col-md-4 col-lg-2 mb-3">
+                    <a href="index.php?category=<?= $parentId ?>" class="text-decoration-none">
+                        <div class="quick-category-card bg-white border rounded-lg p-3 text-center h-100 shadow-sm hover-lift">
+                            <div class="category-icon <?= $colorClass ?> text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                <i class="fas <?= $iconClass ?> fa-lg"></i>
+                            </div>
+                            <h6 class="font-weight-bold mb-1 text-dark"><?= htmlspecialchars($categoryName) ?></h6>
+                            <small class="text-muted"><?= htmlspecialchars($subText) ?></small>
+                        </div>
+                    </a>
                 </div>
-            </a>
-        </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+        
+        <!-- Danh mục "Khác" -->
         <div class="col-6 col-md-4 col-lg-2 mb-3">
-            <a href="index.php?category=2" class="text-decoration-none">
-                <div class="quick-category-card bg-white border rounded-lg p-3 text-center h-100 shadow-sm hover-lift">
-                    <div class="category-icon bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <i class="fas fa-mobile-alt fa-lg"></i>
-                    </div>
-                    <h6 class="font-weight-bold mb-1 text-dark">Điện tử</h6>
-                    <small class="text-muted">Điện thoại, laptop</small>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2 mb-3">
-            <a href="index.php?category=3" class="text-decoration-none">
+            <a href="index.php?category=all" class="text-decoration-none">
                 <div class="quick-category-card bg-white border rounded-lg p-3 text-center h-100 shadow-sm hover-lift">
                     <div class="category-icon bg-warning text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <i class="fas fa-tshirt fa-lg"></i>
-                    </div>
-                    <h6 class="font-weight-bold mb-1 text-dark">Thời trang</h6>
-                    <small class="text-muted">Quần áo, giày dép</small>
-            </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2 mb-3">
-            <a href="index.php?category=4" class="text-decoration-none">
-                <div class="quick-category-card bg-white border rounded-lg p-3 text-center h-100 shadow-sm hover-lift">
-                    <div class="category-icon bg-info text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <i class="fas fa-couch fa-lg"></i>
-                    </div>
-                    <h6 class="font-weight-bold mb-1 text-dark">Nội thất</h6>
-                    <small class="text-muted">Bàn ghế, tủ kệ</small>
-            </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2 mb-3">
-            <a href="index.php?category=5" class="text-decoration-none">
-                <div class="quick-category-card bg-white border rounded-lg p-3 text-center h-100 shadow-sm hover-lift">
-                    <div class="category-icon bg-danger text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <i class="fas fa-gamepad fa-lg"></i>
-                    </div>
-                    <h6 class="font-weight-bold mb-1 text-dark">Giải trí</h6>
-                    <small class="text-muted">Game, nhạc cụ</small>
-            </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2 mb-2">
-            <a href="index.php?category=6" class="text-decoration-none">
-                <div class="quick-category-card bg-white border rounded-lg p-3 text-center h-100 shadow-sm hover-lift">
-                    <div class="category-icon bg-secondary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <i class="fas fa-ellipsis-h fa-lg"></i>
+                        <i class="fas fa-th-large fa-lg"></i>
                     </div>
                     <h6 class="font-weight-bold mb-1 text-dark">Khác</h6>
-                    <small class="text-muted">Sản phẩm khác</small>
-            </div>
+                    <small class="text-muted">Xem tất cả danh mục</small>
+                </div>
             </a>
         </div>
     </div>

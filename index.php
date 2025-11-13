@@ -52,6 +52,7 @@ $controller = new cDetailProduct();
 
     <!-- Customized Bootstrap Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/responsive.css" rel="stylesheet">
 
 
 

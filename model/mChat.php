@@ -58,35 +58,15 @@ class mChat extends Connect {
     
     public function sendMessage($from, $to, $content, $idSanPham = null) {
         $conn = $this->connect();
-        $min = min($from, $to);
-        $max = max($from, $to);
-        $fileName = "chat_" . $min . "_" . $max . ".json";
-    
-        // ⚠️ Kiểm tra nếu chưa có dòng nào thì mới insert tên file vào DB
-        $stmtCheck = $conn->prepare("SELECT COUNT(*) FROM messages WHERE 
-            (sender_id = ? AND receiver_id = ?) OR 
-            (sender_id = ? AND receiver_id = ?)");
-        $stmtCheck->bind_param("iiii", $from, $to, $to, $from);
-        $stmtCheck->execute();
-        $stmtCheck->bind_result($count);
-        $stmtCheck->fetch();
-        $stmtCheck->close();
-    
-        if ($count == 0) {
-            // ✅ Chỉ lưu 1 dòng duy nhất để ghi nhớ tên file
-            $stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, product_id, content, created_time) 
-                                    VALUES (?, ?, ?, ?, NOW())");
-            $stmt->bind_param("iiis", $from, $to, $idSanPham, $fileName);
-            return $stmt->execute();
-        }
-    
-        return true; // Nếu đã có rồi thì không cần lưu thêm nữa
+        $stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, product_id, content, created_time) VALUES (?, ?, ?, ?, NOW())");
+        $stmt->bind_param("iiis", $from, $to, $idSanPham, $content);
+        return $stmt->execute();
     }
 
     public function readChatFile($from, $to) {
         $ids = [$from, $to];
         sort($ids);
-        $filePath = __DIR__ . "/../../chat/chat_{$ids[0]}_{$ids[1]}.json";
+        $filePath = __DIR__ . "/../chat/chat_{$ids[0]}_{$ids[1]}.json";
     
         if (!file_exists($filePath)) return [];
     
@@ -140,40 +120,14 @@ class mChat extends Connect {
         return true; // Đã tồn tại thì không cần lưu thêm
     }
 
-    public function getLastMessageFromFile($user1_id, $user2_id) {
-        $file1 = "chat/chat_{$user1_id}_{$user2_id}.json";
-        $file2 = "chat/chat_{$user2_id}_{$user1_id}.json";
-        $file = file_exists($file1) ? $file1 : (file_exists($file2) ? $file2 : null);
-    
-        if (!$file) return ['content' => '', 'created_time' => ''];
-    
-        $messages = json_decode(file_get_contents($file), true);
-        if (!$messages || count($messages) === 0) return ['content' => '', 'created_time' => ''];
-    
-        $last = end($messages);
-        $timestamp = strtotime($last['timestamp']);
-        return [
-            'content' => $last['content'],
-            'created_time' => $this->tinhThoiGian($timestamp)
-        ];
-    }
-    
-    private function tinhThoiGian($timestamp) {
-        $now = time();
-        $diff = $now - $timestamp;
-        if ($diff < 86400) return date('H:i', $timestamp);
-        elseif ($diff < 2 * 86400) return '1 ngày trước';
-        elseif ($diff < 30 * 86400) return floor($diff / 86400) . ' ngày trước';
-        elseif ($diff < 365 * 86400) return floor($diff / (30 * 86400)) . ' tháng trước';
-        else return floor($diff / (365 * 86400)) . ' năm trước';
-    }
 
     public function demTinNhanChuaDoc($idNguoiDung) {
-        $conn = (new mConnect())->connect();
-        $sql = "SELECT COUNT(*) AS so_chua_doc FROM messages WHERE receiver_id = ? AND is_read = 0";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([$idNguoiDung]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $conn = $this->connect();
+        $stmt = $conn->prepare("SELECT COUNT(*) AS so_chua_doc FROM messages WHERE receiver_id = ? AND is_read = 0");
+        $stmt->bind_param("i", $idNguoiDung);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
         return intval($row['so_chua_doc'] ?? 0);
     }
 
@@ -188,7 +142,19 @@ class mChat extends Connect {
         return $stmt->get_result()->fetch_assoc();
     }
     
+    public function markAsRead($messageId, $userId) {
+        $conn = $this->connect();
+        $stmt = $conn->prepare("UPDATE messages SET is_read = 1 WHERE id = ? AND receiver_id = ?");
+        $stmt->bind_param("ii", $messageId, $userId);
+        return $stmt->execute();
+    }
     
-    
-    
+    public function markConversationAsRead($user1, $user2, $userId) {
+        $conn = $this->connect();
+        $stmt = $conn->prepare("UPDATE messages SET is_read = 1 
+            WHERE ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) 
+            AND receiver_id = ? AND is_read = 0");
+        $stmt->bind_param("iiiii", $user1, $user2, $user2, $user1, $userId);
+        return $stmt->execute();
+    }
 }

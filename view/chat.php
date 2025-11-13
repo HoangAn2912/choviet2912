@@ -63,11 +63,19 @@ const ID_SAN_PHAM = 0;
     font-size: 14px;
     margin: 4px;
     transition: 0.2s;
+    white-space: nowrap;
   }
   .btn-suggestion:hover {
     background-color: #ffe082;
     color: #000;
     border-color: #ffc107;
+  }
+  .suggestions-container {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 10px;
+    padding: 8px 0;
+    background-color: #fff;
   }
   .chat-user {
     border: 1px solid #dee2e6;
@@ -82,7 +90,14 @@ const ID_SAN_PHAM = 0;
     background-color: #fff8e1;
   }
   .chat-wrapper {
-    margin-top: -30px; 
+    margin-top: 0 !important; 
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Bỏ margin-bottom của navbar trên trang chat */
+  .bg-dark.mb-30 {
+    margin-bottom: 0 !important;
   }
 
   .chat-user .unread-dot {
@@ -107,6 +122,15 @@ const ID_SAN_PHAM = 0;
     object-fit: cover;
   }
 
+  /* Nút gửi tin nhắn - Bo góc */
+  #formChat button.btn {
+    border-radius: 8px !important;
+  }
+
+  /* Input tin nhắn - Bo góc */
+  #formChat input.form-control {
+    border-radius: 8px !important;
+  }
 
 </style>
 
@@ -208,26 +232,34 @@ const ID_SAN_PHAM = 0;
     "Còn bạn."
   ];
 
-  const form = document.querySelector("form.d-flex");
-  const input = form.querySelector("input");
-  const suggestContainer = document.createElement("div");
-  suggestContainer.className = "d-flex flex-wrap gap-2 mt-2";
+  // Chỉ tạo suggestions khi có form và receiver
+  document.addEventListener("DOMContentLoaded", function() {
+    const form = document.querySelector("form#formChat");
+    if (!form) return;
+    
+    const input = form.querySelector("input[name='content']");
+    if (!input) return;
 
-  suggestions.forEach(msg => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn btn-sm btn-outline-secondary btn-suggestion mr-2 mb-2";
-    btn.textContent = msg;
-    btn.onclick = () => {
-      input.value = msg;
-      input.focus();
-    };
-    suggestContainer.appendChild(btn);
+    const suggestContainer = document.createElement("div");
+    suggestContainer.className = "suggestions-container d-flex flex-wrap gap-2";
+
+    suggestions.forEach(msg => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-sm btn-outline-secondary btn-suggestion";
+      btn.textContent = msg;
+      btn.onclick = () => {
+        input.value = msg;
+        input.focus();
+      };
+      suggestContainer.appendChild(btn);
+    });
+
+    // Chèn suggestions vào trước form, trong cùng container của form
+    if (form && form.parentNode) {
+      form.parentNode.insertBefore(suggestContainer, form);
+    }
   });
-
-  if (form && form.parentNode) {
-    form.parentNode.insertBefore(suggestContainer, form);
-  }
 </script>
 
 <script>
@@ -246,14 +278,13 @@ document.getElementById("searchUserInput").addEventListener("input", function ()
 });
 </script>
 <script>
-// Mở hội thoại và đánh dấu đã nhấn (đọc) bằng localStorage
+// Mở hội thoại và ẩn chấm đỏ
 function openConversation(toId) {
-  try {
-    const key = `openedConv:${CURRENT_USER_ID}`;
-    const opened = JSON.parse(localStorage.getItem(key) || '{}');
-    opened[String(toId)] = true;
-    localStorage.setItem(key, JSON.stringify(opened));
-  } catch (e) {}
+  // Ẩn chấm đỏ ngay lập tức khi mở cuộc trò chuyện
+  const dot = document.querySelector(`.chat-user[data-id="${toId}"] .unread-dot`);
+  if (dot) {
+    dot.style.display = 'none';
+  }
   window.location.href = `index.php?tin-nhan&to=${toId}`;
 }
 // Hàm gọi API lấy tin đầu và thêm nút "Viết đánh giá"
@@ -321,6 +352,92 @@ document.addEventListener("DOMContentLoaded", () => {
     const selector = `.chat-user[data-id="${toId}"] .media-body`;
     checkFirstMessageAndShowButton(fromId, toId, selector);
   });
+  
+  // Ẩn chấm đỏ của cuộc trò chuyện đang xem
+  if (typeof TO_USER_ID !== 'undefined') {
+    const currentDot = document.querySelector(`.chat-user[data-id="${TO_USER_ID}"] .unread-dot`);
+    if (currentDot) {
+      currentDot.style.display = 'none';
+    }
+  }
+  
+  // Tự động gửi tin nhắn sản phẩm khi mở chat lần đầu
+  if (typeof ID_SAN_PHAM !== 'undefined' && ID_SAN_PHAM > 0 && typeof TO_USER_ID !== 'undefined') {
+    // Đợi một chút để WebSocket kết nối xong
+    setTimeout(() => {
+      // Kiểm tra xem đã có tin nhắn nào chưa
+      fetch(`/api/chat-file-api.php?from=${CURRENT_USER_ID}&to=${TO_USER_ID}`)
+        .then(res => res.json())
+        .then(messages => {
+          // Nếu chưa có tin nhắn nào, gửi tin nhắn sản phẩm
+          if (!messages || messages.length === 0) {
+            // Lấy thông tin sản phẩm
+            fetch(`/api/get-product-info.php?product_id=${ID_SAN_PHAM}`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.success && data.product) {
+                  const product = data.product;
+                  
+                  // Tạo HTML card sản phẩm
+                  const productCard = `
+                    <div class="product-card-message" style="border: 1px solid #ddd; border-radius: 8px; padding: 12px; background: #fff; max-width: 300px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                      <div style="display: flex; gap: 12px;">
+                        <img src="img/${product.image}" alt="${product.title.replace(/"/g, '&quot;')}" 
+                             style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; flex-shrink: 0;">
+                        <div style="flex: 1; min-width: 0;">
+                          <h6 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #333; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${product.title}</h6>
+                          <p style="margin: 0 0 8px 0; color: #dc3545; font-weight: bold; font-size: 16px;">
+                            ${product.formatted_price}
+                          </p>
+                          <a href="index.php?detail&id=${product.id}" 
+                             style="display: inline-block; font-size: 12px; color: #007bff; text-decoration: none; font-weight: 500;">
+                            Xem chi tiết →
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                  
+                  // Hàm gửi tin nhắn sản phẩm
+                  function sendProductMessage() {
+                    // Kiểm tra socket từ window hoặc global scope
+                    const ws = window.socket || (typeof socket !== 'undefined' ? socket : null);
+                    const queue = window.sendQueue || (typeof sendQueue !== 'undefined' ? sendQueue : null);
+                    
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                      ws.send(JSON.stringify({
+                        type: 'message',
+                        from: CURRENT_USER_ID,
+                        to: TO_USER_ID,
+                        content: productCard,
+                        product_id: ID_SAN_PHAM
+                      }));
+                    } else if (queue && Array.isArray(queue)) {
+                      // Lưu vào queue nếu WebSocket chưa sẵn sàng
+                      queue.push({
+                        type: 'message',
+                        from: CURRENT_USER_ID,
+                        to: TO_USER_ID,
+                        content: productCard,
+                        product_id: ID_SAN_PHAM
+                      });
+                    } else {
+                      // Thử lại sau 1 giây
+                      setTimeout(sendProductMessage, 1000);
+                    }
+                  }
+                  
+                  // Thử gửi ngay
+                  sendProductMessage();
+                }
+              })
+              .catch(err => console.error("❌ Lỗi lấy thông tin sản phẩm:", err));
+          }
+        })
+        .catch(err => console.error("❌ Lỗi kiểm tra tin nhắn:", err));
+    }, 500); // Đợi 500ms để WebSocket kết nối
+  }
+  
   // Khởi tạo danh mục realtime: đồng bộ tin cuối và chấm đỏ
   bootstrapConversationListRealtime();
   // Rút gọn tên và tin cuối ban đầu
@@ -340,80 +457,60 @@ function bootstrapConversationListRealtime() {
     }
   });
 
-  // Khi tải số unread ban đầu
-  window.onUnreadBootstrap = (unreadMap) => {
-    Object.keys(unreadMap || {}).forEach(fromId => {
-      if (!hasOpenedConversation(fromId)) {
-        const el = document.querySelector(`.chat-user[data-id="${fromId}"] .unread-dot`);
-        if (el) el.style.display = 'inline-block';
-      }
-    });
-  };
-  // Nếu client đã fetch unread trước khi gắn handler
-  if (window.__UNREAD_BOOT) {
-    window.onUnreadBootstrap(window.__UNREAD_BOOT);
-    window.__UNREAD_BOOT = null;
-  }
-  // Đọc từ localStorage để vẫn hiển thị chấm đỏ ngay cả trước khi API trả về
-  try {
-    const cached = localStorage.getItem(`unread:${CURRENT_USER_ID}`);
-    if (cached) {
-      const map = JSON.parse(cached);
-      window.onUnreadBootstrap(map);
-    }
-  } catch (e) {}
-
-  // Re-apply một lần nữa sau 800ms để chống trường hợp component khác ghi đè
-  setTimeout(() => {
-    try {
-      const cached = localStorage.getItem(`unread:${CURRENT_USER_ID}`);
-      if (cached) {
-        const map = JSON.parse(cached);
-        window.onUnreadBootstrap(map);
-      }
-    } catch (e) {}
-  }, 800);
-
-  // Khi server báo unread thay đổi
-  window.onUnreadChanged = (msg) => {
-    if (msg.type === 'unread') {
-      if (!hasOpenedConversation(msg.from)) {
-        const el = document.querySelector(`.chat-user[data-id="${msg.from}"] .unread-dot`);
-        if (el) el.style.display = 'inline-block';
-      }
-    }
-    if (msg.type === 'unread_summary') {
-      // reset toàn bộ
-      document.querySelectorAll('.chat-user .unread-dot').forEach(dot => dot.style.display = 'none');
-      const unread = msg.unread || {};
-      Object.keys(unread).forEach(fromId => {
-        if (!hasOpenedConversation(fromId)) {
-          const el = document.querySelector(`.chat-user[data-id="${fromId}"] .unread-dot`);
-          if (el) el.style.display = 'inline-block';
-        }
-      });
-    }
-  };
-
-  // Khi nhận tin nhắn mới, cập nhật tin cuối + thời gian và đưa hội thoại lên đầu
+  // Khi nhận tin nhắn mới qua WebSocket - hiển thị chấm đỏ realtime
   window.onNewChatMessage = (msg) => {
     const item = document.querySelector(`.chat-user[data-id="${msg.from}"]`) || document.querySelector(`.chat-user[data-id="${msg.to}"]`);
     if (!item) return;
+    
+    // Xác định người gửi (người không phải current user)
     const isFrom = String(msg.from) !== String(CURRENT_USER_ID) ? msg.from : msg.to;
     const li = document.querySelector(`.chat-user[data-id="${isFrom}"]`);
     if (!li) return;
+    
+    // Cập nhật tin cuối và thời gian
     const lastEl = li.querySelector('.js-last');
     const timeEl = li.querySelector('.js-time');
-    if (lastEl) lastEl.textContent = compactText(msg.content || msg.noi_dung || '', 5);
+    
+    // Xử lý tin nhắn sản phẩm - extract tên sản phẩm từ HTML
+    let displayText = msg.content || msg.noi_dung || '';
+    if (displayText.includes('product-card-message')) {
+      // Lấy tên sản phẩm từ HTML card
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = displayText;
+      const titleElement = tempDiv.querySelector('h6');
+      if (titleElement) {
+        displayText = '📦 ' + titleElement.textContent.trim();
+      } else {
+        // Fallback: tìm trong HTML
+        const match = displayText.match(/<h6[^>]*>([^<]+)<\/h6>/);
+        if (match) {
+          displayText = '📦 ' + match[1].trim();
+        } else {
+          displayText = '📦 Đã gửi sản phẩm';
+        }
+      }
+    }
+    
+    if (lastEl) lastEl.textContent = compactText(displayText, 5);
     if (timeEl) timeEl.textContent = formatRelativeTime(msg.timestamp);
-    // rút gọn tên nếu cần
+    
+    // Rút gọn tên nếu cần
     const nameEl = li.querySelector('.js-username');
     if (nameEl) nameEl.textContent = clipName(nameEl.getAttribute('title') || nameEl.textContent, 15);
-    // nếu không phải cuộc trò chuyện đang mở, bật chấm đỏ
-    if (typeof TO_USER_ID === 'undefined' || String(isFrom) !== String(TO_USER_ID)) {
+    
+    // Hiển thị chấm đỏ realtime - chỉ nếu KHÔNG phải cuộc trò chuyện đang xem
+    const isCurrentConversation = typeof TO_USER_ID !== 'undefined' && String(isFrom) === String(TO_USER_ID);
+    
+    if (!isCurrentConversation) {
+      // Có tin nhắn mới và không phải cuộc trò chuyện đang xem -> hiện chấm đỏ
       const dot = li.querySelector('.unread-dot');
       if (dot) dot.style.display = 'inline-block';
+    } else {
+      // Đang xem cuộc trò chuyện này -> ẩn chấm đỏ
+      const dot = li.querySelector('.unread-dot');
+      if (dot) dot.style.display = 'none';
     }
+    
     // Đưa item lên đầu danh sách
     const list = li.parentNode;
     list.insertBefore(li, list.firstChild);
@@ -450,7 +547,26 @@ function compactConversationItems() {
     }
     const lastEl = li.querySelector('.js-last');
     if (lastEl) {
-      lastEl.textContent = compactText(lastEl.textContent, 10);
+      let text = lastEl.textContent;
+      // Kiểm tra nếu là HTML code của sản phẩm
+      if (text.includes('product-card-message') || text.includes('<h6')) {
+        // Extract tên sản phẩm từ HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = text;
+        const titleElement = tempDiv.querySelector('h6');
+        if (titleElement) {
+          text = '📦 ' + titleElement.textContent.trim();
+        } else {
+          // Fallback: regex extract
+          const match = text.match(/<h6[^>]*>([^<]+)<\/h6>/);
+          if (match) {
+            text = '📦 ' + match[1].trim();
+          } else {
+            text = '📦 Đã gửi sản phẩm';
+          }
+        }
+      }
+      lastEl.textContent = compactText(text, 10);
     }
   });
 }
@@ -468,16 +584,6 @@ function compactText(text, maxWords) {
   return words.slice(0, maxWords).join(' ') + '…';
 }
 
-// Utility: kiểm tra người dùng đã từng mở hội thoại với fromId chưa
-function hasOpenedConversation(fromId) {
-  try {
-    const key = `openedConv:${CURRENT_USER_ID}`;
-    const opened = JSON.parse(localStorage.getItem(key) || '{}');
-    return !!opened[String(fromId)];
-  } catch (e) {
-    return false;
-  }
-}
 </script>
 
 

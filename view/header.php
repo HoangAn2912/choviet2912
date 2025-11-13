@@ -9,8 +9,19 @@ $userHeader = null;
 $is_business_account = false;
 $user_account_type = 'ca_nhan';
 
+$hasUnread = false;
 if (isset($_SESSION['user_id'])) {
     $userHeader = $cCategory->getUserById($_SESSION['user_id']);
+    
+    // Kiểm tra tin nhắn chưa đọc
+    try {
+        require_once __DIR__ . '/../controller/cChat.php';
+        $cChat = new cChat();
+        $unreadCount = $cChat->demTinNhanChuaDoc($_SESSION['user_id']);
+        $hasUnread = ($unreadCount > 0);
+    } catch (Exception $e) {
+        $hasUnread = false;
+    }
     
     // Lấy account_type để kiểm tra quyền truy cập
     // Query trực tiếp để tránh dependency vào $cCategory
@@ -77,6 +88,7 @@ if (isset($_SESSION['user_id'])) {
 
     <!-- Customized Bootstrap Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/responsive.css" rel="stylesheet">
     <link href="css/profile.css" rel="stylesheet">
     <link href="css/managePost.css" rel="stylesheet">
     <link rel="stylesheet" href="css/chat.css">
@@ -168,6 +180,11 @@ if (isset($_SESSION['user_id'])) {
 
         .dropdown-item:hover .text-warning {
             color: #fff !important;
+        }
+
+        /* Nút Đăng Tin - Bo góc */
+        .btn-dang-tin {
+            border-radius: 8px !important;
         }
 
         /* Dropdown Toggle */
@@ -268,13 +285,15 @@ if (isset($_SESSION['user_id'])) {
             padding-bottom: 8px !important;
         }
         
-        /* Navbar Collapse - Không wrap */
-        #navbarCollapse {
-            flex-wrap: nowrap !important;
-            overflow: visible !important;
-            display: flex !important;
-            align-items: center !important;
-            min-height: 65px !important;
+        /* Navbar Collapse - Không wrap - Chỉ áp dụng desktop */
+        @media (min-width: 992px) {
+            #navbarCollapse {
+                flex-wrap: nowrap !important;
+                overflow: visible !important;
+                display: flex !important;
+                align-items: center !important;
+                min-height: 65px !important;
+            }
         }
 
         /* Menu navbar - Giữ trên 1 dòng */
@@ -375,9 +394,11 @@ if (isset($_SESSION['user_id'])) {
             white-space: nowrap !important;
         }
 
-        /* Đảm bảo dropdown không bị cắt */
-        .navbar-collapse {
-            overflow: visible !important;
+        /* Đảm bảo dropdown không bị cắt - Chỉ desktop */
+        @media (min-width: 992px) {
+            .navbar-collapse {
+                overflow: visible !important;
+            }
         }
 
         .navbar {
@@ -424,7 +445,7 @@ if (isset($_SESSION['user_id'])) {
                             <?php if (!empty($parent['con'])) : ?>
                                 <!-- Có danh mục con -->
                                 <div class="nav-item dropdown dropright">
-                                    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                                         <?= htmlspecialchars($parent['ten_cha']) ?>
                                         <i class="fa fa-angle-right float-right mt-1"></i>
                                     </a>
@@ -453,15 +474,15 @@ if (isset($_SESSION['user_id'])) {
                         <span class="h1 text-uppercase text-dark bg-light px-2" style="line-height: 1.2; display: inline-block; vertical-align: middle;">Chợ</span>
                         <span class="h1 text-uppercase text-light bg-primary px-2 ml-n1" style="line-height: 1.2; display: inline-block; vertical-align: middle;">Việt</span>
                     </a>
-                    <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
+                    <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-                    <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse">
+                    <div class="collapse navbar-collapse" id="navbarCollapse">
                         <!-- Thanh tìm kiếm và nút đăng tin -->
-                        <div class="d-flex align-items-center" style="flex-grow: 1; gap: 15px; min-height: 65px;">
-                        <form action="index.php" method="get" class="flex-grow-1 d-flex align-items-center">
+                        <div class="d-flex align-items-center mobile-search-section" style="flex-grow: 1; gap: 15px; min-height: 65px;">
+                        <form action="index.php" method="get" class="d-flex align-items-center" style="width: 100%;">
                             <input type="hidden" name="search" value="1">
-                            <div class="input-group w-100">
+                            <div class="input-group search-input-group" style="width: 100%;">
                                 <input type="text" name="keyword" class="form-control" placeholder="Tìm kiếm sản phẩm..." required style="height: 40px;">
                                 <div class="input-group-append">
                                     <button class="input-group-text bg-transparent text-white d-flex align-items-center justify-content-center" type="submit" style="background-color: #3D464D !important; height: 40px; width: 40px;">
@@ -479,11 +500,11 @@ if (isset($_SESSION['user_id'])) {
 
                         </div>
 
-                        <!-- Menu navbar -->
-                        <div class="navbar-nav d-flex align-items-center ml-3" style="gap: 15px; flex-wrap: nowrap; min-height: 65px; align-items: center !important;">
+                        <!-- Menu navbar - Responsive tự động -->
+                        <div class="navbar-nav main-menu-section d-flex align-items-center ml-3" style="gap: 15px; flex-wrap: nowrap; min-height: 65px; align-items: center !important;">
                             <a href="index.php?tin-nhan" class="nav-item nav-link d-flex align-items-center position-relative">
                                 <i class="fas fa-envelope mr-2"></i> Tin nhắn
-                                <?php if ($hasUnread): ?>
+                                <?php if (isset($hasUnread) && $hasUnread): ?>
                                     <span class="position-absolute" style="top: 2px; right: -10px; width: 10px; height: 10px; background: red; border-radius: 50%;"></span>
                                 <?php endif; ?>
                             </a>
@@ -584,14 +605,13 @@ if (isset($_SESSION['user_id'])) {
                                 </div>
                             </div>
                             <?php endif; ?>
-                            
                         </div>
 
-                        <!-- Avatar tài khoản -->
-                        <div class="navbar-nav d-flex align-items-center ml-3" style="gap: 15px; flex-wrap: nowrap; min-height: 65px; align-items: center !important;">
+                        <!-- Avatar tài khoản - Responsive tự động -->
+                        <div class="navbar-nav main-avatar-section d-flex align-items-center ml-3" style="gap: 15px; flex-wrap: nowrap; min-height: 65px; align-items: center !important;">
                             <div class="btn-group">
                                 <button type="button" class="btn px-0 dropdown-toggle d-flex align-items-center"
-                                        style="gap: 4px; line-height: 1; font-size: 18px; font-weight: 400; color: white; background: none; border: none;"
+                                        style="gap: 6px; line-height: 1; font-size: 18px; font-weight: 400; color: white; background: none; border: none;"
                                         data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <?php if ($userHeader): ?>
                                     <?php
@@ -601,7 +621,7 @@ if (isset($_SESSION['user_id'])) {
     $avatarFile = $userHeader['avatar'];
 }
                                     ?>
-                                    <img src="<?= $avatarPath . htmlspecialchars($avatarFile) ?>" class="rounded-circle mr-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                    <img src="<?= $avatarPath . htmlspecialchars($avatarFile) ?>" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover; margin-right: 0;">
                                     <span style="color: white; font-weight: 400;">
                                         <?= strlen($userHeader['username']) > 10 ? substr(htmlspecialchars($userHeader['username']), 0, 10) . '...' : htmlspecialchars($userHeader['username']) ?>
                                     </span>

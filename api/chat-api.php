@@ -2,8 +2,8 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-require_once("../model/mChat.php");
-$mChat = new mChat();
+require_once("../controller/cChat.php");
+$cChat = new cChat();
 
 // ----------------- POST: Lưu tin nhắn vào DB -----------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $success = $mChat->sendMessage($from, $to, $content, $idSanPham);
+    $success = $cChat->sendMessage($from, $to, $content, $idSanPham);
     echo json_encode(["status" => $success ? "ok" : "db_error"]);
     exit;
 }
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['from'], $_GET['to'])) {
     $from = intval($_GET['from']);
     $to = intval($_GET['to']);
 
-    $messages = $mChat->getMessages($from, $to);
+    $messages = $cChat->getMessages($from, $to);
     echo json_encode($messages);
     exit;
 }

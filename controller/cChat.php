@@ -1,5 +1,6 @@
 <?php
-require_once 'model/mChat.php';
+require_once __DIR__ . '/../model/mChat.php';
+require_once __DIR__ . '/../helpers/TimeHelper.php';
 
 class cChat {
     private $model;
@@ -17,9 +18,7 @@ class cChat {
     }
 
     public function getConversationUsers($current_user_id) {
-        require_once("model/mChat.php");
-        $chatModel = new mChat();
-        $users = $chatModel->getConversationUsers($current_user_id);
+        $users = $this->model->getConversationUsers($current_user_id);
     
         foreach ($users as &$user) {
             $fileName = $this->getChatFileName($current_user_id, $user['id']);
@@ -53,31 +52,27 @@ class cChat {
             $last['content'] = $last['noi_dung'];
         }
         $timestamp = strtotime($last['timestamp']);
+        
+        // Xử lý tin nhắn sản phẩm - extract tên sản phẩm từ HTML
+        $content = $last['content'] ?? '';
+        if (strpos($content, 'product-card-message') !== false) {
+            // Extract tên sản phẩm từ HTML
+            if (preg_match('/<h6[^>]*>([^<]+)<\/h6>/', $content, $matches)) {
+                $content = '📦 ' . trim($matches[1]);
+            } else {
+                $content = '📦 Đã gửi sản phẩm';
+            }
+        }
     
         return [
-            'content' => $last['content'] ?? '',
+            'content' => $content,
             'created_time' => $this->formatThoiGian($timestamp)
         ];
     }
     
     // ✅ Format thời gian: <1 ngày => HH:MM; >=1 ngày => tương đối ngày/tháng/năm
     private function formatThoiGian($timestamp) {
-        $now = time();
-        $diff = $now - $timestamp;
-
-        if ($diff < 86400) {
-            return date('H:i', $timestamp);
-        }
-        if ($diff < 2 * 86400) {
-            return '1 ngày trước';
-        }
-        if ($diff < 30 * 86400) {
-            return floor($diff / 86400) . ' ngày trước';
-        }
-        if ($diff < 365 * 86400) {
-            return floor($diff / (30 * 86400)) . ' tháng trước';
-        }
-        return floor($diff / (365 * 86400)) . ' năm trước';
+        return TimeHelper::formatRelativeTime($timestamp);
     }
     
 
@@ -90,12 +85,22 @@ class cChat {
     }
 
     public function demTinNhanChuaDoc($userId) {
-        $model = new mChat();
-        return $model->demTinNhanChuaDoc($userId);
+        return $this->model->demTinNhanChuaDoc($userId);
     }
 
     public function getFirstMessage($from, $to) {
-        $model = new mChat();
-        return $model->getFirstMessage($from, $to);
+        return $this->model->getFirstMessage($from, $to);
+    }
+    
+    public function sendMessage($from, $to, $content, $idSanPham = null) {
+        return $this->model->sendMessage($from, $to, $content, $idSanPham);
+    }
+    
+    public function markAsRead($messageId, $userId) {
+        return $this->model->markAsRead($messageId, $userId);
+    }
+    
+    public function markConversationAsRead($user1, $user2, $userId) {
+        return $this->model->markConversationAsRead($user1, $user2, $userId);
     }
 }

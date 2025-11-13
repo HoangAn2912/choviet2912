@@ -53,4 +53,41 @@ class mDetailProduct {
 
         return $data;
     }
+
+    public function getRelatedProducts($categoryId, $currentProductId, $limit = 12) {
+        $p = new Connect();
+        $conn = $p->connect();
+        
+        $sql = "SELECT sp.*, nd.username, nd.avatar, nd.phone, nd.address
+                FROM products sp 
+                JOIN users nd ON sp.user_id = nd.id 
+                WHERE sp.category_id = ? 
+                AND sp.id != ? 
+                AND sp.sale_status = 'Đang bán' 
+                AND sp.status = 'Đã duyệt'
+                ORDER BY sp.updated_date DESC, sp.created_date DESC
+                LIMIT ?";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("iii", $categoryId, $currentProductId, $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = [];
+
+        while ($row = $result->fetch_assoc()) {
+            // Lấy ảnh đầu tiên
+            if (!empty($row['image'])) {
+                $dsAnh = array_map('trim', explode(',', $row['image']));
+                $row['anh_dau'] = $dsAnh[0] ?? '';
+            } else {
+                $row['anh_dau'] = '';
+            }
+            $data[] = $row;
+        }
+        
+        $stmt->close();
+        $conn->close();
+        
+        return $data;
+    }
 }

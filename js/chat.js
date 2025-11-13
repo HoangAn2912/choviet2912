@@ -19,6 +19,10 @@ let sendQueue = [];
 let reconnectAttempts = 0;
 const MAX_RECONNECT_DELAY = 10000; // ms
 
+// Expose socket và sendQueue ra window để có thể truy cập từ các script khác
+window.socket = socket;
+window.sendQueue = sendQueue;
+
 function signWebSocketPayload(userId) {
   // Nếu có biến toàn cục WS_SECRET trên server thì server sẽ bật xác thực.
   // Client chỉ tính chữ ký khi có WS_AUTH_SECRET trên window (tùy bạn set qua blade/php)
@@ -40,6 +44,7 @@ function signWebSocketPayload(userId) {
 
 function connectSocket() {
   socket = new WebSocket(getWebSocketURL());
+  window.socket = socket; // Cập nhật window.socket
 
   socket.addEventListener('open', () => {
     reconnectAttempts = 0;
@@ -72,27 +77,7 @@ function connectSocket() {
         socket.send(JSON.stringify({ type: 'mark_read', from: msg.from, to: CURRENT_USER_ID }));
       }
     }
-    if (msg.type === 'unread' || msg.type === 'unread_summary') {
-      if (typeof window.onUnreadChanged === 'function') {
-        window.onUnreadChanged(msg);
-      }
-      // Cập nhật cache localStorage để giữ chấm đỏ sau refresh
-      try {
-        const key = `unread:${CURRENT_USER_ID}`;
-        const cached = JSON.parse(localStorage.getItem(key) || '{}');
-        if (msg.type === 'unread') {
-          const fromId = String(msg.from);
-          const count = Number(cached[fromId] || 0) + 1;
-          cached[fromId] = count;
-        } else if (msg.type === 'unread_summary') {
-          const newMap = msg.unread || {};
-          // Thay thế hoàn toàn bằng bản server gửi
-          Object.keys(cached).forEach(k => delete cached[k]);
-          Object.keys(newMap).forEach(k => { cached[k] = newMap[k]; });
-        }
-        localStorage.setItem(key, JSON.stringify(cached));
-      } catch (e) {}
-    }
+    // Không xử lý unread API nữa - chỉ dùng realtime qua onNewChatMessage
   });
 }
 
@@ -110,11 +95,25 @@ function renderMessage(msg, isFromSocket = false) {
   shownMessages.add(messageKey);
 
   const isMe = msg.from == CURRENT_USER_ID;
-  const html = `<div class="${isMe ? 'text-right' : 'text-left'} mb-2">
-    <span class="${isMe ? 'bg-warning text-white chat-bubble-sent' : 'chat-bubble-received'} px-3 py-2 rounded d-inline-block">
-      ${content}
-    </span>
-  </div>`;
+  
+  // Kiểm tra nếu là tin nhắn sản phẩm (có chứa product-card-message)
+  const isProductMessage = content.includes('product-card-message');
+  
+  // Nếu là tin nhắn sản phẩm, hiển thị HTML trực tiếp, không wrap trong bubble
+  let html;
+  if (isProductMessage) {
+    html = `<div class="${isMe ? 'text-right' : 'text-left'} mb-3">
+      <div style="display: inline-block; max-width: 100%;">
+        ${content}
+      </div>
+    </div>`;
+  } else {
+    html = `<div class="${isMe ? 'text-right' : 'text-left'} mb-2">
+      <span class="${isMe ? 'bg-warning text-white chat-bubble-sent' : 'chat-bubble-received'} px-3 py-2 rounded d-inline-block">
+        ${content}
+      </span>
+    </div>`;
+  }
 
   if (chatBox) {
     chatBox.insertAdjacentHTML('beforeend', html);
@@ -161,19 +160,5 @@ window.addEventListener("DOMContentLoaded", () => {
       .catch(err => console.error("❌ Lỗi khi đọc file JSON:", err));
   }
 
-  // Nạp số chưa đọc để vẽ chấm đỏ ban đầu
-  fetch(`/api/chat-unread.php?user_id=${CURRENT_USER_ID}`)
-    .then(r => r.json())
-    .then(unread => {
-      try {
-        localStorage.setItem(`unread:${CURRENT_USER_ID}`, JSON.stringify(unread || {}));
-      } catch (e) {}
-      if (typeof window.onUnreadBootstrap === 'function') {
-        window.onUnreadBootstrap(unread);
-      } else {
-        // Lưu tạm nếu handler chưa sẵn sàng (do thứ tự load script)
-        window.__UNREAD_BOOT = unread;
-      }
-    })
-    .catch(() => {});
+  // Không cần fetch unread API nữa - chỉ dùng realtime qua WebSocket
 });

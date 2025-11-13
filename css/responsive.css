@@ -1,0 +1,2126 @@
+/* ========================================
+   RESPONSIVE CSS - CHỢ VIỆT
+   Hỗ trợ: Mobile, Tablet, Desktop
+   ======================================== */
+
+/* ========================================
+   BREAKPOINTS
+   ======================================== */
+/* Mobile: < 576px */
+/* Tablet: 576px - 991px */
+/* Desktop: >= 992px */
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.mobile-only {
+    display: none !important;
+}
+
+.desktop-only {
+    display: block !important;
+}
+
+@media (max-width: 991px) {
+    .mobile-only {
+        display: block !important;
+    }
+    
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+/* ========================================
+   HEADER & NAVBAR RESPONSIVE
+   ======================================== */
+
+/* Topbar - Ẩn trên mobile */
+@media (max-width: 991px) {
+    .d-none.d-lg-flex {
+        display: none !important;
+    }
+}
+
+/* Navbar chính - Mobile */
+@media (max-width: 991px) {
+    /* Navbar collapse - Ẩn mặc định, chỉ hiện khi click hamburger */
+    #navbarCollapse.navbar-collapse {
+        display: none !important;
+    }
+    
+    #navbarCollapse.navbar-collapse.show {
+        display: flex !important;
+        background-color: #3D464D !important;
+        padding: 15px !important;
+        margin-top: 10px !important;
+        border-radius: 8px !important;
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+        width: 100% !important;
+        flex-direction: column !important;
+    }
+    
+    #navbarCollapse.navbar-collapse:not(.show) {
+        display: none !important;
+    }
+    
+    /* Search section - Fix CSS */
+    .mobile-search-section {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 10px !important;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .mobile-search-section form {
+        width: 100% !important;
+        margin: 0 !important;
+        flex: 0 0 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+    }
+    
+    .mobile-search-section .search-input-group {
+        width: 100% !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: row !important;
+    }
+    
+    .mobile-search-section .input-group {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        flex-direction: row !important;
+        display: flex !important;
+        align-items: stretch !important;
+    }
+    
+    .mobile-search-section input.form-control {
+        flex: 1 1 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-right: none !important;
+    }
+    
+    .mobile-search-section .input-group-append {
+        display: flex !important;
+        width: auto !important;
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .mobile-search-section .input-group-append button {
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-top-right-radius: 4px !important;
+        border-bottom-right-radius: 4px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Nút Đăng Tin - Cùng width với search */
+    .btn-dang-tin {
+        width: 100% !important;
+        justify-content: center !important;
+        margin-bottom: 0 !important;
+        flex: 0 0 100% !important;
+    }
+    
+    /* Menu navbar section - Responsive tự động */
+    .main-menu-section {
+        flex-direction: column !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        gap: 0 !important;
+    }
+    
+    .main-menu-section .nav-link {
+        padding: 12px 15px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        width: 100%;
+        white-space: normal !important;
+        display: flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+    }
+    
+    .main-menu-section .nav-link:last-child {
+        border-bottom: none;
+    }
+    
+    /* Dropdown trên mobile */
+    .main-menu-section .dropdown {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .main-menu-section .dropdown-toggle {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        padding: 12px 15px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    .main-menu-section .dropdown-toggle::after {
+        margin-left: auto !important;
+    }
+    
+    /* Đảm bảo icon và text thẳng hàng */
+    .main-menu-section .nav-link i,
+    .main-menu-section .dropdown-toggle i {
+        margin-right: 8px !important;
+        margin-left: 0 !important;
+        flex-shrink: 0 !important;
+    }
+    
+    /* Đảm bảo text bắt đầu cùng vị trí */
+    .main-menu-section .nav-link,
+    .main-menu-section .dropdown-toggle {
+        padding-left: 15px !important;
+    }
+    
+    .main-menu-section .dropdown-menu {
+        position: static !important;
+        float: none !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        box-shadow: none !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        border: none !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .main-menu-section .dropdown-item {
+        padding: 10px 35px !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .main-menu-section .dropdown-item:last-child {
+        border-bottom: none;
+    }
+    
+    .main-menu-section .dropdown-item:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }
+    
+    .main-menu-section .dropdown-header {
+        padding: 10px 35px !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .main-menu-section .dropdown-divider {
+        margin: 5px 0 !important;
+        border-top-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    /* Avatar section - Responsive tự động */
+    .main-avatar-section {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 15px !important;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        flex-direction: column !important;
+        gap: 0 !important;
+    }
+    
+    .main-avatar-section .btn-group {
+        width: 100% !important;
+    }
+    
+    .main-avatar-section .dropdown-toggle {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        padding: 12px 15px !important;
+        gap: 6px !important;
+    }
+    
+    .main-avatar-section .dropdown-toggle img {
+        margin-right: 0 !important;
+    }
+    
+    .main-avatar-section .dropdown-toggle::after {
+        margin-left: auto !important;
+    }
+    
+    .main-avatar-section .dropdown-menu {
+        position: static !important;
+        width: 100% !important;
+        margin-top: 5px !important;
+        margin-left: 0 !important;
+        box-shadow: none !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        border: none !important;
+        border-radius: 0 !important;
+    }
+    
+    /* Navbar brand trên mobile */
+    .navbar-brand {
+        margin-right: 15px;
+    }
+    
+    /* Navbar toggler */
+    .navbar-toggler {
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        padding: 4px 8px !important;
+        background-color: transparent;
+    }
+    
+    .navbar-toggler:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+    }
+    
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    }
+    
+    /* Ẩn justify-content-between trên mobile */
+    .navbar-collapse.justify-content-between {
+        justify-content: flex-start !important;
+    }
+    
+    /* Đảm bảo navbar không bị overlap */
+    .navbar {
+        position: relative;
+        z-index: 1000;
+    }
+    
+    /* Fix cho sidebar danh mục trên mobile */
+    .col-lg-3.d-none.d-lg-block {
+        display: none !important;
+    }
+    
+    /* Container adjustments */
+    .container-fluid.bg-dark {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
+}
+
+/* Desktop - Menu hiển thị trực tiếp, không collapse */
+@media (min-width: 992px) {
+    /* Navbar collapse luôn hiển thị trên desktop */
+    .navbar-collapse {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+    
+    .navbar-collapse:not(.show) {
+        display: flex !important;
+    }
+    
+    /* Ẩn hamburger menu trên desktop */
+    .navbar-toggler {
+        display: none !important;
+    }
+    
+    /* Menu hiển thị ngang */
+    .main-menu-section {
+        display: flex !important;
+        flex-direction: row !important;
+        width: auto !important;
+        margin-left: 15px !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        border-top: none !important;
+        gap: 15px !important;
+    }
+    
+    .main-menu-section .nav-link {
+        width: auto !important;
+        border-bottom: none !important;
+        padding: 0.5rem 0.75rem !important;
+        white-space: nowrap !important;
+    }
+    
+    .main-menu-section .dropdown {
+        width: auto !important;
+    }
+    
+    .main-menu-section .dropdown-toggle {
+        width: auto !important;
+        padding: 0.5rem 0.75rem !important;
+        border-bottom: none !important;
+        white-space: nowrap !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+    }
+    
+    .main-menu-section .dropdown-menu {
+        position: absolute !important;
+        width: auto !important;
+        min-width: 200px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+        background-color: #fff !important;
+        border-radius: 8px !important;
+        padding: 8px 0 !important;
+    }
+    
+    .main-menu-section .dropdown-item {
+        padding: 10px 20px !important;
+        color: #333 !important;
+    }
+    
+    .main-menu-section .dropdown-item:hover {
+        background-color: #f8f9fa !important;
+        color: #333 !important;
+    }
+    
+    .main-menu-section .dropdown-header {
+        padding: 8px 20px !important;
+        color: #666 !important;
+    }
+    
+    /* Avatar hiển thị ngang */
+    .main-avatar-section {
+        display: flex !important;
+        flex-direction: row !important;
+        width: auto !important;
+        margin-left: 15px !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        border-top: none !important;
+        gap: 15px !important;
+    }
+    
+    .main-avatar-section .btn-group {
+        width: auto !important;
+    }
+    
+    .main-avatar-section .dropdown-toggle {
+        width: auto !important;
+        padding: 0 !important;
+        border: none !important;
+        gap: 6px !important;
+    }
+    
+    .main-avatar-section .dropdown-toggle img {
+        margin-right: 0 !important;
+    }
+    
+    .main-avatar-section .dropdown-menu {
+        position: absolute !important;
+        width: auto !important;
+        min-width: 200px !important;
+        margin-top: 5px !important;
+        margin-left: 0 !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+        background-color: #fff !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Search section trên desktop */
+    .mobile-search-section {
+        flex-direction: row !important;
+        width: auto;
+        gap: 15px;
+    }
+    
+    .mobile-search-section form {
+        width: auto !important;
+        flex: 1 1 auto;
+        min-width: 200px;
+        max-width: 400px;
+    }
+    
+    .mobile-search-section .search-input-group {
+        width: 100% !important;
+    }
+    
+    .btn-dang-tin {
+        width: auto !important;
+        flex-shrink: 0;
+    }
+}
+
+/* Tablet adjustments - iPad/Tablet (768px - 991px) - Giống mobile */
+@media (min-width: 768px) and (max-width: 991px) {
+    /* Navbar collapse - Ẩn mặc định, chỉ hiện khi click hamburger */
+    #navbarCollapse.navbar-collapse {
+        display: none !important;
+    }
+    
+    #navbarCollapse.navbar-collapse.show {
+        display: flex !important;
+        background-color: #3D464D !important;
+        padding: 15px !important;
+        margin-top: 10px !important;
+        border-radius: 8px !important;
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+        width: 100% !important;
+        flex-direction: column !important;
+    }
+    
+    #navbarCollapse.navbar-collapse:not(.show) {
+        display: none !important;
+    }
+    
+    /* Search section - Giống mobile */
+    .mobile-search-section {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 10px !important;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .mobile-search-section form {
+        width: 100% !important;
+        margin: 0 !important;
+        flex: 0 0 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+    }
+    
+    .mobile-search-section .search-input-group {
+        width: 100% !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: row !important;
+    }
+    
+    .mobile-search-section .input-group {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        flex-direction: row !important;
+        display: flex !important;
+        align-items: stretch !important;
+    }
+    
+    .mobile-search-section input.form-control {
+        flex: 1 1 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-right: none !important;
+    }
+    
+    .mobile-search-section .input-group-append {
+        display: flex !important;
+        width: auto !important;
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .mobile-search-section .input-group-append button {
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-top-right-radius: 4px !important;
+        border-bottom-right-radius: 4px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Nút Đăng Tin - Cùng width với search */
+    .btn-dang-tin {
+        width: 100% !important;
+        justify-content: center !important;
+        margin-bottom: 0 !important;
+        flex: 0 0 100% !important;
+    }
+    
+    /* Menu navbar section - Giống mobile */
+    .main-menu-section {
+        flex-direction: column !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        gap: 0 !important;
+    }
+    
+    .main-menu-section .nav-link {
+        padding: 12px 15px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        width: 100%;
+        white-space: normal !important;
+        display: flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+    }
+    
+    .main-menu-section .nav-link:last-child {
+        border-bottom: none;
+    }
+    
+    /* Dropdown trên tablet */
+    .main-menu-section .dropdown {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .main-menu-section .dropdown-toggle {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        padding: 12px 15px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    .main-menu-section .dropdown-toggle::after {
+        margin-left: auto !important;
+    }
+    
+    /* Đảm bảo icon và text thẳng hàng */
+    .main-menu-section .nav-link i,
+    .main-menu-section .dropdown-toggle i {
+        margin-right: 8px !important;
+        margin-left: 0 !important;
+        flex-shrink: 0 !important;
+    }
+    
+    /* Đảm bảo text bắt đầu cùng vị trí */
+    .main-menu-section .nav-link,
+    .main-menu-section .dropdown-toggle {
+        padding-left: 15px !important;
+    }
+    
+    .main-menu-section .dropdown-menu {
+        position: static !important;
+        float: none !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        box-shadow: none !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        border: none !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .main-menu-section .dropdown-item {
+        padding: 10px 35px !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .main-menu-section .dropdown-item:last-child {
+        border-bottom: none;
+    }
+    
+    .main-menu-section .dropdown-item:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }
+    
+    .main-menu-section .dropdown-header {
+        padding: 10px 35px !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .main-menu-section .dropdown-divider {
+        margin: 5px 0 !important;
+        border-top-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    /* Avatar section - Giống mobile */
+    .main-avatar-section {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 15px !important;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        flex-direction: column !important;
+    }
+    
+    .main-avatar-section .btn-group {
+        width: 100% !important;
+    }
+    
+    .main-avatar-section .dropdown-toggle {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        padding: 12px 15px !important;
+        gap: 6px !important;
+    }
+    
+    .main-avatar-section .dropdown-toggle img {
+        margin-right: 0 !important;
+    }
+    
+    .main-avatar-section .dropdown-toggle::after {
+        margin-left: auto !important;
+    }
+    
+    .main-avatar-section .dropdown-menu {
+        position: static !important;
+        width: 100% !important;
+        margin-top: 5px !important;
+        margin-left: 0 !important;
+        box-shadow: none !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        border: none !important;
+        border-radius: 0 !important;
+    }
+}
+
+/* Danh mục sidebar - Mobile */
+@media (max-width: 991px) {
+    .col-lg-3.d-none.d-lg-block {
+        width: 100% !important;
+        margin-bottom: 10px;
+    }
+    
+    #navbar-vertical {
+        width: 100% !important;
+        position: relative !important;
+    }
+}
+
+/* ========================================
+   CONTAINER & LAYOUT RESPONSIVE
+   ======================================== */
+@media (max-width: 575px) {
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+
+/* ========================================
+   BANNER & CAROUSEL RESPONSIVE
+   ======================================== */
+
+/* Banner Layout - Mobile & Tablet */
+@media (max-width: 991px) {
+    /* Banner container full width */
+    .container-fluid .row.px-xl-5 {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    /* Banner column full width */
+    .col-lg-8 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 20px !important;
+    }
+    
+    /* Live Stream panel full width và nằm dưới */
+    .col-lg-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Carousel container */
+    #mainCarousel {
+        width: 100% !important;
+        margin-bottom: 20px !important;
+    }
+    
+    /* Banner image responsive */
+    .banner-image {
+        height: 250px !important;
+        width: 100% !important;
+        object-fit: cover !important;
+        object-position: center !important;
+    }
+    
+    /* Banner overlay - Full ảnh */
+    .banner-overlay {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: rgba(0, 0, 0, 0.4) !important;
+        z-index: 1 !important;
+    }
+    
+    /* Carousel caption - Nằm trên overlay - Không có background */
+    .carousel-caption {
+        padding: 15px !important;
+        bottom: 10px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        position: absolute !important;
+        z-index: 2 !important;
+        background: transparent !important; /* Loại bỏ lớp mờ cũ */
+        background-color: transparent !important;
+    }
+    
+    /* Banner title responsive */
+    .banner-title {
+        font-size: 1.5rem !important;
+        margin-bottom: 10px !important;
+        line-height: 1.3 !important;
+    }
+    
+    /* Banner description responsive */
+    .banner-description {
+        font-size: 0.9rem !important;
+        margin-bottom: 15px !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* Banner button responsive */
+    .btn-banner {
+        padding: 10px 25px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* Carousel control buttons - Đẹp hơn */
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 40px !important;
+        height: 40px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 2px solid rgba(255, 215, 0, 0.9) !important;
+        border-radius: 50% !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
+        opacity: 0.9 !important;
+        transition: all 0.3s ease !important;
+        z-index: 10 !important;
+    }
+    
+    .carousel-control-prev:hover,
+    .carousel-control-next:hover {
+        opacity: 1 !important;
+        background: rgba(255, 255, 255, 1) !important;
+        border-color: #FFD333 !important;
+        box-shadow: 0 5px 15px rgba(255, 215, 0, 0.5) !important;
+        transform: translateY(-50%) scale(1.15) !important;
+    }
+    
+    .carousel-control-prev {
+        left: 15px !important;
+    }
+    
+    .carousel-control-next {
+        right: 15px !important;
+    }
+    
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        width: 16px !important;
+        height: 16px !important;
+        filter: brightness(0) saturate(100%) invert(75%) sepia(87%) saturate(1352%) hue-rotate(0deg) brightness(1.1) contrast(1.1) !important;
+        -webkit-filter: brightness(0) saturate(100%) invert(75%) sepia(87%) saturate(1352%) hue-rotate(0deg) brightness(1.1) contrast(1.1) !important;
+        opacity: 1 !important;
+    }
+    
+    /* Carousel indicators - Đẹp hơn */
+    .carousel-indicators {
+        margin-bottom: 15px !important;
+        gap: 8px !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    
+    .carousel-indicators button {
+        width: 12px !important;
+        height: 12px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.5) !important;
+        border: 2px solid rgba(255, 255, 255, 0.8) !important;
+        margin: 0 4px !important;
+        opacity: 0.7 !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important;
+    }
+    
+    .carousel-indicators button:hover {
+        opacity: 1 !important;
+        background: rgba(255, 255, 255, 0.8) !important;
+        transform: scale(1.2) !important;
+    }
+    
+    .carousel-indicators button.active {
+        width: 14px !important;
+        height: 14px !important;
+        background: #FFD333 !important;
+        border: 2px solid #fff !important;
+        opacity: 1 !important;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.6) !important;
+    }
+}
+
+/* Mobile Small (< 576px) */
+@media (max-width: 575px) {
+    .banner-image {
+        height: 200px !important;
+    }
+    
+    .banner-title {
+        font-size: 1.2rem !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .banner-description {
+        font-size: 0.8rem !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .btn-banner {
+        padding: 8px 20px !important;
+        font-size: 0.85rem !important;
+    }
+    
+    /* Banner overlay - Mobile small */
+    .banner-overlay {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: rgba(0, 0, 0, 0.4) !important;
+        z-index: 1 !important;
+    }
+    
+    .carousel-caption {
+        padding: 10px !important;
+        bottom: 5px !important;
+        position: absolute !important;
+        z-index: 2 !important;
+        background: transparent !important; /* Loại bỏ lớp mờ cũ */
+        background-color: transparent !important;
+    }
+    
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 36px !important;
+        height: 36px !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 2px solid rgba(255, 215, 0, 0.9) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    .carousel-control-prev {
+        left: 8px !important;
+    }
+    
+    .carousel-control-next {
+        right: 8px !important;
+    }
+    
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        width: 14px !important;
+        height: 14px !important;
+    }
+    
+    .carousel-indicators {
+        margin-bottom: 10px !important;
+        gap: 6px !important;
+    }
+    
+    .carousel-indicators button {
+        width: 10px !important;
+        height: 10px !important;
+        margin: 0 3px !important;
+        background: rgba(255, 255, 255, 0.5) !important;
+        border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    }
+    
+    .carousel-indicators button.active {
+        width: 12px !important;
+        height: 12px !important;
+        background: #FFD333 !important;
+        box-shadow: 0 0 8px rgba(255, 215, 0, 0.6) !important;
+    }
+}
+
+/* Tablet (768px - 991px) - Cải thiện banner */
+@media (min-width: 768px) and (max-width: 991px) {
+    .banner-image {
+        height: 300px !important;
+    }
+    
+    .banner-title {
+        font-size: 1.8rem !important;
+    }
+    
+    .banner-description {
+        font-size: 1rem !important;
+    }
+    
+    .btn-banner {
+        padding: 12px 30px !important;
+        font-size: 1rem !important;
+    }
+    
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 42px !important;
+        height: 42px !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 2px solid rgba(255, 215, 0, 0.9) !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        width: 18px !important;
+        height: 18px !important;
+    }
+    
+    .carousel-indicators button {
+        width: 13px !important;
+        height: 13px !important;
+    }
+    
+    .carousel-indicators button.active {
+        width: 15px !important;
+        height: 15px !important;
+    }
+}
+
+/* Desktop (≥ 992px) - Carousel controls đẹp */
+@media (min-width: 992px) {
+    /* Carousel control buttons - Desktop */
+    #mainCarousel .carousel-control-prev,
+    #mainCarousel .carousel-control-next {
+        width: 45px !important;
+        height: 45px !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 2px solid rgba(255, 215, 0, 0.9) !important;
+        border-radius: 50% !important;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25) !important;
+        opacity: 0.9 !important;
+        transition: all 0.3s ease !important;
+        z-index: 10 !important;
+    }
+    
+    #mainCarousel .carousel-control-prev:hover,
+    #mainCarousel .carousel-control-next:hover {
+        opacity: 1 !important;
+        background: rgba(255, 255, 255, 1) !important;
+        border-color: #FFD333 !important;
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6) !important;
+        transform: translateY(-50%) scale(1.2) !important;
+    }
+    
+    #mainCarousel .carousel-control-prev-icon,
+    #mainCarousel .carousel-control-next-icon {
+        width: 20px !important;
+        height: 20px !important;
+        filter: brightness(0) saturate(100%) invert(75%) sepia(87%) saturate(1352%) hue-rotate(0deg) brightness(1.1) contrast(1.1) !important;
+        -webkit-filter: brightness(0) saturate(100%) invert(75%) sepia(87%) saturate(1352%) hue-rotate(0deg) brightness(1.1) contrast(1.1) !important;
+    }
+    
+    /* Carousel indicators - Desktop */
+    #mainCarousel .carousel-indicators {
+        margin-bottom: 20px !important;
+        gap: 10px !important;
+    }
+    
+    #mainCarousel .carousel-indicators button {
+        width: 14px !important;
+        height: 14px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.5) !important;
+        border: 2px solid rgba(255, 255, 255, 0.8) !important;
+        margin: 0 5px !important;
+        opacity: 0.7 !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important;
+    }
+    
+    #mainCarousel .carousel-indicators button:hover {
+        opacity: 1 !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        transform: scale(1.3) !important;
+    }
+    
+    #mainCarousel .carousel-indicators button.active {
+        width: 16px !important;
+        height: 16px !important;
+        background: #FFD333 !important;
+        border: 2px solid #fff !important;
+        opacity: 1 !important;
+        box-shadow: 0 0 12px rgba(255, 215, 0, 0.7) !important;
+    }
+}
+
+/* ========================================
+   FEATURED CATEGORIES RESPONSIVE
+   ======================================== */
+
+/* Global - Đảm bảo tất cả danh mục có chiều cao đều nhau */
+.container-fluid.pt-2 .row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.container-fluid.pt-2 .col-6.col-md-4.col-lg-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    margin-bottom: 20px !important;
+}
+
+.container-fluid.pt-2 .col-6.col-md-4.col-lg-2 > a {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    text-decoration: none !important;
+}
+
+.quick-category-card {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px 15px !important;
+    min-height: 160px !important;
+}
+
+.quick-category-card h6 {
+    margin-bottom: 8px !important;
+    text-align: center !important;
+    line-height: 1.3 !important;
+    flex-shrink: 0 !important;
+}
+
+.quick-category-card small {
+    text-align: center !important;
+    line-height: 1.4 !important;
+    flex-shrink: 0 !important;
+    display: block !important;
+}
+
+.category-icon {
+    flex-shrink: 0 !important;
+    margin-bottom: 15px !important;
+}
+
+/* Danh mục nổi bật - Mobile & Tablet */
+@media (max-width: 991px) {
+    /* Container padding */
+    .container-fluid.pt-2 .row.px-xl-5 {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    /* Title responsive */
+    .container-fluid.pt-2 h4 {
+        font-size: 1.3rem !important;
+        margin-bottom: 20px !important;
+    }
+    
+    /* Category cards responsive - Chiều cao đều nhau */
+    .quick-category-card {
+        padding: 15px !important;
+        min-height: 140px !important;
+    }
+    
+    /* Category icon responsive */
+    .category-icon {
+        width: 50px !important;
+        height: 50px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .category-icon i {
+        font-size: 1.2rem !important;
+    }
+    
+    /* Category text responsive */
+    .quick-category-card h6 {
+        font-size: 0.95rem !important;
+        margin-bottom: 5px !important;
+    }
+    
+    .quick-category-card small {
+        font-size: 0.75rem !important;
+    }
+    
+    /* Spacing between cards */
+    .container-fluid.pt-2 .col-6.col-md-4.col-lg-2 {
+        margin-bottom: 15px !important;
+        padding-left: 7.5px !important;
+        padding-right: 7.5px !important;
+    }
+}
+
+/* Mobile Small (< 576px) */
+@media (max-width: 575px) {
+    .container-fluid.pt-2 h4 {
+        font-size: 1.1rem !important;
+        margin-bottom: 15px !important;
+    }
+    
+    .quick-category-card {
+        padding: 12px !important;
+        min-height: 130px !important;
+    }
+    
+    .category-icon {
+        width: 45px !important;
+        height: 45px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .category-icon i {
+        font-size: 1rem !important;
+    }
+    
+    .quick-category-card h6 {
+        font-size: 0.9rem !important;
+        margin-bottom: 4px !important;
+    }
+    
+    .quick-category-card small {
+        font-size: 0.7rem !important;
+    }
+    
+    .col-6.col-md-4.col-lg-2 {
+        margin-bottom: 12px !important;
+    }
+}
+
+/* Tablet (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .quick-category-card {
+        padding: 18px !important;
+        min-height: 150px !important;
+    }
+    
+    .category-icon {
+        width: 55px !important;
+        height: 55px !important;
+    }
+    
+    .category-icon i {
+        font-size: 1.3rem !important;
+    }
+    
+    .quick-category-card h6 {
+        font-size: 1rem !important;
+    }
+    
+    .quick-category-card small {
+        font-size: 0.8rem !important;
+    }
+}
+
+/* Desktop (≥ 992px) - Tối ưu hiển thị */
+@media (min-width: 992px) {
+    /* Category cards - Chiều cao đều nhau */
+    .quick-category-card {
+        min-height: 170px !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .quick-category-card:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .category-icon {
+        transition: transform 0.3s ease !important;
+    }
+    
+    .quick-category-card:hover .category-icon {
+        transform: scale(1.1) !important;
+    }
+    
+    /* Spacing đều nhau */
+    .container-fluid.pt-2 .col-6.col-md-4.col-lg-2 {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        margin-bottom: 20px !important;
+    }
+}
+
+/* ========================================
+   PRODUCT GRID RESPONSIVE
+   ======================================== */
+@media (max-width: 1199px) {
+    .col-lg-4 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 767px) {
+    .col-lg-4,
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* Product cards */
+@media (max-width: 767px) {
+    .product-item {
+        margin-bottom: 20px;
+    }
+    
+    .product-img-hover {
+        height: 200px !important;
+    }
+    
+    .product-title {
+        font-size: 1rem !important;
+    }
+    
+    .product-price {
+        font-size: 1.1rem !important;
+    }
+}
+
+/* ========================================
+   FORMS RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .form-control {
+        font-size: 16px; /* Tránh zoom trên iOS */
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    /* Input group - Không áp dụng cho search section */
+    .input-group:not(.search-input-group) {
+        flex-direction: column;
+    }
+    
+    .input-group-append:not(.search-input-group .input-group-append) {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+/* ========================================
+   MODAL RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .modal-content {
+        width: 95% !important;
+        margin: 20px auto !important;
+        padding: 15px !important;
+    }
+    
+    .modal-header {
+        padding: 15px !important;
+    }
+    
+    .modal-body {
+        padding: 15px !important;
+    }
+    
+    #dangTinModal .modal-content {
+        width: 95% !important;
+        margin: 10px auto !important;
+        padding: 15px !important;
+    }
+}
+
+/* ========================================
+   TABLES RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        font-size: 0.85rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 8px 5px !important;
+        white-space: nowrap;
+    }
+    
+    /* Stack table on very small screens */
+    @media (max-width: 575px) {
+        .table,
+        .table thead,
+        .table tbody,
+        .table th,
+        .table td,
+        .table tr {
+            display: block;
+        }
+        
+        .table thead tr {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
+        
+        .table tr {
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        
+        .table td {
+            border: none;
+            position: relative;
+            padding-left: 50% !important;
+        }
+        
+        .table td:before {
+            content: attr(data-label);
+            position: absolute;
+            left: 6px;
+            width: 45%;
+            padding-right: 10px;
+            white-space: nowrap;
+            font-weight: bold;
+        }
+    }
+}
+
+/* ========================================
+   CARDS RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .card {
+        margin-bottom: 20px;
+    }
+    
+    .card-body {
+        padding: 15px !important;
+    }
+    
+    .card-title {
+        font-size: 1.1rem !important;
+    }
+    
+    .card-text {
+        font-size: 0.9rem !important;
+    }
+}
+
+/* ========================================
+   FOOTER RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .main-footer,
+    .container-fluid.bg-dark {
+        padding: 30px 15px 15px !important;
+    }
+    
+    .main-footer .row,
+    .container-fluid.bg-dark .row {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    .main-footer .row > div,
+    .container-fluid.bg-dark .row > div {
+        margin-bottom: 30px;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .main-footer h5,
+    .container-fluid.bg-dark h5 {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+    
+    .main-footer p,
+    .container-fluid.bg-dark p {
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+    
+    .main-footer .col-lg-4,
+    .main-footer .col-lg-8,
+    .main-footer .col-md-4,
+    .main-footer .col-md-6 {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .main-footer .btn-square {
+        width: 35px !important;
+        height: 35px !important;
+        margin-right: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .main-footer img.img-fluid {
+        max-width: 200px;
+    }
+}
+
+/* Back to top button */
+@media (max-width: 767px) {
+    .back-to-top {
+        width: 45px;
+        height: 45px;
+        right: 15px;
+        bottom: 15px;
+        font-size: 18px;
+    }
+}
+
+/* ========================================
+   CHAT RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .chat-container {
+        flex-direction: column !important;
+        height: calc(100vh - 120px) !important;
+    }
+    
+    .chat-sidebar {
+        width: 100% !important;
+        height: 200px !important;
+        border-right: none !important;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .chat-messages {
+        width: 100% !important;
+        height: calc(100vh - 320px) !important;
+    }
+    
+    .chat-input {
+        width: 100% !important;
+    }
+}
+
+/* ========================================
+   PROFILE RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .profile-header {
+        flex-direction: column !important;
+        text-align: center;
+    }
+    
+    .profile-avatar {
+        margin-bottom: 20px;
+        margin-right: 0 !important;
+    }
+    
+    .profile-info {
+        width: 100% !important;
+    }
+    
+    .profile-tabs {
+        flex-direction: column;
+    }
+    
+    .profile-tabs .nav-link {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
+
+/* ========================================
+   DASHBOARD & MANAGEMENT RESPONSIVE
+   ======================================== */
+@media (max-width: 991px) {
+    .dashboard-stats {
+        flex-direction: column;
+    }
+    
+    .stat-card {
+        width: 100% !important;
+        margin-bottom: 15px;
+    }
+    
+    .management-toolbar {
+        flex-direction: column;
+    }
+    
+    .management-toolbar .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+/* ========================================
+   LIVESTREAM RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .livestream-player {
+        width: 100% !important;
+        height: 250px !important;
+    }
+    
+    .livestream-chat {
+        width: 100% !important;
+        height: 300px !important;
+    }
+    
+    .livestream-info {
+        padding: 15px !important;
+    }
+}
+
+/* ========================================
+   SEARCH & FILTER RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .search-filters {
+        flex-direction: column;
+    }
+    
+    .filter-group {
+        width: 100% !important;
+        margin-bottom: 15px;
+    }
+    
+    .search-results {
+        padding: 15px !important;
+    }
+}
+
+/* ========================================
+   UTILITY RESPONSIVE CLASSES
+   ======================================== */
+@media (max-width: 575px) {
+    .px-xl-5 {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
+    
+    .py-xl-5 {
+        padding-top: 30px !important;
+        padding-bottom: 30px !important;
+    }
+    
+    .mb-30 {
+        margin-bottom: 20px !important;
+    }
+    
+    .mt-5 {
+        margin-top: 30px !important;
+    }
+    
+    .mb-5 {
+        margin-bottom: 30px !important;
+    }
+}
+
+/* ========================================
+   TEXT RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    h1 {
+        font-size: 1.8rem !important;
+    }
+    
+    h2 {
+        font-size: 1.5rem !important;
+    }
+    
+    h3 {
+        font-size: 1.3rem !important;
+    }
+    
+    h4 {
+        font-size: 1.1rem !important;
+    }
+    
+    .display-4 {
+        font-size: 2rem !important;
+    }
+    
+    .display-5 {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* ========================================
+   IMAGES RESPONSIVE
+   ======================================== */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 767px) {
+    .img-fluid {
+        width: 100%;
+        height: auto;
+    }
+}
+
+/* ========================================
+   SPACING RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .section-padding {
+        padding: 40px 0 !important;
+    }
+    
+    .content-padding {
+        padding: 20px 15px !important;
+    }
+}
+
+/* ========================================
+   BUTTONS RESPONSIVE
+   ======================================== */
+@media (max-width: 575px) {
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        width: 100%;
+        margin-bottom: 5px;
+        border-radius: 4px !important;
+    }
+}
+
+/* ========================================
+   FIXES FOR MOBILE BROWSERS
+   ======================================== */
+/* Prevent zoom on input focus (iOS) */
+@media (max-width: 767px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"],
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 767px) {
+    a, button {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+/* ========================================
+   DETAIL PRODUCT PAGE RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .product-detail {
+        padding: 15px !important;
+    }
+    
+    .product-images {
+        margin-bottom: 20px;
+    }
+    
+    .product-main-image {
+        width: 100%;
+        height: 300px !important;
+        object-fit: cover;
+    }
+    
+    /* Product carousel responsive */
+    .carousel-item {
+        height: 300px !important;
+    }
+    
+    .product-carousel-img {
+        height: 300px !important;
+        object-fit: cover;
+    }
+    
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 35px !important;
+        height: 35px !important;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .carousel-control-prev {
+        left: 10px;
+    }
+    
+    .carousel-control-next {
+        right: 10px;
+    }
+    
+    .product-thumbnails {
+        flex-direction: row;
+        overflow-x: auto;
+        margin-top: 10px;
+    }
+    
+    .product-thumbnail {
+        min-width: 80px;
+        height: 80px;
+        margin-right: 10px;
+    }
+    
+    /* Product info section */
+    .col-lg-7.h-auto {
+        margin-top: 20px;
+    }
+    
+    .h-100.bg-light.p-30 {
+        padding: 20px 15px !important;
+    }
+    
+    .product-info {
+        padding: 15px !important;
+    }
+    
+    .product-title {
+        font-size: 1.3rem !important;
+        margin-bottom: 15px;
+    }
+    
+    .product-price {
+        font-size: 1.8rem !important;
+    }
+    
+    .product-actions {
+        flex-direction: column;
+    }
+    
+    .product-actions .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .product-description {
+        margin-top: 20px;
+        padding: 15px;
+    }
+    
+    .product-seller-info {
+        margin-top: 20px;
+        padding: 15px;
+    }
+    
+    /* Container adjustments */
+    .container.d-flex.justify-content-center {
+        padding: 15px;
+    }
+    
+    .row.px-xl-10 {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+}
+
+/* ========================================
+   CATEGORY PAGE RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .category-header {
+        padding: 15px !important;
+        text-align: center;
+    }
+    
+    .category-filters {
+        flex-direction: column;
+        margin-bottom: 20px;
+    }
+    
+    .filter-item {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .category-products {
+        padding: 15px !important;
+    }
+}
+
+/* ========================================
+   SEARCH PAGE RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .search-header {
+        padding: 15px !important;
+    }
+    
+    .search-results-count {
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+    
+    .search-sort {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+}
+
+/* ========================================
+   CHECKOUT PAGE RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .checkout-container {
+        flex-direction: column;
+    }
+    
+    .checkout-form,
+    .checkout-summary {
+        width: 100% !important;
+        margin-bottom: 20px;
+    }
+    
+    .order-summary {
+        position: static !important;
+        margin-top: 20px;
+    }
+}
+
+/* ========================================
+   ADMIN PAGES RESPONSIVE
+   ======================================== */
+@media (max-width: 991px) {
+    .admin-sidebar {
+        position: fixed;
+        left: -100%;
+        transition: left 0.3s ease;
+        z-index: 1000;
+        height: 100vh;
+        overflow-y: auto;
+    }
+    
+    .admin-sidebar.show {
+        left: 0;
+    }
+    
+    .admin-content {
+        margin-left: 0 !important;
+        width: 100%;
+    }
+    
+    .admin-header {
+        padding: 15px !important;
+    }
+}
+
+/* ========================================
+   DASHBOARD CARDS RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .stat-card {
+        margin-bottom: 15px;
+    }
+    
+    .stat-card .card-body {
+        padding: 15px !important;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem !important;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem !important;
+    }
+}
+
+/* ========================================
+   FORM RESPONSIVE IMPROVEMENTS
+   ======================================== */
+@media (max-width: 767px) {
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-row .col,
+    .form-row [class*="col-"] {
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 15px;
+    }
+    
+    .form-check {
+        margin-bottom: 10px;
+    }
+    
+    label {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+}
+
+/* ========================================
+   PAGINATION RESPONSIVE
+   ======================================== */
+@media (max-width: 575px) {
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .pagination .page-link {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .pagination .page-item:first-child .page-link,
+    .pagination .page-item:last-child .page-link {
+        display: none;
+    }
+}
+
+/* ========================================
+   ALERT & TOAST RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .alert {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+    
+    .toast {
+        max-width: 90%;
+        margin: 10px auto;
+    }
+}
+
+/* ========================================
+   BREADCRUMB RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .breadcrumb {
+        flex-wrap: wrap;
+        padding: 10px 15px;
+        font-size: 0.85rem;
+    }
+    
+    .breadcrumb-item {
+        margin-bottom: 5px;
+    }
+}
+
+/* ========================================
+   BADGE & TAG RESPONSIVE
+   ======================================== */
+@media (max-width: 575px) {
+    .badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+    
+    .tag {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        margin: 3px;
+    }
+}
+
+/* ========================================
+   LOADING & SPINNER RESPONSIVE
+   ======================================== */
+@media (max-width: 767px) {
+    .spinner-border,
+    .spinner-grow {
+        width: 2rem;
+        height: 2rem;
+    }
+    
+    .loading-overlay {
+        padding: 20px;
+    }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+    .navbar,
+    .footer,
+    .btn,
+    .no-print,
+    .back-to-top,
+    .navbar-toggler {
+        display: none !important;
+    }
+    
+    body {
+        font-size: 12pt;
+        line-height: 1.5;
+    }
+    
+    .container-fluid {
+        padding: 0 !important;
+    }
+    
+    .product-item,
+    .card {
+        page-break-inside: avoid;
+    }
+}
+

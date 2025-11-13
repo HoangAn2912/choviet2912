@@ -31,9 +31,9 @@ if (!is_array($messages) || count($messages) === 0) {
 $first = $messages[0];
 
 // ✅ Lấy product_id từ DB dòng đầu tiên
-require_once("../model/mChat.php");
-$model = new mChat();
-$row = $model->getFirstMessage($first['from'], $first['to']);
+require_once("../controller/cChat.php");
+$cChat = new cChat();
+$row = $cChat->getFirstMessage($first['from'], $first['to']);
 $idSanPham = $row['product_id'] ?? 0;
 
 // ✅ Trả kết quả đầy đủ

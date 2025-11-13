@@ -14,6 +14,12 @@ class cDetailProduct {
             $product['thoi_gian_format'] = $helper->tinhThoiGian($product['updated_date']);
         }
 
+        // Lấy sản phẩm liên quan (cùng danh mục)
+        $relatedProducts = [];
+        if ($product && isset($product['category_id'])) {
+            $relatedProducts = $model->getRelatedProducts($product['category_id'], $id, 12);
+        }
+
         include("view/detail.php");
     }
 }

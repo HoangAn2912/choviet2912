@@ -145,7 +145,7 @@ body {
 }
 
 .carousel-caption {
-  background: rgba(0, 0, 0, 0.6);
+  background: transparent !important; /* Loại bỏ lớp mờ cũ - chỉ dùng banner-overlay */
   border-radius: 10px;
   padding: 20px;
   backdrop-filter: none !important;

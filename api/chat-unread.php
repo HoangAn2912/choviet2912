@@ -1,6 +1,8 @@
 <?php
 header("Content-Type: application/json");
 
+require_once("../controller/cChat.php");
+
 $userId = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
 if ($userId <= 0) {
     http_response_code(400);
@@ -8,17 +10,9 @@ if ($userId <= 0) {
     exit;
 }
 
-$chatDir = __DIR__ . "/../chat";
-$file = $chatDir . "/unread_{$userId}.json";
-
-if (!file_exists($file)) {
-    echo json_encode([]);
-    exit;
-}
-
-$data = json_decode(file_get_contents($file), true);
-if (!is_array($data)) $data = [];
-echo json_encode($data);
+$cChat = new cChat();
+$count = $cChat->demTinNhanChuaDoc($userId);
+echo json_encode(["unread_count" => $count]);
 ?>
 
 

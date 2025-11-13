@@ -1,11 +1,11 @@
 <?php
 header("Content-Type: application/json");
-require_once("../model/mUser.php");
-$mUser = new mUser();
+require_once("../controller/cUser.php");
 
 if (isset($_GET['user_id'])) {
     $user_id = intval($_GET['user_id']);
-    $user = $mUser->getUserById($user_id); // viết sẵn hàm này rồi
+    $cUser = new cUser();
+    $user = $cUser->getUserById($user_id);
 
     if ($user) {
         echo json_encode($user);
