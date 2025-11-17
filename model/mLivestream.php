@@ -572,8 +572,8 @@ class mLivestream {
                 error_log("Processing wallet refund for order_id: $order_id, amount: " . $order['total_amount']);
                 // Sử dụng PDO connection cho transfer_accounts
                 try {
-                    // Tạo PDO connection riêng cho transfer_accounts
-                    $pdo = new PDO("mysql:host=localhost;dbname=choviet29", "root", "");
+                    // Tạo PDO connection riêng cho transfer_accounts (dùng cùng credentials với mConnect.php)
+                    $pdo = new PDO("mysql:host=localhost;dbname=choviet29", "admin", "123456");
                     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                     
                     // Bắt đầu transaction cho transfer_accounts
@@ -697,6 +697,60 @@ class mLivestream {
         return $result->fetch_assoc();
     }
 
+    // Lấy thống kê real-time cho broadcast page
+    public function getRealTimeStats($livestream_id) {
+        // Số người đang xem (trong 5 phút gần đây)
+        $viewers_sql = "SELECT COUNT(DISTINCT user_id) as current_viewers 
+                       FROM livestream_viewers 
+                       WHERE livestream_id = ? AND last_activity > DATE_SUB(NOW(), INTERVAL 5 MINUTE)";
+        $stmt = $this->conn->prepare($viewers_sql);
+        $stmt->bind_param("i", $livestream_id);
+        $stmt->execute();
+        $viewers_result = $stmt->get_result();
+        $viewers_data = $viewers_result->fetch_assoc();
+        $current_viewers = $viewers_data['current_viewers'] ?? 0;
+        
+        // Số đơn hàng (chỉ đếm đơn hàng từ livestream này, không tính cancelled)
+        $orders_sql = "SELECT COUNT(*) as order_count 
+                      FROM livestream_orders 
+                      WHERE livestream_id = ? AND status != 'cancelled'";
+        $stmt = $this->conn->prepare($orders_sql);
+        $stmt->bind_param("i", $livestream_id);
+        $stmt->execute();
+        $orders_result = $stmt->get_result();
+        $orders_data = $orders_result->fetch_assoc();
+        $order_count = $orders_data['order_count'] ?? 0;
+        
+        // Doanh thu (tổng số tiền đơn hàng, không tính cancelled)
+        $revenue_sql = "SELECT COALESCE(SUM(total_amount), 0) as total_revenue 
+                       FROM livestream_orders 
+                       WHERE livestream_id = ? AND status != 'cancelled'";
+        $stmt = $this->conn->prepare($revenue_sql);
+        $stmt->bind_param("i", $livestream_id);
+        $stmt->execute();
+        $revenue_result = $stmt->get_result();
+        $revenue_data = $revenue_result->fetch_assoc();
+        $total_revenue = $revenue_data['total_revenue'] ?? 0;
+        
+        // Lượt thích (cộng dồn từ bảng livestream_interactions)
+        $likes_sql = "SELECT COUNT(*) as like_count 
+                     FROM livestream_interactions 
+                     WHERE livestream_id = ? AND action_type = 'like'";
+        $stmt = $this->conn->prepare($likes_sql);
+        $stmt->bind_param("i", $livestream_id);
+        $stmt->execute();
+        $likes_result = $stmt->get_result();
+        $likes_data = $likes_result->fetch_assoc();
+        $like_count = $likes_data['like_count'] ?? 0;
+        
+        return [
+            'current_viewers' => (int)$current_viewers,
+            'order_count' => (int)$order_count,
+            'total_revenue' => (float)$total_revenue,
+            'like_count' => (int)$like_count
+        ];
+    }
+
     // Lấy danh sách đơn hàng của user
     public function getUserOrders($user_id, $status_filter = null, $limit = 20, $offset = 0) {
         $sql = "SELECT DISTINCT
@@ -791,11 +845,12 @@ class mLivestream {
 
     // Xử lý thanh toán bằng ví
     public function processWalletPayment($order_id, $user_id) {
+        // Bắt đầu transaction cho livestream_orders (mysqli)
         $this->conn->begin_transaction();
         
         try {
             // Lấy thông tin đơn hàng
-            $order_sql = "SELECT total_amount FROM livestream_orders WHERE id = ? AND user_id = ?";
+            $order_sql = "SELECT total_amount, livestream_id FROM livestream_orders WHERE id = ? AND user_id = ?";
             $order_stmt = $this->conn->prepare($order_sql);
             $order_stmt->bind_param("ii", $order_id, $user_id);
             $order_stmt->execute();
@@ -805,41 +860,80 @@ class mLivestream {
                 throw new Exception("Không tìm thấy đơn hàng");
             }
             
-            // Lấy số dư hiện tại từ transfer_accounts (cùng cơ sở dữ liệu với nạp tiền)
-            $balance_sql = "SELECT balance FROM transfer_accounts WHERE user_id = ?";
-            $balance_stmt = $this->conn->prepare($balance_sql);
-            $balance_stmt->bind_param("i", $user_id);
-            $balance_stmt->execute();
-            $account = $balance_stmt->get_result()->fetch_assoc();
+            $total_amount = $order['total_amount'];
+            $livestream_id = $order['livestream_id'];
             
-            if (!$account || $account['balance'] < $order['total_amount']) {
-                throw new Exception("Số dư không đủ");
+            // Sử dụng PDO connection cho transfer_accounts (giống như phần refund)
+            try {
+                // Tạo PDO connection riêng cho transfer_accounts
+                $pdo = new PDO("mysql:host=localhost;dbname=choviet29", "admin", "123456");
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                
+                // Bắt đầu transaction cho transfer_accounts
+                $pdo->beginTransaction();
+                
+                // Kiểm tra xem tài khoản transfer_accounts có tồn tại không
+                $check_account_sql = "SELECT id, balance FROM transfer_accounts WHERE user_id = ? FOR UPDATE";
+                $check_account_stmt = $pdo->prepare($check_account_sql);
+                $check_account_stmt->execute([$user_id]);
+                $account = $check_account_stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$account) {
+                    // Tạo tài khoản mới nếu chưa có
+                    $account_number = 'ACC' . str_pad($user_id, 8, '0', STR_PAD_LEFT);
+                    $create_account_sql = "INSERT INTO transfer_accounts (account_number, user_id, balance) VALUES (?, ?, 0)";
+                    $create_account_stmt = $pdo->prepare($create_account_sql);
+                    $create_account_stmt->execute([$account_number, $user_id]);
+                    $account = ['balance' => 0];
+                }
+                
+                // Kiểm tra số dư
+                if ($account['balance'] < $total_amount) {
+                    $pdo->rollBack();
+                    $this->conn->rollback();
+                    throw new Exception("Số dư không đủ. Số dư hiện tại: " . number_format($account['balance']) . " VNĐ, cần: " . number_format($total_amount) . " VNĐ");
+                }
+                
+                // Trừ tiền từ ví
+                $update_balance_sql = "UPDATE transfer_accounts SET balance = balance - ? WHERE user_id = ?";
+                $update_balance_stmt = $pdo->prepare($update_balance_sql);
+                $update_balance_stmt->execute([$total_amount, $user_id]);
+                
+                // Commit transaction cho transfer_accounts
+                $pdo->commit();
+                
+            } catch (PDOException $e) {
+                // Rollback transaction cho transfer_accounts nếu có lỗi
+                if (isset($pdo) && $pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                $this->conn->rollback();
+                error_log("Error processing wallet payment (transfer_accounts): " . $e->getMessage());
+                throw new Exception("Lỗi khi xử lý thanh toán: " . $e->getMessage());
             }
             
-            // Trừ tiền từ ví
-            $new_balance = $account['balance'] - $order['total_amount'];
-            $update_balance_sql = "UPDATE transfer_accounts SET balance = ? WHERE user_id = ?";
-            $update_balance_stmt = $this->conn->prepare($update_balance_sql);
-            $update_balance_stmt->bind_param("di", $new_balance, $user_id);
-            $update_balance_stmt->execute();
-            
-            // Cập nhật trạng thái đơn hàng
-            $update_order_sql = "UPDATE livestream_orders SET status = 'confirmed' WHERE id = ?";
+            // Cập nhật trạng thái đơn hàng (mysqli)
+            $update_order_sql = "UPDATE livestream_orders SET status = 'confirmed', updated_at = NOW() WHERE id = ?";
             $update_order_stmt = $this->conn->prepare($update_order_sql);
             $update_order_stmt->bind_param("i", $order_id);
             $update_order_stmt->execute();
             
-            // Xóa giỏ hàng
-            $clear_cart_sql = "DELETE FROM livestream_cart_items WHERE user_id = ? AND livestream_id = (SELECT livestream_id FROM livestream_orders WHERE id = ?)";
+            // Xóa giỏ hàng (mysqli)
+            $clear_cart_sql = "DELETE FROM livestream_cart_items WHERE user_id = ? AND livestream_id = ?";
             $clear_cart_stmt = $this->conn->prepare($clear_cart_sql);
-            $clear_cart_stmt->bind_param("ii", $user_id, $order_id);
+            $clear_cart_stmt->bind_param("ii", $user_id, $livestream_id);
             $clear_cart_stmt->execute();
             
+            // Commit transaction cho livestream_orders
             $this->conn->commit();
+            
+            error_log("Wallet payment processed successfully for order_id: $order_id, user_id: $user_id, amount: $total_amount");
             return true;
             
         } catch (Exception $e) {
             $this->conn->rollback();
+            error_log("Error processing wallet payment: " . $e->getMessage());
+            error_log("Order ID: $order_id, User ID: $user_id");
             return false;
         }
     }

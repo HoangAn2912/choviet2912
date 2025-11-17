@@ -808,6 +808,12 @@ function processCheckout() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Gửi thông báo đơn hàng mới qua WebSocket
+            const livestreamId = <?= $livestream_id ?? 0 ?>;
+            if (livestreamId) {
+                sendOrderCreatedNotification(livestreamId, data);
+            }
+            
             if (selectedPaymentMethod === 'vnpay' && data.payment_url) {
                 // Chuyển đến VNPay
                 window.location.href = data.payment_url;
@@ -834,6 +840,54 @@ function processCheckout() {
         checkoutBtn.disabled = false;
         checkoutBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Tiến hành thanh toán';
     });
+}
+
+// Hàm gửi thông báo đơn hàng mới qua WebSocket
+function sendOrderCreatedNotification(livestreamId, orderData) {
+    // Tạo WebSocket connection tạm thời để gửi message
+    try {
+        const ws = new WebSocket('ws://localhost:3000');
+        let messageSent = false;
+        
+        ws.onopen = function() {
+            console.log('📦 WebSocket connected, joining livestream room');
+            // Join livestream room trước
+            ws.send(JSON.stringify({
+                type: 'join_livestream',
+                livestream_id: livestreamId,
+                user_id: <?= isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0 ?>,
+                user_type: 'viewer'
+            }));
+            
+            // Gửi message order_created sau khi join (delay nhỏ)
+            setTimeout(() => {
+                if (!messageSent && ws.readyState === WebSocket.OPEN) {
+                    console.log('📦 Sending order_created message');
+                    ws.send(JSON.stringify({
+                        type: 'order_created',
+                        livestream_id: livestreamId,
+                        order_id: orderData.order_id || null,
+                        order_code: orderData.order_code || '',
+                        total_amount: orderData.total_amount || 0
+                    }));
+                    messageSent = true;
+                    
+                    // Đóng connection sau khi gửi
+                    setTimeout(() => {
+                        ws.close();
+                    }, 500);
+                }
+            }, 200);
+        };
+        
+        ws.onerror = function(error) {
+            console.warn('⚠️ WebSocket error (non-critical):', error);
+            // Không ảnh hưởng đến flow chính
+        };
+    } catch (error) {
+        console.warn('⚠️ Failed to send order_created via WebSocket (non-critical):', error);
+        // Không ảnh hưởng đến flow chính
+    }
 }
 
 // Kiểm tra số dư khi chọn thanh toán bằng ví

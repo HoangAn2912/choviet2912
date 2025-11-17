@@ -27,11 +27,20 @@ try {
 }
 
 // Validate CSRF token cho POST requests
+// Bỏ qua CSRF cho các request từ Node.js server (có user_id trong POST và không có session)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
-    if (!Security::validateCSRFToken($token)) {
-        echo json_encode(['success' => false, 'message' => 'CSRF token không hợp lệ. Vui lòng refresh trang.']);
-        exit;
+    $action = $_POST['action'] ?? '';
+    $hasUserIdInPost = isset($_POST['user_id']);
+    $hasSession = isset($_SESSION['user_id']);
+    
+    // Nếu là request từ Node.js (có user_id trong POST nhưng không có session), bỏ qua CSRF
+    // Hoặc nếu là action record_interaction từ Node.js
+    if (!($hasUserIdInPost && !$hasSession && $action === 'record_interaction')) {
+        $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        if (!Security::validateCSRFToken($token)) {
+            echo json_encode(['success' => false, 'message' => 'CSRF token không hợp lệ. Vui lòng refresh trang.']);
+            exit;
+        }
     }
 }
 
@@ -127,14 +136,24 @@ switch ($action) {
     case 'record_interaction':
         $livestream_id = $_POST['livestream_id'] ?? null;
         $action_type = $_POST['action_type'] ?? null;
-        $user_id = $_SESSION['user_id'] ?? null;
+        // Cho phép user_id từ POST (khi gọi từ Node.js) hoặc từ session (khi gọi từ frontend)
+        $user_id = $_POST['user_id'] ?? $_SESSION['user_id'] ?? null;
         
         if (!$livestream_id || !$action_type || !$user_id) {
             echo json_encode(['success' => false, 'message' => 'Thiếu thông tin']);
             break;
         }
         
-        $result = $model->recordInteraction($livestream_id, $user_id, $action_type);
+        // Chỉ chấp nhận user_id là integer (user đã đăng nhập)
+        // Guest user (có ID dạng string như 'viewer_xxx') không thể thích vì database yêu cầu integer
+        $user_id_int = is_numeric($user_id) ? (int)$user_id : null;
+        if (!$user_id_int || $user_id_int <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Chỉ user đã đăng nhập mới có thể thích']);
+            break;
+        }
+        
+        // Không giới hạn số lần thích - mỗi lần nhấn là 1 lượt thích mới
+        $result = $model->recordInteraction($livestream_id, $user_id_int, $action_type);
         echo json_encode(['success' => $result]);
         break;
         
@@ -364,14 +383,30 @@ switch ($action) {
             break;
         }
         
-        // Kiểm tra số dư nếu thanh toán bằng ví
+        // Kiểm tra số dư nếu thanh toán bằng ví (từ transfer_accounts)
         if ($payment_method === 'wallet') {
-            include_once __DIR__ . "/../model/mUser.php";
-            $userModel = new mUser();
-            $user = $userModel->getUserById($user_id);
-            
-            if ($user['balance'] < $cart['total']) {
-                echo json_encode(['success' => false, 'message' => 'Số dư tài khoản không đủ để thanh toán']);
+            try {
+                // Sử dụng PDO connection để kiểm tra số dư từ transfer_accounts
+                $pdo = new PDO("mysql:host=localhost;dbname=choviet29", "admin", "123456");
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                
+                $balance_sql = "SELECT balance FROM transfer_accounts WHERE user_id = ?";
+                $balance_stmt = $pdo->prepare($balance_sql);
+                $balance_stmt->execute([$user_id]);
+                $account = $balance_stmt->fetch(PDO::FETCH_ASSOC);
+                
+                $balance = $account ? $account['balance'] : 0;
+                
+                if ($balance < $cart['total']) {
+                    echo json_encode([
+                        'success' => false, 
+                        'message' => 'Số dư tài khoản không đủ để thanh toán. Số dư hiện tại: ' . number_format($balance) . ' VNĐ, cần: ' . number_format($cart['total']) . ' VNĐ'
+                    ]);
+                    break;
+                }
+            } catch (PDOException $e) {
+                error_log("Error checking balance from transfer_accounts: " . $e->getMessage());
+                echo json_encode(['success' => false, 'message' => 'Lỗi khi kiểm tra số dư tài khoản']);
                 break;
             }
         }
@@ -394,6 +429,9 @@ switch ($action) {
         }
         
         $order = $model->getOrder($order_id);
+        
+        // Trả về thông tin đơn hàng để frontend có thể gửi qua WebSocket
+        // Frontend sẽ gửi message order_created qua WebSocket sau khi nhận response
         
         if ($payment_method === 'vnpay') {
             // Tạo URL thanh toán VNPay
@@ -451,7 +489,9 @@ switch ($action) {
             echo json_encode([
                 'success' => true,
                 'payment_url' => $vnp_Url,
-                'order_id' => $order_id
+                'order_id' => $order_id,
+                'order_code' => $order['order_code'] ?? '',
+                'total_amount' => $order['total_amount'] ?? 0
             ]);
         } else if ($payment_method === 'wallet') {
             // Thanh toán bằng ví
@@ -461,6 +501,8 @@ switch ($action) {
                     'success' => true, 
                     'message' => 'Thanh toán thành công',
                     'order_id' => $order_id,
+                    'order_code' => $order['order_code'] ?? '',
+                    'total_amount' => $order['total_amount'] ?? 0,
                     'redirect_url' => 'index.php?my-orders'
                 ]);
             } else {
@@ -472,6 +514,8 @@ switch ($action) {
                 'success' => true, 
                 'message' => 'Đơn hàng đã được tạo. Bạn sẽ thanh toán khi nhận hàng.',
                 'order_id' => $order_id,
+                'order_code' => $order['order_code'] ?? '',
+                'total_amount' => $order['total_amount'] ?? 0,
                 'redirect_url' => 'index.php?my-orders'
             ]);
         }
@@ -736,6 +780,22 @@ switch ($action) {
         } catch (Exception $e) {
             error_log("Get products status error: " . $e->getMessage());
             echo json_encode(['success' => false, 'message' => 'Lỗi khi lấy trạng thái sản phẩm: ' . $e->getMessage()]);
+        }
+        break;
+
+    case 'get_realtime_stats':
+        $livestream_id = $_GET['livestream_id'] ?? null;
+        if (!$livestream_id) {
+            echo json_encode(['success' => false, 'message' => 'Thiếu livestream_id']);
+            break;
+        }
+        
+        try {
+            $stats = $model->getRealTimeStats($livestream_id);
+            echo json_encode(['success' => true, 'stats' => $stats]);
+        } catch (Exception $e) {
+            error_log("Get realtime stats error: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Lỗi khi lấy thống kê: ' . $e->getMessage()]);
         }
         break;
 

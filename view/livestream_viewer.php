@@ -815,9 +815,11 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
         // Variables
         let ws = null;
         let isConnected = false;
-        let viewerCount = 0;
+        let viewerCount = <?= $current_viewers ?>; // Khởi tạo từ PHP
         let likeCount = 0;
         let viewerPeer;
+        
+        const LIVESTREAM_ID = <?= $livestream_id ?>;
 
         // Initialize WebSocket
         function initWebSocket() {
@@ -897,9 +899,37 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                     viewerCount = data.count;
                     updateViewerCount();
                     break;
+                case 'viewers_count_update':
+                    // Cập nhật số người xem real-time từ WebSocket
+                    viewerCount = data.viewers_count || 0;
+                    updateViewerCount();
+                    console.log('📊 Viewer count updated:', viewerCount);
+                    break;
+                case 'viewer_joined':
+                    // Có người mới join, cập nhật số người xem
+                    viewerCount = data.viewers_count || 0;
+                    updateViewerCount();
+                    break;
+                case 'viewer_left':
+                    // Có người rời, cập nhật số người xem
+                    viewerCount = data.viewers_count || 0;
+                    updateViewerCount();
+                    break;
+                case 'livestream_joined':
+                    console.log('✅ Successfully joined livestream room');
+                    // Cập nhật số người xem khi join thành công
+                    if (data.viewers_count !== undefined) {
+                        viewerCount = data.viewers_count;
+                        updateViewerCount();
+                    }
+                    break;
                 case 'livestream_like_count':
-                    likeCount = data.count;
+                    // Cập nhật lượt thích real-time
+                    console.log('❤️ Viewer received livestream_like_count:', data);
+                    likeCount = data.count || 0;
+                    console.log('❤️ Viewer: Updating like count to', likeCount);
                     updateLikeCount();
+                    console.log('❤️ Viewer: Like count updated successfully to', likeCount);
                     break;
                 case 'livestream_chat':
                     const displayName = data.username || 'Khách';
@@ -919,10 +949,6 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                     break;
                 case 'livestream_stopped':
                     stopLivestreamVideo();
-                    break;
-                case 'livestream_joined':
-                    console.log('✅ Successfully joined livestream room');
-                    // Không cần làm gì thêm, chỉ log để confirm
                     break;
                 case 'webrtc_offer':
                     console.log('🎯 Received offer from streamer → creating answer...');
@@ -1164,7 +1190,13 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
         // Update like count
         function updateLikeCount() {
             const likeCountEl = document.getElementById('like-count-stat');
-            if (likeCountEl) likeCountEl.textContent = likeCount;
+            console.log('❤️ updateLikeCount called, likeCount:', likeCount, 'Element:', likeCountEl);
+            if (likeCountEl) {
+                likeCountEl.textContent = likeCount;
+                console.log('✅ Like count element updated to:', likeCount);
+            } else {
+                console.warn('⚠️ Like count element not found!');
+            }
         }
 
         // Record viewer join in database
@@ -1179,9 +1211,9 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    console.log('Viewer join recorded');
-                    // Update viewer count after recording
-                    updateViewerCountFromServer();
+                    console.log('✅ Viewer join recorded in database');
+                } else {
+                    console.warn('⚠️ Failed to record viewer join:', data.message);
                 }
             })
             .catch(error => {
@@ -1189,27 +1221,15 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             });
         }
 
-        // Update viewer count from server
-        function updateViewerCountFromServer() {
-            fetch(`api/livestream-api.php?action=get_products&livestream_id=${LIVESTREAM_ID}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Get viewer count from livestream data
-                    fetch(`api/livestream-api.php?action=get_livestream&id=${LIVESTREAM_ID}`)
-                    .then(response => response.json())
-                    .then(livestreamData => {
-                        if (livestreamData.success) {
-                            viewerCount = livestreamData.livestream.viewer_count || 0;
-                            updateViewerCount();
-                        }
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error updating viewer count:', error);
-            });
+        // Khởi tạo số người xem ban đầu từ database
+        function initViewerCount() {
+            // Số người xem ban đầu từ PHP
+            viewerCount = <?= $current_viewers ?>;
+            updateViewerCount();
         }
+        
+        // Gọi khi trang load
+        initViewerCount();
 
         // Chat functions
         function addChatMessage(sender, message) {
@@ -1466,24 +1486,87 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             window.location.href = `/index.php?checkout&livestream_id=<?= $livestream_id ?>`;
         }
 
-        // Like function
+        // Like function - không giới hạn số lần thích
         function toggleLike() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                console.log('❤️ Sending like to livestream');
-                ws.send(JSON.stringify({
-                    type: 'livestream_like',
-                    livestream_id: <?= $livestream_id ?>,
-                    user_id: <?= isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0 ?>
-                }));
-                
-                // Visual feedback
-                const likeBtn = event.target.closest('button');
+            const userId = <?= isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0 ?>;
+            const livestreamId = <?= $livestream_id ?>;
+            
+            // Chỉ cho phép user đã đăng nhập mới có thể thích
+            if (!userId || userId <= 0) {
+                alert('Vui lòng đăng nhập để thích livestream này!');
+                return;
+            }
+            
+            console.log('❤️ User clicking like button, userId:', userId, 'livestreamId:', livestreamId);
+            
+            // Visual feedback ngay lập tức
+            const likeBtn = event.target.closest('button');
+            if (likeBtn) {
                 likeBtn.style.transform = 'scale(1.2)';
                 likeBtn.style.color = '#ff4757';
                 setTimeout(() => {
                     likeBtn.style.transform = 'scale(1)';
+                    likeBtn.style.color = '';
                 }, 200);
             }
+            
+            // Gọi API trực tiếp từ frontend (đơn giản hơn và dễ debug)
+            const formData = new FormData();
+            formData.append('action', 'record_interaction');
+            formData.append('livestream_id', livestreamId);
+            formData.append('user_id', userId);
+            formData.append('action_type', 'like');
+            
+            console.log('❤️ Calling API directly to record like');
+            fetch('api/livestream-api.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('📥 API response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('📥 API response data:', data);
+                if (data.success) {
+                    console.log('✅ Like recorded successfully via API');
+                    // Sau khi ghi thành công, gửi qua WebSocket để broadcast
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        console.log('📡 Broadcasting like via WebSocket');
+                        ws.send(JSON.stringify({
+                            type: 'livestream_like_broadcast',
+                            livestream_id: livestreamId
+                        }));
+                    }
+                    // Refresh like count
+                    refreshLikeCount();
+                } else {
+                    console.error('❌ Failed to record like:', data.message);
+                    alert('Không thể thích: ' + (data.message || 'Lỗi không xác định'));
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error calling like API:', error);
+                alert('Có lỗi xảy ra khi thích. Vui lòng thử lại!');
+            });
+        }
+        
+        // Refresh like count từ API
+        function refreshLikeCount() {
+            const livestreamId = <?= $livestream_id ?>;
+            fetch(`api/livestream-api.php?action=get_realtime_stats&livestream_id=${livestreamId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.stats) {
+                        const newLikeCount = data.stats.like_count || 0;
+                        console.log('📊 Refreshed like count:', newLikeCount);
+                        likeCount = newLikeCount;
+                        updateLikeCount();
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error refreshing like count:', error);
+                });
         }
 
         // Share function

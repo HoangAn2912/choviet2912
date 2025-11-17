@@ -11,7 +11,7 @@ let livestreamRooms = {};
 let CONFIG = {
   hostname: process.env.HOSTNAME || 'localhost',
   port: process.env.PORT || 8080,
-  basePath: process.env.BASE_PATH || '/choviet29' // Có thể thay đổi qua environment variable
+  basePath: process.env.BASE_PATH || '' // Nếu project ở root thì để empty string, nếu trong folder thì thêm '/folder_name'
 };
 
 console.log("🟡 Đang chạy đúng file server.js JSON");
@@ -252,13 +252,30 @@ wss.on('connection', function connection(ws) {
       console.log(`🔴 User ${ws.user_id} đã ngắt kết nối`);
     }
     
-    // Xóa client khỏi livestream rooms
+    // Xóa client khỏi livestream rooms và thông báo cho các client khác
     Object.keys(livestreamRooms).forEach(roomId => {
       if (livestreamRooms[roomId]) {
         const index = livestreamRooms[roomId].indexOf(ws);
         if (index > -1) {
           livestreamRooms[roomId].splice(index, 1);
+          
+          // Thông báo cho tất cả clients (bao gồm streamer và viewer) về số người xem mới
+          const newCount = livestreamRooms[roomId].length;
+          broadcastToLivestream(roomId, {
+            type: 'viewers_count_update',
+            livestream_id: roomId,
+            viewers_count: newCount
+          });
+          
+          console.log(`📊 Livestream ${roomId} viewers count updated to ${newCount}`);
         }
+      }
+    });
+    
+    // Xóa khỏi livestreamClients
+    Object.keys(livestreamClients).forEach(clientId => {
+      if (livestreamClients[clientId].ws === ws) {
+        delete livestreamClients[clientId];
       }
     });
   });
@@ -297,6 +314,17 @@ function handleLivestreamMessage(ws, data) {
     case 'livestream_stats':
       handleLivestreamStats(ws, data);
       break;
+    case 'livestream_like':
+      handleLivestreamLike(ws, data);
+      break;
+    case 'livestream_like_broadcast':
+      // Frontend đã ghi vào database, chỉ cần broadcast số lượt thích mới
+      const { livestream_id } = data;
+      if (livestream_id) {
+        console.log('📡 Broadcasting like count update for livestream:', livestream_id);
+        fetchLikeCount(livestream_id);
+      }
+      break;
     // WebRTC signaling bridge
     case 'webrtc_offer':
     case 'webrtc_answer':
@@ -310,6 +338,9 @@ function handleLivestreamMessage(ws, data) {
     case 'get_livestream_status':
       handleGetLivestreamStatus(ws, data);
       break;
+    case 'order_created':
+      handleOrderCreated(ws, data);
+      break;
     default:
       console.log('❓ Unknown livestream message type:', data.type);
   }
@@ -322,7 +353,10 @@ function joinLivestream(ws, data) {
     livestreamRooms[livestream_id] = [];
   }
   
-  if (!livestreamRooms[livestream_id].includes(ws)) {
+  // Kiểm tra xem client đã trong room chưa
+  const alreadyInRoom = livestreamRooms[livestream_id].includes(ws);
+  
+  if (!alreadyInRoom) {
     livestreamRooms[livestream_id].push(ws);
   }
   
@@ -339,21 +373,32 @@ function joinLivestream(ws, data) {
     type: user_type || 'viewer'
   };
   
-  console.log(`🎥 User ${user_id} đã tham gia livestream ${livestream_id}`);
+  const currentViewersCount = livestreamRooms[livestream_id].length;
+  console.log(`🎥 User ${user_id} (${user_type || 'viewer'}) đã tham gia livestream ${livestream_id}. Tổng viewers: ${currentViewersCount}`);
   
-  // Gửi thông tin phòng cho client
+  // Gửi thông tin phòng cho client vừa join
   ws.send(JSON.stringify({
     type: 'livestream_joined',
     livestream_id: livestream_id,
-    viewers_count: livestreamRooms[livestream_id].length
+    viewers_count: currentViewersCount
   }));
   
-  // Thông báo cho các client khác
+  // Thông báo cho TẤT CẢ clients (bao gồm streamer và viewer) về số người xem mới
+  // KHÔNG exclude ws để cả người vừa join cũng nhận được cập nhật
   broadcastToLivestream(livestream_id, {
-    type: 'viewer_joined',
-    user_id: user_id,
-    viewers_count: livestreamRooms[livestream_id].length
-  }, ws);
+    type: 'viewers_count_update',
+    livestream_id: livestream_id,
+    viewers_count: currentViewersCount
+  });
+  
+  // Thông báo có người mới join (optional, để hiển thị thông báo)
+  if (!alreadyInRoom) {
+    broadcastToLivestream(livestream_id, {
+      type: 'viewer_joined',
+      user_id: user_id,
+      viewers_count: currentViewersCount
+    }, ws);
+  }
 }
 
 function leaveLivestream(ws, data) {
@@ -366,12 +411,20 @@ function leaveLivestream(ws, data) {
     }
   }
   
-  console.log(`🎥 User đã rời livestream ${livestream_id}`);
+  const newCount = livestreamRooms[livestream_id] ? livestreamRooms[livestream_id].length : 0;
+  console.log(`🎥 User đã rời livestream ${livestream_id}. Còn lại: ${newCount} viewers`);
   
-  // Thông báo cho các client khác
+  // Thông báo cho TẤT CẢ clients (bao gồm streamer và viewer) về số người xem mới
+  broadcastToLivestream(livestream_id, {
+    type: 'viewers_count_update',
+    livestream_id: livestream_id,
+    viewers_count: newCount
+  });
+  
+  // Thông báo có người rời (optional)
   broadcastToLivestream(livestream_id, {
     type: 'viewer_left',
-    viewers_count: livestreamRooms[livestream_id] ? livestreamRooms[livestream_id].length : 0
+    viewers_count: newCount
   }, ws);
 }
 
@@ -498,13 +551,231 @@ function handleLivestreamStats(ws, data) {
   console.log(`📊 Cập nhật thống kê livestream ${livestream_id}`);
 }
 
-function broadcastToLivestream(livestream_id, message, excludeWs = null) {
-  if (livestreamRooms[livestream_id]) {
-    livestreamRooms[livestream_id].forEach(client => {
-      if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(message));
+// Xử lý lượt thích livestream
+function handleLivestreamLike(ws, data) {
+  const { livestream_id, user_id } = data;
+  
+  if (!livestream_id || !user_id) {
+    console.log('❌ Missing livestream_id or user_id for like', { livestream_id, user_id });
+    return;
+  }
+  
+  console.log(`❤️ User ${user_id} liked livestream ${livestream_id}`);
+  console.log(`🔍 Calling API: http://${CONFIG.hostname}:${CONFIG.port}${CONFIG.basePath}/api/livestream-api.php`);
+  
+  // Gọi API PHP để ghi vào database (không giới hạn số lần thích)
+  // API dùng form data, không phải JSON
+  const querystring = require('querystring');
+  const postData = querystring.stringify({
+    action: 'record_interaction',
+    livestream_id: livestream_id,
+    user_id: user_id,
+    action_type: 'like'
+  });
+  
+  const apiPath = CONFIG.basePath + '/api/livestream-api.php';
+  const options = {
+    hostname: CONFIG.hostname,
+    port: CONFIG.port,
+    path: apiPath,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  };
+  
+  console.log(`📤 POST Request to: http://${options.hostname}:${options.port}${options.path}`);
+  console.log(`📤 POST Data:`, postData);
+  
+  const req = http.request(options, (res) => {
+    console.log(`📥 Response status: ${res.statusCode} ${res.statusMessage}`);
+    let responseData = '';
+    res.on('data', (chunk) => {
+      responseData += chunk;
+    });
+    res.on('end', () => {
+      console.log(`📥 Response data:`, responseData);
+      try {
+        const result = JSON.parse(responseData);
+        if (result.success) {
+          console.log('✅ Like recorded successfully');
+          // Lấy số lượt thích mới từ API
+          fetchLikeCount(livestream_id);
+        } else {
+          console.error('❌ Failed to record like:', result.message);
+        }
+      } catch (e) {
+        console.error('❌ Error parsing like response:', e);
+        console.error('❌ Raw response:', responseData);
       }
     });
+  });
+  
+  req.on('error', (error) => {
+    console.error('❌ Error calling like API:', error);
+    console.error('❌ Error details:', {
+      code: error.code,
+      message: error.message,
+      hostname: options.hostname,
+      port: options.port,
+      path: options.path
+    });
+  });
+  
+  req.write(postData);
+  req.end();
+}
+
+// Lấy số lượt thích mới và broadcast
+function fetchLikeCount(livestream_id) {
+  const apiPath = CONFIG.basePath + '/api/livestream-api.php?action=get_realtime_stats&livestream_id=' + livestream_id;
+  console.log(`🔍 Fetching like count from: http://${CONFIG.hostname}:${CONFIG.port}${apiPath}`);
+  
+  const req = http.get({
+    hostname: CONFIG.hostname,
+    port: CONFIG.port,
+    path: apiPath
+  }, (res) => {
+    console.log(`📥 Like count response status: ${res.statusCode}`);
+    let responseData = '';
+    res.on('data', (chunk) => {
+      responseData += chunk;
+    });
+    res.on('end', () => {
+      console.log(`📥 Like count response data:`, responseData);
+      try {
+        const result = JSON.parse(responseData);
+        if (result.success && result.stats) {
+          const likeCount = result.stats.like_count || 0;
+          
+          console.log(`📊 Current like count: ${likeCount} for livestream ${livestream_id}`);
+          
+          // Broadcast số lượt thích mới cho tất cả clients (viewer và streamer)
+          broadcastToLivestream(livestream_id, {
+            type: 'livestream_like_count',
+            livestream_id: livestream_id,
+            count: likeCount,
+            timestamp: new Date().toISOString()
+          });
+          
+          console.log(`❤️ Broadcasted like count: ${likeCount} for livestream ${livestream_id}`);
+        } else {
+          console.error('❌ Failed to get like count:', result.message || 'Unknown error');
+          console.error('❌ Result:', result);
+        }
+      } catch (e) {
+        console.error('❌ Error parsing like count response:', e);
+        console.error('❌ Raw response:', responseData);
+      }
+    });
+  });
+  
+  req.on('error', (error) => {
+    console.error('❌ Error fetching like count:', error);
+    console.error('❌ Error details:', {
+      code: error.code,
+      message: error.message,
+      hostname: CONFIG.hostname,
+      port: CONFIG.port,
+      path: apiPath
+    });
+  });
+}
+
+// Xử lý khi có đơn hàng mới được tạo
+function handleOrderCreated(ws, data) {
+  const { livestream_id, order_id, order_code, total_amount } = data;
+  
+  if (!livestream_id) {
+    console.log('❌ Missing livestream_id for order_created');
+    return;
+  }
+  
+  console.log(`📦 Order created: ${order_code || order_id} for livestream ${livestream_id}, amount: ${total_amount}`);
+  
+  // Broadcast thông báo đơn hàng mới cho streamer
+  broadcastToLivestream(livestream_id, {
+    type: 'order_created',
+    livestream_id: livestream_id,
+    order_id: order_id,
+    order_code: order_code || '',
+    total_amount: total_amount || 0,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Sau đó fetch và broadcast thống kê mới (số đơn hàng và doanh thu)
+  setTimeout(() => {
+    fetchLivestreamStats(livestream_id);
+  }, 500); // Delay nhỏ để đảm bảo database đã commit
+}
+
+// Lấy thống kê livestream và broadcast
+function fetchLivestreamStats(livestream_id) {
+  const apiPath = CONFIG.basePath + '/api/livestream-api.php?action=get_realtime_stats&livestream_id=' + livestream_id;
+  console.log(`🔍 Fetching livestream stats from: http://${CONFIG.hostname}:${CONFIG.port}${apiPath}`);
+  
+  const req = http.get({
+    hostname: CONFIG.hostname,
+    port: CONFIG.port,
+    path: apiPath
+  }, (res) => {
+    let responseData = '';
+    res.on('data', (chunk) => {
+      responseData += chunk;
+    });
+    res.on('end', () => {
+      try {
+        const result = JSON.parse(responseData);
+        if (result.success && result.stats) {
+          const stats = result.stats;
+          
+          console.log(`📊 Livestream stats:`, stats);
+          
+          // Broadcast thống kê mới cho streamer
+          broadcastToLivestream(livestream_id, {
+            type: 'livestream_stats_update',
+            livestream_id: livestream_id,
+            stats: {
+              order_count: stats.order_count || 0,
+              total_revenue: stats.total_revenue || 0,
+              like_count: stats.like_count || 0,
+              current_viewers: stats.current_viewers || 0
+            },
+            timestamp: new Date().toISOString()
+          });
+          
+          console.log(`📊 Broadcasted stats update for livestream ${livestream_id}`);
+        }
+      } catch (e) {
+        console.error('❌ Error parsing stats response:', e);
+      }
+    });
+  });
+  
+  req.on('error', (error) => {
+    console.error('❌ Error fetching stats:', error);
+  });
+}
+
+function broadcastToLivestream(livestream_id, message, excludeWs = null) {
+  if (livestreamRooms[livestream_id]) {
+    let sentCount = 0;
+    livestreamRooms[livestream_id].forEach(client => {
+      if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
+        try {
+          client.send(JSON.stringify(message));
+          sentCount++;
+        } catch (error) {
+          console.error('Error sending message to client:', error);
+        }
+      }
+    });
+    if (sentCount > 0) {
+      console.log(`📡 Broadcasted "${message.type}" to ${sentCount} clients in livestream ${livestream_id}`);
+    }
+  } else {
+    console.log(`⚠️ No clients in livestream room ${livestream_id}`);
   }
 }
 

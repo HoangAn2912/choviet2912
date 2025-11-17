@@ -159,9 +159,9 @@ echo "<script>document.title = 'Broadcast Livestream - Chợ Việt';</script>";
         <h5>Thống kê</h5>
         <div class="row g-2">
           <div class="col-6"><div class="stat"><div class="num" id="live-viewers">0</div><div>Đang xem</div></div></div>
+          <div class="col-6"><div class="stat"><div class="num" id="live-likes">0</div><div>Lượt thích</div></div></div>
           <div class="col-6"><div class="stat"><div class="num" id="live-orders">0</div><div>Đơn hàng</div></div></div>
           <div class="col-6"><div class="stat"><div class="num" id="live-revenue">0</div><div>Doanh thu</div></div></div>
-          <div class="col-6"><div class="stat"><div class="num" id="live-likes">0</div><div>Lượt thích</div></div></div>
         </div>
       </div>
     </div>
@@ -245,6 +245,47 @@ function initWs(){
       const isStreamer = msg.user_id == USER_ID;
       const nameWithIcon = isStreamer ? displayName + ' <i class="fas fa-home text-warning"></i>' : displayName;
       appendChat(nameWithIcon, msg.message||''); 
+    }
+    else if (msg.type==='viewers_count_update'){ 
+      // Cập nhật số người xem real-time từ WebSocket (ưu tiên cao nhất)
+      updateViewersCount(msg.viewers_count || 0);
+    }
+    else if (msg.type==='viewer_joined'){ 
+      // Có người mới join, cập nhật số người xem
+      updateViewersCount(msg.viewers_count || 0);
+    }
+    else if (msg.type==='viewer_left'){ 
+      // Có người rời, cập nhật số người xem
+      updateViewersCount(msg.viewers_count || 0);
+    }
+    else if (msg.type==='livestream_joined'){ 
+      // Streamer join thành công, nhận số người xem ban đầu
+      if (msg.viewers_count !== undefined) {
+        updateViewersCount(msg.viewers_count);
+      }
+    }
+    else if (msg.type==='order_created'){ 
+      // Cập nhật thống kê khi có đơn hàng mới
+      console.log('📦 Streamer received order_created:', msg);
+      refreshStats();
+    }
+    else if (msg.type==='livestream_stats_update'){ 
+      // Cập nhật thống kê real-time từ WebSocket
+      console.log('📊 Streamer received stats update:', msg.stats);
+      if (msg.stats) {
+        document.getElementById('live-orders').textContent = msg.stats.order_count || 0;
+        document.getElementById('live-revenue').textContent = formatRevenue(msg.stats.total_revenue || 0);
+        document.getElementById('live-likes').textContent = msg.stats.like_count || 0;
+        // Số người xem vẫn ưu tiên từ viewers_count_update
+        if (msg.stats.current_viewers && currentViewersCount === 0) {
+          updateViewersCount(msg.stats.current_viewers);
+        }
+      }
+    }
+    else if (msg.type==='livestream_like_count'){ 
+      // Cập nhật lượt thích real-time
+      updateLikesCount(msg.count || 0);
+      console.log('❤️ Streamer: Like count updated to', msg.count || 0);
     }
   };
 }
@@ -503,6 +544,73 @@ window.addEventListener('beforeunload', function(e) {
             'action=update_status&livestream_id=' + LIVESTREAM_ID + '&status=da_ket_thuc');
     }
 });
+
+// Hàm cập nhật số người xem (ưu tiên từ WebSocket real-time)
+let currentViewersCount = 0; // Lưu số người xem từ WebSocket
+function updateViewersCount(count) {
+  currentViewersCount = count;
+  document.getElementById('live-viewers').textContent = count;
+  console.log('📊 Streamer: Viewers count updated to', count);
+}
+
+// Hàm cập nhật lượt thích
+function updateLikesCount(count) {
+  document.getElementById('live-likes').textContent = count;
+}
+
+// Hàm format số tiền linh hoạt
+function formatRevenue(amount) {
+  if (!amount || amount === 0) return '0';
+  
+  const numAmount = parseFloat(amount);
+  
+  // Nếu >= 1 triệu, hiển thị theo triệu
+  if (numAmount >= 1000000) {
+    const trieu = (numAmount / 1000000).toFixed(3); // Giữ 3 chữ số thập phân
+    // Loại bỏ số 0 thừa ở cuối
+    const cleanTrieu = parseFloat(trieu).toString();
+    return cleanTrieu.replace('.', ',') + 'tr';
+  }
+  
+  // Nếu >= 100k, hiển thị theo k
+  if (numAmount >= 100000) {
+    const k = (numAmount / 1000).toFixed(0);
+    return k + 'k';
+  }
+  
+  // Nhỏ hơn 100k, hiển thị số đầy đủ với dấu phẩy ngăn cách hàng nghìn
+  return new Intl.NumberFormat('vi-VN').format(numAmount);
+}
+
+// Hàm refresh thống kê từ API (chỉ cập nhật đơn hàng, doanh thu, lượt thích)
+// Số người xem được cập nhật real-time qua WebSocket, không ghi đè
+function refreshStats() {
+  fetch(`api/livestream-api.php?action=get_realtime_stats&livestream_id=${LIVESTREAM_ID}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.stats) {
+        const stats = data.stats;
+        // Chỉ cập nhật số người xem nếu chưa có từ WebSocket (fallback)
+        if (currentViewersCount === 0) {
+          document.getElementById('live-viewers').textContent = stats.current_viewers || 0;
+          currentViewersCount = stats.current_viewers || 0;
+        }
+        // Cập nhật các thống kê khác
+        document.getElementById('live-orders').textContent = stats.order_count || 0;
+        document.getElementById('live-revenue').textContent = formatRevenue(stats.total_revenue || 0);
+        document.getElementById('live-likes').textContent = stats.like_count || 0;
+      }
+    })
+    .catch(error => {
+      console.error('Error refreshing stats:', error);
+    });
+}
+
+// Load thống kê ban đầu
+refreshStats();
+
+// Refresh thống kê mỗi 5 giây
+setInterval(refreshStats, 5000);
 
 initWs();
 </script>
