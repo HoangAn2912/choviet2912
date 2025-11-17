@@ -8,7 +8,7 @@ class qldoanhthu {
         
         // Simplified query - just get all products and calculate revenue
         $sql = "SELECT 
-                sp.id as products_id, 
+                sp.id as id, 
                 sp.title, 
                 sp.price, 
                 nd.id as users_id,
@@ -80,7 +80,7 @@ class qldoanhthu {
         // Simplified summary query
         $sql = "SELECT 
                 COUNT(*) as total_posts,
-                COUNT(DISTINCT id_users) as total_users,
+                COUNT(DISTINCT user_id) as total_users,
                 COUNT(*) * 11000 as total_revenue
                 FROM products
                 WHERE 1=1";
@@ -175,7 +175,7 @@ class qldoanhthu {
         
         // Simplified export query
         $sql = "SELECT 
-                sp.id as products_id, 
+                sp.id as id, 
                 sp.title, 
                 sp.price, 
                 nd.id as users_id,

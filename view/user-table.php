@@ -1,4 +1,15 @@
 <?php
+if ($_SESSION['role'] != 1) {
+    echo "<script>
+        alert('Bạn không đủ thẩm quyền truy cập!');
+        
+    </script>";
+    header("refresh: 0; url='/ad'");
+    exit;
+}
+?>
+
+<?php
 include_once("controller/cQLthongtin.php");
 $p = new cqlthongtin();
 

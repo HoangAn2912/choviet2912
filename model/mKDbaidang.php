@@ -22,7 +22,7 @@ class kdbaidang {
                 $price = $r['price'];
                 $hinh = $r['image'];
                 $status = $r['status'];
-                $status_ban = $r['sale_status'];
+                $sale_status = $r['sale_status'];
                 $created_date = $r['created_date'];
                 $updated_date = $r['updated_date'];
                 $note = $r['note'];
@@ -36,7 +36,7 @@ class kdbaidang {
                     'price' => $price,
                     'image' => $hinh,
                     'status' => $status,
-                    'status_ban' => $status_ban,
+                    'sale_status' => $sale_status,
                     'created_date' => $created_date,
                     'updated_date' => $updated_date,
                     'note' => $note
@@ -66,7 +66,7 @@ class kdbaidang {
                 $price = $r['price'];
                 $hinh = $r['image'];
                 $status = $r['status'];
-                $status_ban = $r['sale_status'];
+                $sale_status = $r['sale_status'];
                 $created_date = $r['created_date'];
                 $updated_date = $r['updated_date'];
                 $note = $r['note'];
@@ -80,7 +80,7 @@ class kdbaidang {
                     'price' => $price,
                     'image' => $hinh,
                     'status' => $status,
-                    'status_ban' => $status_ban,
+                    'sale_status' => $sale_status,
                     'created_date' => $created_date,
                     'updated_date' => $updated_date,
                     'note' => $note

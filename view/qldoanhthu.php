@@ -1,4 +1,15 @@
 <?php
+if ($_SESSION['role'] != 1 && $_SESSION['role'] !=5) {
+    echo "<script>
+        alert('Bạn không đủ thẩm quyền truy cập!');
+        
+    </script>";
+    header("refresh: 0; url='/ad'");
+    exit;
+}
+?>
+
+<?php
 include_once("controller/cQLdoanhthu.php");
 $p = new cqldoanhthu();
 
@@ -284,13 +295,13 @@ $chartDataJson = json_encode(array_values($chartData));
                 <?php if (empty($revenueData)): ?>
                   <tr>
                     <td colspan="6" class="empty-table-message">
-                                             Không tìm thấy dữ liệu doanh thu nào<?php echo ($startDate && $endDate) ? ' trong khoảng thời gian đã chọn' : ''; ?>.
+                      Không tìm thấy dữ liệu doanh thu nào<?php echo ($startDate && $endDate) ? ' trong khoảng thời gian đã chọn' : ''; ?>.
                     </td>
                   </tr>
                 <?php else: ?>
                   <?php foreach ($revenueData as $item): ?>
                     <tr>
-                      <td><?php echo $item['product_id']; ?></td>
+                      <td><?php echo $item['id']; ?></td>
                       <td><?php echo $item['title']; ?></td>
                       <td><?php echo formatCurrency($item['price']); ?></td>
                       <td><?php echo $item['username']; ?></td>

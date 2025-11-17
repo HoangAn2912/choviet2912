@@ -1,215 +1,138 @@
 <?php
-include_once("mConnect.php");
+require_once 'mConnect.php';
 
-class mGiaodich {
-    private $conn;
-    
+class PaymentManager {
+    private $db;
+
     public function __construct() {
-        $this->conn = new Connect();
-        $this->conn = $this->conn->connect();
+    $connect = new Connect();
+    $this->db = $connect->connect(); // trả về mysqli connection
+}
+
+    /**
+     * Tạo giao dịch mới
+     */
+    public function createTransaction($userId, $accountId, $amount, $notes = '') {
+        $transactionId = 'TXN' . time() . rand(1000, 9999);
+        $stmt = $this->db->prepare("
+            INSERT INTO transactions 
+            (transaction_id, user_id, account_id, amount, notes, status) 
+            VALUES (?, ?, ?, ?, ?, 'pending')
+        ");
+        if (!$stmt) {
+            return ['success' => false, 'error' => $this->db->error];
+        }
+
+        $stmt->bind_param("siids", $transactionId, $userId, $accountId, $amount, $notes);
+
+        if ($stmt->execute()) {
+            $transactionDbId = $stmt->insert_id; // MySQLi lấy ID insert
+            $stmt->close();
+
+            return [
+                'success' => true,
+                'transaction_id' => $transactionId,
+                'db_id' => $transactionDbId,
+                'amount' => $amount
+            ];
+        } else {
+            $stmt->close();
+            return ['success' => false, 'error' => 'Không thể tạo giao dịch: ' . $this->db->error];
+        }
     }
-    
-    // Get all transactions
-    public function getAllTransactions() {
-        $query = "SELECT gd.*, nd.username 
-                 FROM transfer_history gd 
-                 LEFT JOIN users nd ON gd.user_id = nd.id 
-                 ORDER BY gd.created_date DESC";
-        $result = $this->conn->query($query);
-        $data = array();
-        
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $data[] = $row;
+    public function getDb() {
+    return $this->db;
+}
+
+    /**
+     * Lấy thông tin tài khoản theo user_id
+     */
+    public function getAccountByUserId($userId) {
+        $stmt = $this->db->prepare("SELECT * FROM transfer_accounts WHERE user_id = ? LIMIT 1");
+        if (!$stmt) return null;
+
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $account = $result->fetch_assoc();
+        $stmt->close();
+
+        return $account;
+    }
+
+    /**
+     * Cập nhật balance sau khi nhận callback
+     */
+    public function updateBalance($transactionId, $amount, $callbackData = null) {
+        $this->db->begin_transaction();
+
+        try {
+            // Lấy transaction đang pending
+            $stmt = $this->db->prepare("
+                SELECT t.*, ta.id as account_id 
+                FROM transactions t 
+                JOIN transfer_accounts ta ON t.account_id = ta.id 
+                WHERE t.transaction_id = ? AND t.status = 'pending'
+            ");
+            $stmt->bind_param("s", $transactionId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transaction = $result->fetch_assoc();
+            $stmt->close();
+
+            if (!$transaction) {
+                throw new Exception("Transaction không tồn tại hoặc đã được xử lý");
             }
+
+            // Cập nhật balance
+            $stmt = $this->db->prepare("UPDATE transfer_accounts SET balance = balance + ? WHERE id = ?");
+            $stmt->bind_param("di", $amount, $transaction['account_id']);
+            $stmt->execute();
+            $stmt->close();
+
+            // Cập nhật trạng thái transaction
+            $callbackJson = $callbackData ? json_encode($callbackData) : null;
+            $stmt = $this->db->prepare("
+                UPDATE transactions 
+                SET status = 'completed', callback_data = ?, updated_at = NOW() 
+                WHERE transaction_id = ?
+            ");
+            $stmt->bind_param("ss", $callbackJson, $transactionId);
+            $stmt->execute();
+            $stmt->close();
+
+            $this->db->commit();
+            return ['success' => true, 'message' => 'Cập nhật balance thành công'];
+        } catch (Exception $e) {
+            $this->db->rollback();
+            return ['success' => false, 'error' => $e->getMessage()];
         }
-        
-        return $data;
     }
-    
-    // Get paginated transactions with filters
-    public function getPaginatedTransactions($offset, $limit, $statusFilter = 'all', $typeFilter = 'all', $searchTerm = '') {
-        $query = "SELECT gd.*, nd.username 
-                 FROM transfer_history gd 
-                 LEFT JOIN users nd ON gd.user_id = nd.id 
-                 WHERE 1=1";
-        
-        // Apply status filter
-        if ($statusFilter != 'all') {
-            $query .= " AND gd.transfer_status = '" . $this->conn->real_escape_string($statusFilter) . "'";
+
+    /**
+     * Lấy lịch sử giao dịch
+     */
+    public function getTransactionHistory($userId, $limit = 10) {
+        $stmt = $this->db->prepare("
+            SELECT t.*, ta.account_number 
+            FROM transactions t 
+            JOIN transfer_accounts ta ON t.account_id = ta.id 
+            WHERE t.user_id = ?
+            LIMIT ?
+        ");
+        if (!$stmt) return [];
+
+        $stmt->bind_param("ii", $userId, $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $transactions = [];
+        while ($row = $result->fetch_assoc()) {
+            $transactions[] = $row;
         }
-        
-        // Apply type filter
-        if ($typeFilter != 'all') {
-            $query .= " AND gd.transfer_type = '" . $this->conn->real_escape_string($typeFilter) . "'";
-        }
-        
-        // Apply search filter
-        if (!empty($searchTerm)) {
-            $searchTerm = $this->conn->real_escape_string($searchTerm);
-            $query .= " AND (gd.id LIKE '%$searchTerm%' OR nd.username LIKE '%$searchTerm%')";
-        }
-        
-        $query .= " ORDER BY gd.created_date DESC LIMIT $offset, $limit";
-        
-        $result = $this->conn->query($query);
-        $data = array();
-        
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $data[] = $row;
-            }
-        }
-        
-        return $data;
-    }
-    
-    // Count transactions for pagination
-    public function countTransactions($statusFilter = 'all', $typeFilter = 'all', $searchTerm = '') {
-        $query = "SELECT COUNT(*) as total 
-                 FROM transfer_history gd 
-                 LEFT JOIN users nd ON gd.user_id = nd.id 
-                 WHERE 1=1";
-        
-        // Apply status filter
-        if ($statusFilter != 'all') {
-            $query .= " AND gd.transfer_status = '" . $this->conn->real_escape_string($statusFilter) . "'";
-        }
-        
-        // Apply type filter
-        if ($typeFilter != 'all') {
-            $query .= " AND gd.transfer_type = '" . $this->conn->real_escape_string($typeFilter) . "'";
-        }
-        
-        // Apply search filter
-        if (!empty($searchTerm)) {
-            $searchTerm = $this->conn->real_escape_string($searchTerm);
-            $query .= " AND (gd.id LIKE '%$searchTerm%' OR nd.username LIKE '%$searchTerm%')";
-        }
-        
-        $result = $this->conn->query($query);
-        $row = $result->fetch_assoc();
-        
-        return $row['total'];
-    }
-    
-    // Get transaction by ID
-    public function getTransactionById($id) {
-        $id = $this->conn->real_escape_string($id);
-        $query = "SELECT gd.*, nd.username 
-                 FROM transfer_history gd 
-                 LEFT JOIN users nd ON gd.user_id = nd.id 
-                 WHERE gd.id = '$id'";
-        
-        $result = $this->conn->query($query);
-        
-        if ($result->num_rows > 0) {
-            return $result->fetch_assoc();
-        }
-        
-        return null;
-    }
-    
-    // Add new transaction
-    public function addTransaction($userId, $type, $amount, $status) {
-        $userId = $this->conn->real_escape_string($userId);
-        $type = $this->conn->real_escape_string($type);
-        $amount = $this->conn->real_escape_string($amount);
-        $status = $this->conn->real_escape_string($status);
-        $date = date('Y-m-d H:i:s');
-        
-        $query = "INSERT INTO transfer_history (id_users, transfer_type, amount, status, created_date) 
-                 VALUES ('$userId', '$type', '$amount', '$status', '$date')";
-        
-        if ($this->conn->query($query)) {
-            return $this->conn->insert_id;
-        }
-        
-        return false;
-    }
-    
-    // Update transaction status
-    public function updateTransactionStatus($id, $status) {
-        $id = $this->conn->real_escape_string($id);
-        $status = $this->conn->real_escape_string($status);
-        
-        $query = "UPDATE transfer_history SET status = '$status' WHERE id = '$id'";
-        
-        return $this->conn->query($query);
-    }
-    
-    // Process bulk status update
-    public function bulkUpdateStatus($ids, $status) {
-        if (empty($ids)) return false;
-        
-        $idList = array();
-        foreach ($ids as $id) {
-            $idList[] = $this->conn->real_escape_string($id);
-        }
-        
-        $idString = implode("','", $idList);
-        $status = $this->conn->real_escape_string($status);
-        
-        $query = "UPDATE transfer_history SET status = '$status' WHERE id IN ('$idString')";
-        
-        return $this->conn->query($query);
-    }
-    
-    // Get unique transaction types
-    public function getTransactionTypes() {
-        $query = "SELECT DISTINCT transfer_type FROM transfer_history ORDER BY transfer_type";
-        $result = $this->conn->query($query);
-        $types = array();
-        
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $types[] = $row['transfer_type'];
-            }
-        }
-        
-        return $types;
-    }
-    
-    // Get transaction statistics
-    public function getTransactionStats() {
-        $query = "SELECT 
-                    COUNT(*) as total_transactions,
-                    SUM(CASE WHEN status = 'Hoàn thành' THEN 1 ELSE 0 END) as completed,
-                    SUM(CASE WHEN status = 'Đang xử lý' THEN 1 ELSE 0 END) as processing,
-                    SUM(CASE WHEN status = 'Hủy' THEN 1 ELSE 0 END) as cancelled,
-                    SUM(CASE WHEN transfer_type = 'Nạp tiền' THEN amount ELSE 0 END) as total_deposits,
-                    SUM(CASE WHEN transfer_type = 'Rút tiền' THEN amount ELSE 0 END) as total_withdrawals
-                 FROM transfer_history";
-        
-        $result = $this->conn->query($query);
-        
-        if ($result->num_rows > 0) {
-            return $result->fetch_assoc();
-        }
-        
-        return array(
-            'total_transactions' => 0,
-            'completed' => 0,
-            'processing' => 0,
-            'cancelled' => 0,
-            'total_deposits' => 0,
-            'total_withdrawals' => 0
-        );
-    }
-    
-    // Get users for dropdown
-    public function getUsers() {
-        $query = "SELECT id, username FROM users WHERE role_id = 2 AND is_active = 1 ORDER BY username";
-        $result = $this->conn->query($query);
-        $users = array();
-        
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $users[] = $row;
-            }
-        }
-        
-        return $users;
+
+        $stmt->close();
+        return $transactions;
     }
 }
 ?>

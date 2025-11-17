@@ -1,4 +1,15 @@
 <?php
+if ($_SESSION['role'] != 1 && $_SESSION['role'] !=4) {
+    echo "<script>
+        alert('Bạn không đủ thẩm quyền truy cập!');
+        
+    </script>";
+    header("refresh: 0; url='/ad'");
+    exit;
+}
+?>
+
+<?php
 
 // Handle banner operations
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -83,11 +94,10 @@ if (isset($_GET['edit'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="../css/admin.css">
+    <title>QL Banner</title>
 </head>
 <body>
-   <div class="col-md-9 col-lg-10 main-content">
+   <div class="main-content">
                 <?php if (isset($success_message)): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <i class="fas fa-check-circle"></i> <?= $success_message ?>
@@ -169,7 +179,7 @@ if (isset($_GET['edit'])) {
                                     <i class="fas fa-save"></i> <?= $edit_banner ? 'Cập nhật' : 'Thêm mới' ?>
                                 </button>
                                 <?php if ($edit_banner): ?>
-                                    <a href="ad" class="btn btn-secondary">
+                                    <a href="/ad/edit-banner" class="btn btn-secondary">
                                         <i class="fas fa-times"></i> Hủy
                                     </a>
                                 <?php endif; ?>
@@ -230,19 +240,19 @@ if (isset($_GET['edit'])) {
                                                 <td>
                                                     <div class="btn-group" role="group">
                                                         <a href="edit-banner?edit=<?= $banner['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                                            <i class="fas fa-edit"></i>
+                                                            Sửa<i class="fas fa-edit"></i>
                                                         </a>
                                                         <form method="POST" style="display: inline;" 
                                                               onsubmit="return confirm('Bạn có chắc chắn muốn xóa banner này?')">
                                                             <input type="hidden" name="action" value="delete_banner">
                                                             <input type="hidden" name="id" value="<?= $banner['id'] ?>">
                                                             <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                                <i class="fas fa-trash"></i>
+                                                                Xóa<i class="fas fa-trash"></i>
                                                             </button>
                                                         </form>
                                                     </div>
                                                 </td>
-                                            </tr>
+                                            </tr>   
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>

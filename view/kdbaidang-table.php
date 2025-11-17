@@ -1,4 +1,15 @@
 <?php
+if ($_SESSION['role'] != 1 && $_SESSION['role'] !=4) {
+    echo "<script>
+        alert('Bạn không đủ thẩm quyền truy cập!');
+        
+    </script>";
+    header("refresh: 0; url='/ad'");
+    exit;
+}
+?>
+
+<?php
 include_once("controller/cKDbaidang.php");
 $p = new ckdbaidang();
 
@@ -33,8 +44,7 @@ if (isset($_POST['btn_duyet'])) {
     $p->getduyetbai($_POST['idbv']);
     
     // Preserve pagination and filter parameters
-    require_once __DIR__ . '/../helpers/url_helper.php';
-    $redirectUrl = getBasePath() . "/ad/kdbaidang?status=approved";
+    $redirectUrl = "/ad/kdbaidang?status=approved";
     if (!empty($filter_status)) $redirectUrl .= "&status={$filter_status}";
     if (!empty($filter_product)) $redirectUrl .= "&product_type={$filter_product}";
     if (!empty($search_term)) $redirectUrl .= "&search={$search_term}";
@@ -49,7 +59,7 @@ if (isset($_POST['btn_duyet'])) {
     $p->gettuchoi($id, $ghichu);
     
     // Preserve pagination and filter parameters
-    $redirectUrl = getBasePath() . "/ad/kdbaidang?status=rejected";
+    $redirectUrl = "/ad/kdbaidang?status=rejected";
     if (!empty($filter_status)) $redirectUrl .= "&status={$filter_status}";
     if (!empty($filter_product)) $redirectUrl .= "&product_type={$filter_product}";
     if (!empty($search_term)) $redirectUrl .= "&search={$search_term}";
@@ -69,7 +79,7 @@ foreach ($all_data as $item) {
 
 // Function to generate pagination URL
 function getPaginationUrl($page, $status, $product_type, $search) {
-    $url = getBasePath() . "/ad/kdbaidang?page={$page}";
+    $url = "/ad/kdbaidang?page={$page}";
     if (!empty($status)) $url .= "&status={$status}";
     if (!empty($product_type)) $url .= "&product_type={$product_type}";
     if (!empty($search)) $url .= "&search={$search}";
@@ -86,7 +96,7 @@ foreach($all_data as $item) {
     if($item['status'] == "Chờ duyệt") $waiting_count++;
     if($item['status'] == "Đã duyệt") $approved_count++;
     if($item['status'] == "Từ chối duyệt") $rejected_count++;
-    if($item['status_ban'] == "Đã bán") $sold_count++;
+    if($item['sale_status'] == "Đã bán") $sold_count++;
 }
 ?>
 <!DOCTYPE html>
@@ -105,8 +115,7 @@ foreach($all_data as $item) {
     <link rel="stylesheet" href="../admin/src/assets/css/style.css">
     <!-- endinject -->
     <link rel="shortcut icon" href="../admin/src/assets/images/favicon.ico" />
-    <?php require_once __DIR__ . '/../helpers/url_helper.php'; ?>
-    <link rel="stylesheet" href="<?= getBasePath() ?>/css/kdbaidang.css">
+    <link rel="stylesheet" href="/css/kdbaidang.css">
     <style>
         /* Pagination styles */
         .pagination {
@@ -194,14 +203,14 @@ foreach($all_data as $item) {
                         <?php if (isset($_GET['status']) && $_GET['status'] == 'approved'): ?>
                         <div class="status-message success">
                             <i class="fa fa-check-circle"></i>
-                            Bài đăng đã được duyệt thành công.
+                            Bài đăng đã được duyệt thành công!
                         </div>
                         <?php endif; ?>
                         
                         <?php if (isset($_GET['status']) && $_GET['status'] == 'rejected'): ?>
                         <div class="status-message info">
                             <i class="fa fa-info-circle"></i>
-                            Bài đăng đã được từ chối.
+                            Bài đăng đã bị từ chối!
                         </div>
                         <?php endif; ?>
                         
@@ -253,7 +262,7 @@ foreach($all_data as $item) {
                                 </div>
                                 <div class="filter-buttons">
                                     <button type="submit" class="btn btn-primary">Lọc</button>
-                                    <a href="<?= getBasePath() ?>/ad/kdbaidang" class="btn btn-outline-secondary">Đặt lại</a>
+                                    <a href="/ad/kdbaidang" class="btn btn-outline-secondary">Đặt lại</a>
                                 </div>
                             </form>
                         </div>
@@ -277,17 +286,17 @@ foreach($all_data as $item) {
                                 <?php
                                 if(count($data) > 0) {
                                     foreach($data as $r){
-                                        $status = $r['status'];
+                                        $trang_thai = $r['status'];
                                         $badge_class = "";
                                         $icon = "";
                                         
-                                        if($status == "Đã duyệt"){
+                                        if($trang_thai == "Đã duyệt"){
                                             $badge_class = "bg-success text-white";
                                             $icon = '<i class="fa fa-check-circle"></i> ';
-                                        } else if ($status == "Chờ duyệt") {
+                                        } else if ($trang_thai == "Chờ duyệt") {
                                             $badge_class = "bg-warning text-dark";
                                             $icon = '<i class="fa fa-clock"></i> ';
-                                        } else if($status == "Từ chối duyệt") {
+                                        } else if($trang_thai == "Từ chối duyệt") {
                                             $badge_class = "bg-danger text-white";
                                             $icon = '<i class="fa fa-times-circle"></i> ';
                                         } else {
@@ -295,14 +304,14 @@ foreach($all_data as $item) {
                                             $icon = '';
                                         }
 
-                                        $status_ban = $r['status_ban'];
+                                        $trang_thai_ban = $r['sale_status'];
                                         $ban_badge = "";
                                         $ban_icon = "";
 
-                                        if ($status_ban == "Đã bán") {
+                                        if ($trang_thai_ban == "Đã bán") {
                                             $ban_badge = "bg-info text-white";
                                             $ban_icon = '<i class="fa fa-shopping-cart"></i> ';
-                                        } else if ($status_ban == "Đang bán") {
+                                        } else if ($trang_thai_ban == "Đang bán") {
                                             $ban_badge = "bg-light text-dark";
                                             $ban_icon = '<i class="fa fa-tag"></i> ';
                                         } else {
@@ -319,13 +328,13 @@ foreach($all_data as $item) {
                                             ]
                                         ];
                                         
-                                        if($status == "Chờ duyệt") {
+                                        if($trang_thai == "Chờ duyệt") {
                                             $timeline[] = [
                                                 'status' => 'Đang chờ duyệt',
                                                 'date' => $r['created_date'],
                                                 'class' => 'pending'
                                             ];
-                                        } else if($status == "Đã duyệt") {
+                                        } else if($trang_thai == "Đã duyệt") {
                                             $timeline[] = [
                                                 'status' => 'Đang chờ duyệt',
                                                 'date' => $r['created_date'],
@@ -336,7 +345,7 @@ foreach($all_data as $item) {
                                                 'date' => $r['updated_date'],
                                                 'class' => 'active'
                                             ];
-                                        } else if($status == "Từ chối duyệt") {
+                                        } else if($trang_thai == "Từ chối duyệt") {
                                             $timeline[] = [
                                                 'status' => 'Đang chờ duyệt',
                                                 'date' => $r['created_date'],
@@ -349,7 +358,7 @@ foreach($all_data as $item) {
                                             ];
                                         }
                                         
-                                        if($status_ban == "Đã bán") {
+                                        if($trang_thai_ban == "Đã bán") {
                                             $timeline[] = [
                                                 'status' => 'Đã bán',
                                                 'date' => '',
@@ -365,17 +374,17 @@ foreach($all_data as $item) {
                                             </td>
                                             <td>'.$r['id'].'</td>
                                             <td>'.$r['category_name'].'</td>
-                                            <td><img src="<?= getBasePath() ?>/img/'.explode(',', $r['image'])[0].'" alt=""></td>
+                                            <td><img src="/img/'.explode(',', $r['image'])[0].'" alt=""></td>
                                             <td>
-                                                <div class="status-badge '.$badge_class.'">'.$icon.$status.'</div>
-                                                <div class="status-badge '.$ban_badge.'" style="margin-top: 5px;">'.$ban_icon.$status_ban.'</div>
+                                                <div class="status-badge '.$badge_class.'">'.$icon.$trang_thai.'</div>
+                                                <div class="status-badge '.$ban_badge.'" style="margin-top: 5px;">'.$ban_icon.$trang_thai_ban.'</div>
                                             </td>
                                             <td>
                                                 <div>Đăng: '.$r['created_date'].'</div>
                                                 <div>Cập nhật: '.$r['updated_date'].'</div>
                                             </td>
                                             <td>
-                                                <form action="<?= getBasePath() ?>/ad/kdbaidang?ct&id='.$r['id'].'" method="post">
+                                                <form action="/ad/kdbaidang?ct&id='.$r['id'].'" method="post">
                                                     <input type="hidden" name="idsp" value="'.$r['id'].'">
                                                     <div class="action-buttons">
                                                         <button type="submit" class="btn btn-primary btn-sm" name="btn_ct" data-bs-toggle="modal" data-bs-target="#viewDetailsModal" data-id="'.$r['id'].'">
@@ -385,7 +394,7 @@ foreach($all_data as $item) {
                                                 </form>
                                             </td>';
                                             echo '<td>';
-                                            if($status == "Chờ duyệt"){
+                                            if($trang_thai == "Chờ duyệt"){
                                                 echo '<div class="action-buttons">  
                                                     <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="'.$r['id'].'">
                                                         <i class="fa fa-check"></i> Duyệt
@@ -421,14 +430,14 @@ foreach($all_data as $item) {
                                                         </div>
                                                         <div class="detail-row">
                                                             <div class="detail-label">Mô tả:</div>
-                                                            <div class="detail-value">'.$r['comment'].'</div>
+                                                            <div class="detail-value">'.$r['description'].'</div>
                                                         </div>
                                                         <div class="detail-row">
                                                             <div class="detail-label">Ngày đăng:</div>
                                                             <div class="detail-value">'.$r['created_date'].'</div>
                                                         </div>';
                                                         
-                                                        if($status == "Từ chối duyệt") {
+                                                        if($trang_thai == "Từ chối duyệt") {
                                                             echo '<div class="detail-row">
                                                                 <div class="detail-label">Lý do từ chối:</div>
                                                                 <div class="detail-value text-danger">'.$r['note'].'</div>
