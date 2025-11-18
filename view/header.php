@@ -182,11 +182,6 @@ if (isset($_SESSION['user_id'])) {
             color: #fff !important;
         }
 
-        /* Nút Đăng Tin - Bo góc */
-        .btn-dang-tin {
-            border-radius: 8px !important;
-        }
-
         /* Dropdown Toggle */
         .dropdown-toggle {
             position: relative;

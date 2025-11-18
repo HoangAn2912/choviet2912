@@ -1,28 +1,37 @@
-// Cấu hình môi trường cho Node.js WebSocket Server
-// File cấu hình thực tế cho dự án chạy ở thư mục gốc htdocs
+// ========================================
+// CẤU HÌNH MÔI TRƯỜNG CHO NODE.JS SERVER
+// ========================================
+// 🔴 Đổi NODE_ENV để chuyển môi trường:
+// - development (local)
+// - production (hosting)
 
-module.exports = {
-  // Hostname cho web server
-  hostname: 'localhost',
+const ENV = process.env.NODE_ENV || 'development';
+
+const config = {
+  development: {
+    // LOCAL (XAMPP)
+    hostname: 'localhost',
+    port: 8080,
+    basePath: '',
+    wsPort: 3000,
+    wsSecret: '',
+    projectRoot: 'D:\\xampp\\htdocs',
+    chatPath: 'D:\\xampp\\htdocs\\chat'
+  },
   
-  // Port cho web server  
-  port: 8080,
-  
-  // Base path cho project ở thư mục gốc (để rỗng)
-  basePath: '',
-  
-  // Port cho WebSocket server
-  wsPort: 3000,
-  
-  // Secret để ký HMAC token cho WebSocket (để trống để tắt xác thực)
-  wsSecret: '',
-  
-  // Đường dẫn tuyệt đối đến thư mục project ở gốc
-  projectRoot: 'D:\\xampp\\htdocs',
-  
-  // Đường dẫn đến thư mục chat ở gốc
-  chatPath: 'D:\\xampp\\htdocs\\chat'
+  production: {
+    // HOSTING - ⚠️ Cập nhật khi deploy
+    hostname: 'yourdomain.com',
+    port: 8080,
+    basePath: '',
+    wsPort: 3000,
+    wsSecret: '',  // Nên thêm secret cho production
+    projectRoot: '/home/username/public_html',
+    chatPath: '/home/username/public_html/chat'
+  }
 };
+
+module.exports = config[ENV] || config.development;
 
 
 

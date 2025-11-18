@@ -1,0 +1,70 @@
+# ========================================
+# GITIGNORE CHO DỰ ÁN PHP
+# ========================================
+
+# File cấu hình môi trường (chứa thông tin nhạy cảm)
+config/env_config.php
+config/email_config.php
+config/server_config.js
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Composer vendor
+vendor/
+
+# Logs
+logs/*.log
+*.log
+
+# File upload
+img/*.jpg
+img/*.png
+img/*.gif
+!img/default-avatar.jpg
+!img/favicon.ico
+
+# Chat data
+chat/*.json
+
+# IDE và Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Database dumps
+*.sql
+!data/choviet29.sql
+
+
+
