@@ -249,7 +249,7 @@ if (isset($_GET['edit'])) {
                                                 <td><?= date('d/m/Y H:i', strtotime($banner['created_at'])) ?></td>
                                                 <td>
                                                     <div class="btn-group" role="group">
-                                                        <a href="edit-banner?edit=<?= $banner['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                                        <a href="qlbanner?edit=<?= $banner['id'] ?>" class="btn btn-sm btn-outline-primary">
                                                             Sửa<i class="fas fa-edit"></i>
                                                         </a>
                                                         <form method="POST" style="display: inline;" 

@@ -258,16 +258,22 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
                 include_once("view/kdbaidang-detail.php");
             }else
                 include_once("view/kdbaidang-table.php");
-            }else if(isset($_GET["qlbanner"])){
-            include_once("view/editbanner.php");
+            }else if (isset($_GET["qlbanner"]) || isset($_GET["edit"])) {
+                // Nếu có tham số edit thì mở trang sửa banner
+                if (isset($_GET['edit'])) {
+                    include_once("view/editbanner.php");
+                // Nếu không có edit → mở trang danh sách banner
+                } else {
+                    include_once("view/editbanner.php");
+                }
             }else if(isset($_GET["qldoanhthu"])){
-            include_once("view/qldoanhthu.php");
+                include_once("view/qldoanhthu.php");
             }else if(isset($_GET["qldonhang"])){
-            include_once("view/qldonhang.php");
+                include_once("view/qldonhang.php");
             }else if(isset($_GET["qlgiaodich"])){
-            include_once("view/qlgiaodich.php");
+                include_once("view/qlgiaodich.php");
             }else{
-            include_once("view/info-admin.php");
+                include_once("view/info-admin.php");
             }
         ?>
         </div>
