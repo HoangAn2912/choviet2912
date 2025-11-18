@@ -7,6 +7,56 @@ $mysqli = $con->connect();
 <?php
 ob_start(); // Bắt đầu bộ đệm để tránh lỗi headers
 // error_reporting(0);
+
+// Xử lý AJAX request TRƯỚC KHI output HTML
+if (isset($_GET['qldonhang']) && isset($_GET['action']) && $_GET['action'] === 'get_details' && isset($_GET['order_id'])) {
+    // Xóa output buffer để đảm bảo không có HTML nào được output
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    // Kiểm tra session cho AJAX request
+    if (!isset($_SESSION['role']) || ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5)) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Không đủ thẩm quyền'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    
+    include_once("controller/cQLdonhang.php");
+    $controller = new cQLdonhang();
+    
+    header('Content-Type: application/json');
+    
+    try {
+        $order_id = intval($_GET['order_id']);
+        
+        if ($order_id <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID đơn hàng không hợp lệ'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        
+        $order = $controller->getOrderDetails($order_id);
+        
+        if ($order) {
+            // Đảm bảo tất cả các trường cần thiết đều có giá trị
+            $order['order_code'] = $order['order_code'] ?? '';
+            $order['status'] = $order['status'] ?? 'pending';
+            $order['total_amount'] = $order['total_amount'] ?? 0;
+            $order['payment_method'] = $order['payment_method'] ?? '';
+            $order['created_at'] = $order['created_at'] ?? date('Y-m-d H:i:s');
+            $order['updated_at'] = $order['updated_at'] ?? $order['created_at'];
+            $order['items'] = $order['items'] ?? [];
+            
+            echo json_encode(['success' => true, 'order' => $order], JSON_UNESCAPED_UNICODE);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Không tìm thấy đơn hàng'], JSON_UNESCAPED_UNICODE);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+    }
+    exit;
+}
+
 if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) {
     echo "<script>
         alert('Bạn không đủ thẩm quyền truy cập!');
@@ -36,6 +86,36 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
 <link rel="stylesheet" href="/admin/src/assets/css/style.css">
 <!-- endinject -->
 <link rel="shortcut icon" href="/admin/src/assets/images/favicon.ico" />
+<style>
+    /* Cố định sidebar */
+    @media (min-width: 992px) {
+        .sidebar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .main-panel {
+            margin-left: 257px;
+        }
+        .page-body-wrapper {
+            padding-top: 0;
+        }
+    }
+    
+    /* Tạo khoảng cách giữa header và nội dung */
+    .content-wrapper {
+        padding-top: 20px !important;
+        padding-bottom: 20px;
+    }
+    
+    /* Đảm bảo nội dung không bị đè bởi navbar fixed */
+    .main-panel {
+        padding-top: 0;
+    }
+</style>
 
 </head>
 <body>
@@ -49,15 +129,11 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
     </div>
     <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
         <ul class="navbar-nav me-lg-4 w-100">
-        <li class="nav-item nav-search d-none d-lg-block w-100">
-            <div class="input-group">
-            <div class="input-group-prepend">
-                <span class="input-group-text" id="search">
-                <i class="mdi mdi-magnify"></i>
+        <li class="nav-item d-none d-lg-block w-100">
+            <div class="d-flex align-items-center justify-content-center h-100">
+                <span style="font-size: 1.2rem; font-weight: 600; color: #333;">
+                    <i class="mdi mdi-store"></i> CHỢ VIỆT - Hệ thống quản lý
                 </span>
-            </div>
-            <input type="text" class="form-control" placeholder="Search now" aria-label="search"
-                aria-describedby="search">
             </div>
         </li>
         </ul>
@@ -168,8 +244,8 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
     <div class="main-panel">
         <div class="content-wrapper">
         <?php
-            if(isset($_GET["qlnguoidung"])){
-            if(isset($_GET["ids"])){
+            if(isset($_GET["qlnguoidung"]) || isset($_GET["taikhoan"])){
+            if(isset($_GET["ids"]) || isset($_GET["sua"])){
                 include_once("view/info-update.php");
             }else if(isset($_GET["them"])){
                 include_once("view/info-insert.php");
@@ -199,10 +275,9 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
         <!-- partial:partials/_footer.html -->
         <footer class="footer">
         <div class="d-sm-flex justify-content-center justify-content-sm-between">
-            <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2024 <a
-                href="https://www.bootstrapdash.com/" target="_blank">Bootstrapdash</a>. All rights reserved.</span>
-            <span class="float-none float-sm-end d-block mt-1 mt-sm-0 text-center">Hand-crafted & made with <i
-                class="mdi mdi-heart text-danger"></i></span>
+            <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">
+                CÔNG TY TNHH CHỢ VIỆT - Người đại diện: Nguyễn Phúc Hoàng An, Trần Thái Bảo;
+            </span>
         </div>
         </footer>
         <!-- partial -->

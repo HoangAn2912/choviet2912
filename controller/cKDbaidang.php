@@ -15,11 +15,11 @@ class ckdbaidang {
     }
     public function getduyetbai($id){
         $p = new kdbaidang();
-        $p->duyetBai($id);
+        return $p->duyetBai($id);
     }
     public function gettuchoi($id, $ghichu){
         $p = new kdbaidang();
-        $p->tuChoiBai($id, $ghichu);
+        return $p->tuChoiBai($id, $ghichu);
     }
     function getPaginatedPosts($offset, $limit, $status = '', $product_type = '', $search = '') {
         $p = new kdbaidang();

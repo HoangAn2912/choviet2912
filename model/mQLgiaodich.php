@@ -94,7 +94,7 @@ class PaymentManager {
             $callbackJson = $callbackData ? json_encode($callbackData) : null;
             $stmt = $this->db->prepare("
                 UPDATE transactions 
-                SET status = 'completed', callback_data = ?, updated_at = NOW() 
+                SET status = 'completed', callback_data = ? 
                 WHERE transaction_id = ?
             ");
             $stmt->bind_param("ss", $callbackJson, $transactionId);

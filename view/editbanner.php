@@ -89,15 +89,29 @@ if (isset($_GET['edit'])) {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QL Banner</title>
-</head>
-<body>
-   <div class="main-content">
+<style>
+        /* CSS riêng cho trang quản lý banner */
+        .banner-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px;
+            margin-top: 40px;
+        }
+        
+        /* Card background trắng */
+        .banner-container .card {
+            background: white;
+        }
+        
+        /* Tiêu đề giống các trang khác */
+        .banner-container .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+    </style>
+
+   <div class="banner-container">
                 <?php if (isset($success_message)): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <i class="fas fa-check-circle"></i> <?= $success_message ?>
@@ -107,13 +121,11 @@ if (isset($_GET['edit'])) {
 
                 <!-- Banner Form -->
                 <div class="card form-card">
-                    <div class="card-header">
-                        <h4>
+                    <div class="card-body">
+                        <h3 class="card-title">
                             <i class="fas fa-<?= $edit_banner ? 'edit' : 'plus' ?>"></i>
                             <?= $edit_banner ? 'Chỉnh sửa Banner' : 'Thêm Banner mới' ?>
-                        </h4>
-                    </div>
-                    <div class="card-body">
+                        </h3>
                         <form method="POST" action="">
                             <input type="hidden" name="action" value="<?= $edit_banner ? 'update_banner' : 'add_banner' ?>">
                             <?php if ($edit_banner): ?>
@@ -190,10 +202,8 @@ if (isset($_GET['edit'])) {
 
                 <!-- Banner List -->
                 <div class="card">
-                    <div class="card-header">
-                        <h4><i class="fas fa-list"></i> Danh sách Banner</h4>
-                    </div>
                     <div class="card-body">
+                        <h3 class="card-title"><i class="fas fa-list"></i> Danh sách Banner</h3>
                         <?php if (empty($banners)): ?>
                             <div class="text-center py-5">
                                 <i class="fas fa-images fa-3x text-muted mb-3"></i>
@@ -262,10 +272,6 @@ if (isset($_GET['edit'])) {
                 </div>
             </div>
         </div>
-    </div> 
-    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/theme-toggle.js"></script> -->
-</body>
-</html>
+    </div>
 
 

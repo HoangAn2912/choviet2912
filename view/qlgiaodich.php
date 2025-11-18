@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newStatus = $_POST['new_status'] ?? '';
             
             if ($transactionId && $newStatus) {
-                $stmt = $db->prepare("UPDATE transactions SET status = ?, updated_at = NOW() WHERE transaction_id = ?");
+                $stmt = $db->prepare("UPDATE transactions SET status = ? WHERE transaction_id = ?");
                 $stmt->bind_param("ss", $newStatus, $transactionId);
                 
                 if ($stmt->execute()) {
@@ -99,55 +99,72 @@ if ($search) {
 $sql = "
     SELECT t.*, ta.account_number, ta.balance 
     FROM transactions t 
-    JOIN transfer_accounts ta ON t.account_id = ta.id 
+    LEFT JOIN transfer_accounts ta ON t.account_id = ta.id 
     $whereClause 
-    ORDER BY t.created_at DESC 
+    ORDER BY t.id DESC 
     LIMIT $limit OFFSET $offset
 ";
 
 $stmt = $db->prepare($sql);
+if (!$stmt) {
+    die("Lỗi prepare SQL: " . $db->error);
+}
+
 if ($params) {
     $stmt->bind_param($types, ...$params);
 }
-$stmt->execute();
+
+if (!$stmt->execute()) {
+    die("Lỗi execute SQL: " . $stmt->error);
+}
+
 $result = $stmt->get_result();
-$transactions = $result->fetch_all(MYSQLI_ASSOC);
+$transactions = [];
+while ($row = $result->fetch_assoc()) {
+    $transactions[] = $row;
+}
 $stmt->close();
 
 // Đếm tổng số trang
 $countSql = "
     SELECT COUNT(*) as total 
     FROM transactions t 
-    JOIN transfer_accounts ta ON t.account_id = ta.id 
+    LEFT JOIN transfer_accounts ta ON t.account_id = ta.id 
     $whereClause
 ";
 
 $stmt = $db->prepare($countSql);
+if (!$stmt) {
+    die("Lỗi prepare count SQL: " . $db->error);
+}
+
 if ($params) {
     $stmt->bind_param($types, ...$params);
 }
-$stmt->execute();
+
+if (!$stmt->execute()) {
+    die("Lỗi execute count SQL: " . $stmt->error);
+}
+
 $result = $stmt->get_result();
 $totalRecords = $result->fetch_assoc()['total'];
 $totalPages = ceil($totalRecords / $limit);
 $stmt->close();
 ?>
 
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Giao Dịch</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; }
+<style>
+        /* CSS riêng cho trang quản lý giao dịch */
+        /* Container riêng cho trang này */
+        .qlgiaodich-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px;
+            margin-top: 40px;
+        }
         
         .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 0; }
-        .header .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .header .container { max-width: 100%; margin: 0 auto; padding: 0 20px; }
         .header h1 { font-size: 2rem; margin-bottom: 5px; }
-        
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -204,16 +221,8 @@ $stmt->close();
             .stats-grid { grid-template-columns: 1fr; }
         }
     </style>
-</head>
-<body>
-    <!-- <div class="header">
-        <div class="container">
-            <h1>📊 Quản Lý Giao Dịch</h1>
-            <p>Dashboard quản lý thanh toán VietQR</p>
-        </div>
-    </div> -->
 
-    <div class="container">
+    <div class="qlgiaodich-container">
         <?php if ($message): ?>
             <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
@@ -272,17 +281,24 @@ $stmt->close();
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($transactions as $transaction): ?>
+                    <?php if (empty($transactions)): ?>
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
+                                Không có giao dịch nào
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($transactions as $transaction): ?>
                         <tr>
                             <td>
-                                <div class="transaction-id"><?php echo htmlspecialchars($transaction['transaction_id']); ?></div>
+                                <div class="transaction-id"><?php echo htmlspecialchars($transaction['transaction_id'] ?? 'N/A'); ?></div>
                             </td>
-                            <td><?php echo htmlspecialchars($transaction['account_number']); ?></td>
+                            <td><?php echo htmlspecialchars($transaction['account_number'] ?? 'N/A'); ?></td>
                             <td>
-                                <div class="amount"><?php echo number_format($transaction['amount'], 0, ',', '.'); ?> VND</div>
+                                <div class="amount"><?php echo number_format($transaction['amount'] ?? 0, 0, ',', '.'); ?> VND</div>
                             </td>
                             <td>
-                                <span class="status <?php echo $transaction['status']; ?>">
+                                <span class="status <?php echo $transaction['status'] ?? 'pending'; ?>">
                                     <?php 
                                     $statusText = [
                                         'pending' => 'Đang chờ',
@@ -290,37 +306,54 @@ $stmt->close();
                                         'failed' => 'Thất bại',
                                         'cancelled' => 'Đã hủy'
                                     ];
-                                    echo $statusText[$transaction['status']] ?? $transaction['status'];
+                                    $status = $transaction['status'] ?? 'pending';
+                                    echo $statusText[$status] ?? $status;
                                     ?>
                                 </span>
                             </td>
                             <td>
-                                <div><?php echo date('d/m/Y H:i', strtotime($transaction['created_at'])); ?></div>
-                                <?php if ($transaction['updated_at'] !== $transaction['created_at']): ?>
-                                    <small style="color: #6c757d;">Cập nhật: <?php echo date('d/m/Y H:i', strtotime($transaction['updated_at'])); ?></small>
-                                <?php endif; ?>
+                                <div>ID: <?php echo htmlspecialchars($transaction['id'] ?? 'N/A'); ?></div>
+                                <small style="color: #6c757d;">Loại: <?php 
+                                    $typeText = [
+                                        'deposit' => 'Nạp tiền',
+                                        'withdrawal' => 'Rút tiền',
+                                        'transfer' => 'Chuyển khoản'
+                                    ];
+                                    $type = $transaction['transaction_type'] ?? 'deposit';
+                                    echo $typeText[$type] ?? $type;
+                                ?></small>
                             </td>
                             <td>
-                                <small><?php echo htmlspecialchars($transaction['notes'] ?? ''); ?></small>
+                                <small><?php 
+                                    $notes = '';
+                                    if (isset($transaction['callback_data']) && !empty($transaction['callback_data'])) {
+                                        $callbackData = json_decode($transaction['callback_data'], true);
+                                        if (is_array($callbackData) && isset($callbackData['description'])) {
+                                            $notes = $callbackData['description'];
+                                        }
+                                    }
+                                    echo htmlspecialchars($notes ?: 'Không có');
+                                ?></small>
                             </td>
                             <td>
                                 <div class="actions">
-                                    <?php if ($transaction['status'] === 'pending'): ?>
-                                        <button class="btn btn-success" onclick="completeTransaction('<?php echo $transaction['transaction_id']; ?>')">
+                                    <?php if (($transaction['status'] ?? '') === 'pending'): ?>
+                                        <button class="btn btn-success" onclick="completeTransaction('<?php echo htmlspecialchars($transaction['transaction_id'] ?? ''); ?>')">
                                             Hoàn thành
                                         </button>
-                                        <button class="btn btn-danger" onclick="updateStatus('<?php echo $transaction['transaction_id']; ?>', 'failed')">
+                                        <button class="btn btn-danger" onclick="updateStatus('<?php echo htmlspecialchars($transaction['transaction_id'] ?? ''); ?>', 'failed')">
                                             Thất bại
                                         </button>
                                     <?php endif; ?>
                                     
-                                    <button class="btn btn-primary" onclick="viewDetails('<?php echo $transaction['transaction_id']; ?>')">
+                                    <button class="btn btn-primary" onclick="viewDetails('<?php echo htmlspecialchars($transaction['transaction_id'] ?? ''); ?>')">
                                         Chi tiết
                                     </button>
                                 </div>
                             </td>
                         </tr>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -420,8 +453,7 @@ $stmt->close();
                     <tr><th style="padding: 8px; border: 1px solid #ddd;">Số tiền</th><td style="padding: 8px; border: 1px solid #ddd;">${new Intl.NumberFormat('vi-VN').format(transaction.amount)} VND</td></tr>
                     <tr><th style="padding: 8px; border: 1px solid #ddd;">Trạng thái</th><td style="padding: 8px; border: 1px solid #ddd;"><span class="status ${transaction.status}">${transaction.status}</span></td></tr>
                     <tr><th style="padding: 8px; border: 1px solid #ddd;">Tài khoản</th><td style="padding: 8px; border: 1px solid #ddd;">${transaction.account_number}</td></tr>
-                    <tr><th style="padding: 8px; border: 1px solid #ddd;">Thời gian tạo</th><td style="padding: 8px; border: 1px solid #ddd;">${transaction.created_at}</td></tr>
-                    <tr><th style="padding: 8px; border: 1px solid #ddd;">Cập nhật cuối</th><td style="padding: 8px; border: 1px solid #ddd;">${transaction.updated_at}</td></tr>
+                    <tr><th style="padding: 8px; border: 1px solid #ddd;">ID</th><td style="padding: 8px; border: 1px solid #ddd;">${transaction.id || 'N/A'}</td></tr>
                     <tr><th style="padding: 8px; border: 1px solid #ddd;">Ghi chú</th><td style="padding: 8px; border: 1px solid #ddd;">${transaction.notes || 'Không có'}</td></tr>
                     ${transaction.qr_code_url ? `<tr><th style="padding: 8px; border: 1px solid #ddd;">QR Code</th><td style="padding: 8px; border: 1px solid #ddd;"><img src="${transaction.qr_code_url}" style="max-width: 200px;"></td></tr>` : ''}
                 </table>
@@ -442,5 +474,3 @@ $stmt->close();
             }
         }
     </script>
-</body>
-</html>

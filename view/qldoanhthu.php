@@ -91,35 +91,46 @@ $chartLabelsJson = json_encode($chartLabels);
 $chartDataJson = json_encode(array_values($chartData));
 ?>
 
+<style>
+    /* CSS riêng cho trang quản lý doanh thu */
+    .doanhthu-container { 
+        max-width: 1200px; 
+        margin: 0 auto; 
+        padding: 20px;
+        margin-top: 40px;
+    }
+</style>
+
+<div class="doanhthu-container">
 <div class="col-12">
   <div class="card">
     <div class="card-body">
       <h3 class="card-title">Quản lý doanh thu</h3>
       <p class="card-description">
-        Thống kê doanh thu từ phí đăng bài (3% giá sản phẩm)
+        Thống kê doanh thu từ phí đăng tin (11.000 đ/bài) và phí đăng ký gói livestream
       </p>
       
       <!-- Filter Card -->
       <div class="card filter-card">
         <div class="card-body">
-          <h4 class="card-title">Bộ lọc</h4>
+          <h5 class="card-title mb-3" style="font-size: 1rem; font-weight: 600;">Bộ lọc</h5>
           <form class="filter-form" method="GET" action="">
             <input type="hidden" name="qldoanhthu" value="">
             
             <div class="form-group">
-              <label>Khoảng thời gian</label>
-              <div class="input-group">
-                <input type="date" class="form-control" name="start_date" value="<?php echo $startDate; ?>" placeholder="Từ ngày">
+              <label style="font-size: 0.875rem; margin-bottom: 5px; font-weight: 500;">Khoảng thời gian</label>
+              <div class="input-group" style="height: 38px;">
+                <input type="date" class="form-control" name="start_date" value="<?php echo $startDate; ?>" placeholder="Từ ngày" style="font-size: 0.875rem;">
                 <div class="input-group-append input-group-prepend">
-                  <span class="input-group-text">đến</span>
+                  <span class="input-group-text" style="font-size: 0.875rem; padding: 6px 12px;">đến</span>
                 </div>
-                <input type="date" class="form-control" name="end_date" value="<?php echo $endDate; ?>" placeholder="Đến ngày">
+                <input type="date" class="form-control" name="end_date" value="<?php echo $endDate; ?>" placeholder="Đến ngày" style="font-size: 0.875rem;">
               </div>
             </div>
             
             <div class="form-group">
-              <label>Người dùng</label>
-              <select class="form-control select2" name="user_id">
+              <label style="font-size: 0.875rem; margin-bottom: 5px; font-weight: 500;">Người dùng</label>
+              <select class="form-control select2" name="user_id" style="font-size: 0.875rem; height: 38px;">
                 <option value="">Tất cả người dùng</option>
                 <?php foreach ($allUsers as $user): ?>
                   <option value="<?php echo $user['id']; ?>" <?php echo ($userId == $user['id']) ? 'selected' : ''; ?>>
@@ -130,11 +141,11 @@ $chartDataJson = json_encode(array_values($chartData));
             </div>
             
             <div class="btn-group">
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" class="btn btn-primary" style="font-size: 0.875rem; padding: 6px 16px; height: 38px;">
                 <i class="mdi mdi-filter"></i> Lọc
               </button>
               <?php require_once __DIR__ . '/../helpers/url_helper.php'; ?>
-              <a href="<?= getBasePath() ?>/ad/qldoanhthu" class="btn btn-outline-secondary">
+              <a href="<?= getBasePath() ?>/ad/qldoanhthu" class="btn btn-outline-secondary" style="font-size: 0.875rem; padding: 6px 16px; height: 38px;">
                 <i class="mdi mdi-refresh"></i> Đặt lại
               </a>
             </div>
@@ -144,7 +155,7 @@ $chartDataJson = json_encode(array_values($chartData));
       
       <!-- Statistics Cards -->
       <div class="row mb-4 stats-container">
-        <div class="col-md-4 mb-4 mb-md-0">
+        <div class="col-md-3 mb-4 mb-md-0">
           <div class="card card-stats">
             <div class="card-body d-flex align-items-center">
               <div class="stats-icon bg-gradient-primary">
@@ -158,29 +169,45 @@ $chartDataJson = json_encode(array_values($chartData));
           </div>
         </div>
         
-        <div class="col-md-4 mb-4 mb-md-0">
+        <div class="col-md-3 mb-4 mb-md-0">
           <div class="card card-stats">
             <div class="card-body d-flex align-items-center">
               <div class="stats-icon bg-gradient-success">
                 <i class="mdi mdi-file-document"></i>
               </div>
               <div class="stats-info">
-                <h3><?php echo $summary['total_posts']; ?></h3>
-                <p>Tổng bài đăng</p>
+                <h3><?php echo formatCurrency($summary['post_revenue'] ?? 0); ?></h3>
+                <p>Doanh thu đăng tin</p>
+                <small><?php echo $summary['total_posts']; ?> bài từ <?php echo $summary['total_users']; ?> người dùng</small>
               </div>
             </div>
           </div>
         </div>
         
-        <div class="col-md-4">
+        <div class="col-md-3 mb-4 mb-md-0">
+          <div class="card card-stats">
+            <div class="card-body d-flex align-items-center">
+              <div class="stats-icon bg-gradient-warning">
+                <i class="mdi mdi-video"></i>
+              </div>
+              <div class="stats-info">
+                <h3><?php echo formatCurrency($summary['live_revenue'] ?? 0); ?></h3>
+                <p>Doanh thu gói live</p>
+                <small><?php echo $summary['total_packages'] ?? 0; ?> gói từ <?php echo $summary['total_live_users'] ?? 0; ?> người dùng</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
           <div class="card card-stats">
             <div class="card-body d-flex align-items-center">
               <div class="stats-icon bg-gradient-info">
                 <i class="mdi mdi-account-multiple"></i>
               </div>
               <div class="stats-info">
-                <h3><?php echo $summary['total_users']; ?></h3>
-                <p>Người dùng có bài đăng</p>
+                <h3><?php echo $summary['total_unique_users'] ?? 0; ?></h3>
+                <p>Tổng người dùng</p>
               </div>
             </div>
           </div>
@@ -228,14 +255,14 @@ $chartDataJson = json_encode(array_values($chartData));
         <div class="col-lg-4 grid-margin stretch-card">
           <div class="card">
             <div class="card-body">
-              <h4 class="card-title">Top người dùng có doanh thu cao nhất</h4>
-              <div class="table-responsive">
+              <h4 class="card-title">Top người dùng có số tiền trong tài khoản nhiều nhất</h4>
+              <div class="table-responsive top-users-wrapper">
                 <table class="table table-hover top-users-table">
                   <thead>
                     <tr>
-                      <th>Xếp hạng</th>
+                      <th style="width: 60px;">Xếp hạng</th>
                       <th>Người dùng</th>
-                      <th>Doanh thu</th>
+                      <th style="text-align: right; white-space: nowrap;">Số dư</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -248,19 +275,16 @@ $chartDataJson = json_encode(array_values($chartData));
                       <?php foreach ($topUsers as $user): ?>
                         <tr>
                           <td>
-                            <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center justify-content-center">
                               <div class="user-rank rank-<?php echo min($rank, 3); ?>">
                                 <?php echo $rank; ?>
                               </div>
                             </div>
                           </td>
                           <td>
-                            <div class="d-flex flex-column">
-                              <span class="font-weight-bold"><?php echo $user['username']; ?></span>
-                              <small><?php echo $user['total_posts']; ?> bài đăng</small>
-                            </div>
+                            <span class="font-weight-bold"><?php echo htmlspecialchars($user['username']); ?></span>
                           </td>
-                          <td class="font-weight-bold">
+                          <td class="font-weight-bold text-success" style="text-align: right; white-space: nowrap;">
                             <?php echo formatCurrency($user['total_revenue']); ?>
                           </td>
                         </tr>
@@ -284,17 +308,18 @@ $chartDataJson = json_encode(array_values($chartData));
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Tiêu đề sản phẩm</th>
+                  <th>Mô tả</th>
                   <th>Giá sản phẩm</th>
-                  <th>Người đăng</th>
-                  <th>Ngày đăng</th>
-                  <th>Phí doanh thu (11.000 đ)</th>
+                  <th>Người dùng</th>
+                  <th>Ngày</th>
+                  <th>Loại</th>
+                  <th>Phí doanh thu</th>
                 </tr>
               </thead>
               <tbody>
                 <?php if (empty($revenueData)): ?>
                   <tr>
-                    <td colspan="6" class="empty-table-message">
+                    <td colspan="7" class="empty-table-message">
                       Không tìm thấy dữ liệu doanh thu nào<?php echo ($startDate && $endDate) ? ' trong khoảng thời gian đã chọn' : ''; ?>.
                     </td>
                   </tr>
@@ -302,10 +327,15 @@ $chartDataJson = json_encode(array_values($chartData));
                   <?php foreach ($revenueData as $item): ?>
                     <tr>
                       <td><?php echo $item['id']; ?></td>
-                      <td><?php echo $item['title']; ?></td>
-                      <td><?php echo formatCurrency($item['price']); ?></td>
-                      <td><?php echo $item['username']; ?></td>
-                      <td><?php echo $item['created_date'] ? date('d/m/Y', strtotime($item['created_date'])) : 'N/A'; ?></td>
+                      <td><?php echo htmlspecialchars($item['title']); ?></td>
+                      <td><?php echo $item['price'] > 0 ? formatCurrency($item['price']) : '-'; ?></td>
+                      <td><?php echo htmlspecialchars($item['username']); ?></td>
+                      <td><?php echo isset($item['revenue_date']) ? date('d/m/Y H:i', strtotime($item['revenue_date'])) : (isset($item['created_date']) ? date('d/m/Y H:i', strtotime($item['created_date'])) : 'N/A'); ?></td>
+                      <td>
+                        <span class="badge badge-<?php echo ($item['revenue_type'] ?? '') == 'livestream_package' ? 'warning' : 'success'; ?>">
+                          <?php echo $item['revenue_type_name'] ?? 'Phí đăng tin'; ?>
+                        </span>
+                      </td>
                       <td class="font-weight-bold text-success"><?php echo formatCurrency($item['revenue_fee']); ?></td>
                     </tr>
                   <?php endforeach; ?>
@@ -375,6 +405,7 @@ $chartDataJson = json_encode(array_values($chartData));
     </div>
   </div>
 </div>
+</div>
 
 <style>
   .card-stats {
@@ -423,26 +454,87 @@ $chartDataJson = json_encode(array_values($chartData));
     background: linear-gradient(to right, #90caf9, #047edf);
   }
   
+  .bg-gradient-warning {
+    background: linear-gradient(to right, #ffb74d, #ff9800);
+  }
+  
+  .stats-info small {
+    display: block;
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 2px;
+  }
+  
+  .badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  
+  .badge-success {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .badge-warning {
+    background-color: #ffc107;
+    color: #333;
+  }
+  
   .filter-card {
     margin-bottom: 20px;
+  }
+  
+  .filter-card .card-body {
+    padding: 15px 20px;
   }
   
   .filter-form {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 12px;
     align-items: flex-end;
   }
   
   .filter-form .form-group {
     flex: 1;
-    min-width: 200px;
+    min-width: 180px;
     margin-bottom: 0;
+  }
+  
+  .filter-form .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .filter-form .input-group-text {
+    font-size: 0.875rem;
+    padding: 6px 12px;
+    background-color: #f8f9fa;
+    border-color: #ced4da;
+  }
+  
+  .filter-form .form-control {
+    font-size: 0.875rem;
+    padding: 6px 12px;
+    height: 38px;
   }
   
   .filter-form .btn-group {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  
+  .filter-form .btn {
+    font-size: 0.875rem;
+    padding: 6px 16px;
+    height: 38px;
+    white-space: nowrap;
   }
   
   .table th {
@@ -500,20 +592,61 @@ $chartDataJson = json_encode(array_values($chartData));
     font-style: italic;
   }
   
+  .top-users-wrapper {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  
+  .top-users-table {
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 0;
+  }
+  
+  .top-users-table th,
   .top-users-table td {
+    padding: 10px 8px;
     vertical-align: middle;
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .top-users-table th:first-child,
+  .top-users-table td:first-child {
+    width: 60px;
+    min-width: 60px;
+    max-width: 60px;
+    text-align: center;
+    padding: 10px 5px;
+  }
+  
+  .top-users-table th:last-child,
+  .top-users-table td:last-child {
+    width: 120px;
+    min-width: 120px;
+    text-align: right;
+    padding-right: 10px;
+  }
+  
+  .top-users-table th:nth-child(2),
+  .top-users-table td:nth-child(2) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   .user-rank {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
-    margin-right: 10px;
+    font-size: 0.9rem;
+    flex-shrink: 0;
   }
   
   .rank-1 {

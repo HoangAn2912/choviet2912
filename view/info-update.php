@@ -4,7 +4,8 @@
     
     // Check if ID is provided
     if (!isset($_GET['ids'])) {
-        header("Location: index.php");
+        require_once __DIR__ . '/../helpers/url_helper.php';
+        header("Location: " . getBaseUrl() . "/ad/qlnguoidung");
         exit();
     }
     if (isset($_SESSION['role'])) {
@@ -16,7 +17,7 @@
     // Check if user exists
     if (!$user) {
         require_once __DIR__ . '/../helpers/url_helper.php';
-        header("Location: " . getBasePath() . "/ad/taikhoan");
+        header("Location: " . getBaseUrl() . "/ad/qlnguoidung");
         exit();
     }
     
@@ -25,15 +26,19 @@
     
     // Process form submission
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $username = $_POST['username'];
-        $email = $_POST['email'];
-        $phone = $_POST['phone'];
-        $address = $_POST['address'];
-        $vt = $_POST['role_id'];
+        // Kiểm tra và lấy giá trị từ $_POST với giá trị mặc định
+        $username = isset($_POST['username']) ? $_POST['username'] : '';
+        $email = isset($_POST['email']) ? $_POST['email'] : '';
+        $phone = isset($_POST['phone']) ? trim($_POST['phone']) : '';
+        $address = isset($_POST['address']) ? $_POST['address'] : '';
+        $vt = isset($_POST['role_id']) && !empty($_POST['role_id']) ? $_POST['role_id'] : (isset($user[0]['role_id']) ? $user[0]['role_id'] : 2);
 
-        $avatar = $_POST['avatar_cu']; // mặc định giữ ảnh cũ
+        // Lấy avatar cũ từ user hiện tại nếu không có trong POST
+        $avatar = isset($_POST['avatar_cu']) ? $_POST['avatar_cu'] : (isset($user[0]['avatar']) ? $user[0]['avatar'] : '');
 
+        // Xử lý upload ảnh mới
         if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === 0) {
+            require_once __DIR__ . '/../helpers/url_helper.php';
             $target_dir = $_SERVER['DOCUMENT_ROOT'] . getBasePath() . "/img/";
             $imageFileType = strtolower(pathinfo($_FILES["avatar"]["name"], PATHINFO_EXTENSION));
             $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
@@ -43,9 +48,14 @@
                 $target_file = $target_dir . $unique_name;
 
                 if (move_uploaded_file($_FILES["avatar"]["tmp_name"], $target_file)) {
-                    $anh = $unique_name;
+                    $avatar = $unique_name; // Cập nhật avatar nếu upload thành công
                 }
             }
+        }
+
+        // Xử lý phone: Nếu phone rỗng, giữ nguyên phone cũ để tránh duplicate
+        if (empty($phone)) {
+            $phone = isset($user[0]['phone']) ? $user[0]['phone'] : '';
         }
 
         // Xử lý mật khẩu
@@ -53,12 +63,13 @@
     $password = md5($_POST['password']);
     $result = $p->getupdateuser_with_password($id, $username, $email, $password, $phone, $address, $avatar, $vt);
         } else {
-            $result = $p->getupdateuser($id, $hoten, $email, $sdt, $dc, $anh, $vt);
+            // Sửa: dùng đúng tên biến đã khai báo ở trên
+            $result = $p->getupdateuser($id, $username, $email, $phone, $address, $avatar, $vt);
         }
 
         if ($result) {
             require_once __DIR__ . '/../helpers/url_helper.php';
-        header("Location: " . getBasePath() . "/ad/taikhoan");
+            header("Location: " . getBaseUrl() . "/ad/qlnguoidung");
             exit();
         } else {
             $message = '<div class="alert alert-danger">Không thể cập nhật người dùng. Vui lòng thử lại.</div>';
@@ -168,7 +179,7 @@ value="<?php echo e($u['phone']); ?>">
                             </div>
                             
                             <div class="d-flex justify-content-between">
-                                <a href="<?= getBasePath() ?>/ad/taikhoan" class="btn btn-secondary">
+                                <a href="<?= getBasePath() ?>/ad/qlnguoidung" class="btn btn-secondary">
                                     <i class="bi bi-arrow-left me-2"></i>Quay lại
                                 </a>
                                 <button type="submit" class="btn btn-primary">

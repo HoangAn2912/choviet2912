@@ -56,7 +56,7 @@ if(isset($_GET['id'])){
                             <?php echo $ct['status']; ?>
                         </span>
                     </div>
-                    <a href="<?= getBasePath() ?>/ad/kdbaidang" class="btn btn-secondary">
+                    <a href="<?= getBasePath() ?>/ad/qlkdbaiviet" class="btn btn-secondary">
                         <i class="fa fa-arrow-left"></i>     Quay lại
                     </a>
                 </div>
@@ -106,8 +106,8 @@ if(isset($_GET['id'])){
             </div>
         </div>
     <?php
-        $status = $ct['status'];
-        $status_ban = $ct['status_ban'];
+        $status = isset($ct['status']) ? $ct['status'] : '';
+        $status_ban = isset($ct['sale_status']) ? $ct['sale_status'] : '';
         $timeline = [
             [
                 'status' => 'Tạo bài đăng',

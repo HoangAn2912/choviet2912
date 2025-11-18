@@ -50,7 +50,8 @@
             $result = $p->getinsertuser($hoten, $email, $mk, $sdt, $dc, $anh);
 
             if ($result) {
-                header("Location: " . getBasePath() . "/ad/taikhoan");
+                require_once __DIR__ . '/../helpers/url_helper.php';
+                header("Location: " . getBaseUrl() . "/ad/qlnguoidung");
                 exit();
             } else {
                 $message = '<div class="alert alert-danger">Không thể thêm người dùng. Vui lòng thử lại.</div>';
@@ -137,7 +138,7 @@
                 </div>
 
                 <div class="d-flex justify-content-between">
-                    <a href="<?= getBasePath() ?>/ad/taikhoan" class="btn btn-secondary">
+                    <a href="<?= getBasePath() ?>/ad/qlnguoidung" class="btn btn-secondary">
                     <i class="bi bi-arrow-left me-2"></i>Quay lại
                     </a>
                     <button type="submit" class="btn btn-primary">

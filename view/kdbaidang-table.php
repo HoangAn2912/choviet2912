@@ -41,32 +41,50 @@ $data = $p->getPaginatedPosts($offset, $itemsPerPage, $filter_status, $filter_pr
 
 // Process form submissions
 if (isset($_POST['btn_duyet'])) {
-    $p->getduyetbai($_POST['idbv']);
+    $result = $p->getduyetbai($_POST['idbv']);
     
-    // Preserve pagination and filter parameters
-    $redirectUrl = "/ad/kdbaidang?status=approved";
-    if (!empty($filter_status)) $redirectUrl .= "&status={$filter_status}";
-    if (!empty($filter_product)) $redirectUrl .= "&product_type={$filter_product}";
-    if (!empty($search_term)) $redirectUrl .= "&search={$search_term}";
-    if ($currentPage > 1) $redirectUrl .= "&page={$currentPage}";
+    // Lưu thông báo vào session
+    if ($result) {
+        $_SESSION['kdbaiviet_message'] = 'approved';
+        $_SESSION['kdbaiviet_message_text'] = 'Bài đăng đã được duyệt thành công!';
+    } else {
+        $_SESSION['kdbaiviet_message'] = 'error';
+        $_SESSION['kdbaiviet_message_text'] = 'Có lỗi xảy ra khi duyệt bài đăng. Vui lòng thử lại.';
+    }
     
-    // Redirect to prevent form resubmission
-    header("Location: {$redirectUrl}");
+    // Redirect về trang quản lý bài viết ban đầu (không có tham số)
+    require_once __DIR__ . '/../helpers/url_helper.php';
+    header("Location: " . getBaseUrl() . "/ad/qlkdbaiviet");
     exit();
 } elseif (isset($_POST['btn_tuchoi'])) {
     $id = $_POST['idbv'];
     $ghichu = $_POST['ly_do_tu_choi'];
-    $p->gettuchoi($id, $ghichu);
+    $result = $p->gettuchoi($id, $ghichu);
     
-    // Preserve pagination and filter parameters
-    $redirectUrl = "/ad/kdbaidang?status=rejected";
-    if (!empty($filter_status)) $redirectUrl .= "&status={$filter_status}";
-    if (!empty($filter_product)) $redirectUrl .= "&product_type={$filter_product}";
-    if (!empty($search_term)) $redirectUrl .= "&search={$search_term}";
-    if ($currentPage > 1) $redirectUrl .= "&page={$currentPage}";
+    // Lưu thông báo vào session
+    if ($result) {
+        $_SESSION['kdbaiviet_message'] = 'rejected';
+        $_SESSION['kdbaiviet_message_text'] = 'Bài đăng đã bị từ chối thành công!';
+    } else {
+        $_SESSION['kdbaiviet_message'] = 'error';
+        $_SESSION['kdbaiviet_message_text'] = 'Có lỗi xảy ra khi từ chối bài đăng. Vui lòng thử lại.';
+    }
     
-    header("Location: {$redirectUrl}");
+    // Redirect về trang quản lý bài viết ban đầu (không có tham số)
+    require_once __DIR__ . '/../helpers/url_helper.php';
+    header("Location: " . getBaseUrl() . "/ad/qlkdbaiviet");
     exit();
+}
+
+// Kiểm tra và hiển thị thông báo từ session
+$message = '';
+$messageType = '';
+if (isset($_SESSION['kdbaiviet_message'])) {
+    $messageType = $_SESSION['kdbaiviet_message'];
+    $message = isset($_SESSION['kdbaiviet_message_text']) ? $_SESSION['kdbaiviet_message_text'] : '';
+    // Xóa thông báo sau khi đã lấy
+    unset($_SESSION['kdbaiviet_message']);
+    unset($_SESSION['kdbaiviet_message_text']);
 }
 
 // Get unique product types for filter dropdown
@@ -79,7 +97,7 @@ foreach ($all_data as $item) {
 
 // Function to generate pagination URL
 function getPaginationUrl($page, $status, $product_type, $search) {
-    $url = "/ad/kdbaidang?page={$page}";
+    $url = "/ad/qlkdbaiviet?page={$page}";
     if (!empty($status)) $url .= "&status={$status}";
     if (!empty($product_type)) $url .= "&product_type={$product_type}";
     if (!empty($search)) $url .= "&search={$search}";
@@ -183,6 +201,12 @@ foreach($all_data as $item) {
             border-left: 4px solid #1565c0;
         }
         
+        .status-message.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+        
         .status-message i {
             margin-right: 10px;
             font-size: 20px;
@@ -200,17 +224,13 @@ foreach($all_data as $item) {
                             <span class="post-count"><?php echo $totalPosts; ?> bài đăng</span>
                         </div>
                         
-                        <?php if (isset($_GET['status']) && $_GET['status'] == 'approved'): ?>
-                        <div class="status-message success">
-                            <i class="fa fa-check-circle"></i>
-                            Bài đăng đã được duyệt thành công!
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if (isset($_GET['status']) && $_GET['status'] == 'rejected'): ?>
-                        <div class="status-message info">
-                            <i class="fa fa-info-circle"></i>
-                            Bài đăng đã bị từ chối!
+                        <?php if (!empty($message)): ?>
+                        <div class="status-message <?php echo $messageType == 'approved' ? 'success' : ($messageType == 'rejected' ? 'info' : 'error'); ?>">
+                            <i class="fa <?php 
+                                echo $messageType == 'approved' ? 'fa-check-circle' : 
+                                    ($messageType == 'rejected' ? 'fa-info-circle' : 'fa-exclamation-circle'); 
+                            ?>"></i>
+                            <?php echo htmlspecialchars($message); ?>
                         </div>
                         <?php endif; ?>
                         
@@ -237,7 +257,7 @@ foreach($all_data as $item) {
                         <!-- Filter Section -->
                         <div class="filter-section">
                             <form action="" method="GET" class="filter-form">
-                                <input type="hidden" name="kdbaidang" value="">
+                                <input type="hidden" name="qlkdbaiviet" value="">
                                 <div class="filter-group">
                                     <label for="status">Trạng thái duyệt</label>
                                     <select class="form-control" id="status" name="status">
@@ -262,7 +282,7 @@ foreach($all_data as $item) {
                                 </div>
                                 <div class="filter-buttons">
                                     <button type="submit" class="btn btn-primary">Lọc</button>
-                                    <a href="/ad/kdbaidang" class="btn btn-outline-secondary">Đặt lại</a>
+                                    <a href="/ad/qlkdbaiviet" class="btn btn-outline-secondary">Đặt lại</a>
                                 </div>
                             </form>
                         </div>
@@ -384,14 +404,9 @@ foreach($all_data as $item) {
                                                 <div>Cập nhật: '.$r['updated_date'].'</div>
                                             </td>
                                             <td>
-                                                <form action="/ad/kdbaidang?ct&id='.$r['id'].'" method="post">
-                                                    <input type="hidden" name="idsp" value="'.$r['id'].'">
-                                                    <div class="action-buttons">
-                                                        <button type="submit" class="btn btn-primary btn-sm" name="btn_ct" data-bs-toggle="modal" data-bs-target="#viewDetailsModal" data-id="'.$r['id'].'">
-                                                            <i class="fa fa-eye"></i> Chi tiết
-                                                        </button>
-                                                    </div>
-                                                </form>
+                                                <a href="/ad/qlkdbaiviet?id='.$r['id'].'" class="btn btn-primary btn-sm">
+                                                    <i class="fa fa-eye"></i> Chi tiết
+                                                </a>
                                             </td>';
                                             echo '<td>';
                                             if($trang_thai == "Chờ duyệt"){

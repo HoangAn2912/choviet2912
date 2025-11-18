@@ -109,11 +109,11 @@ class kdbaidang {
         $query = "UPDATE products SET status = 'Đã duyệt', updated_date = NOW() WHERE id = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("i", $id);
-        $stmt->execute();
+        $result = $stmt->execute();
         $stmt->close();
         
         // 📧 GỬI EMAIL THÔNG BÁO DUYỆT
-        if ($post && $post['email']) {
+        if ($result && $post && $post['email']) {
             try {
                 require_once __DIR__ . '/../helpers/EmailNotification.php';
                 $emailer = new EmailNotification();
@@ -136,6 +136,7 @@ class kdbaidang {
         }
         
         $conn->close();
+        return $result;
     }
     
     public function tuChoiBai($id, $note) {
@@ -156,11 +157,11 @@ class kdbaidang {
         $query = "UPDATE products SET status = 'Từ chối duyệt', updated_date = NOW(), note = ? WHERE id = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("si", $note, $id);
-        $stmt->execute();
+        $result = $stmt->execute();
         $stmt->close();
         
         // 📧 GỬI EMAIL THÔNG BÁO TỪ CHỐI
-        if ($post && $post['email']) {
+        if ($result && $post && $post['email']) {
             try {
                 require_once __DIR__ . '/../helpers/EmailNotification.php';
                 $emailer = new EmailNotification();
@@ -184,6 +185,7 @@ class kdbaidang {
         }
         
         $conn->close();
+        return $result;
     }
     // Get paginated and filtered posts
     function selectPaginatedPosts($offset, $limit, $status = '', $product_type = '', $search = '') {
