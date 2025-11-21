@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th10 17, 2025 lúc 05:56 AM
+-- Thời gian đã tạo: Th10 21, 2025 lúc 01:24 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -20,128 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Cơ sở dữ liệu: `choviet29`
 --
-
-DELIMITER $$
---
--- Thủ tục
---
-CREATE DEFINER=`root`@`localhost` PROCEDURE `check_review_permission` (IN `p_reviewer_id` INT, IN `p_reviewed_user_id` INT, IN `p_product_id` INT, IN `p_order_type` ENUM('livestream','c2c','direct'), IN `p_order_id` INT, OUT `can_review` TINYINT, OUT `reason` VARCHAR(255))   BEGIN
-    DECLARE v_existing_review INT DEFAULT 0;
-    DECLARE v_order_status VARCHAR(50);
-    DECLARE v_buyer_id INT;
-    
-    -- Kiểm tra đã review chưa
-    SELECT COUNT(*) INTO v_existing_review
-    FROM reviews
-    WHERE reviewer_id = p_reviewer_id 
-      AND reviewed_user_id = p_reviewed_user_id 
-      AND product_id = p_product_id;
-    
-    IF v_existing_review > 0 THEN
-        SET can_review = 0;
-        SET reason = 'Bạn đã đánh giá sản phẩm này rồi';
-    ELSE
-        -- Kiểm tra theo loại đơn hàng
-        IF p_order_type = 'livestream' THEN
-            -- Kiểm tra đơn hàng livestream
-            SELECT order_status, buyer_id INTO v_order_status, v_buyer_id
-            FROM livestream_orders
-            WHERE id = p_order_id;
-            
-            IF v_buyer_id != p_reviewer_id THEN
-                SET can_review = 0;
-                SET reason = 'Bạn không phải người mua';
-            ELSEIF v_order_status != 'completed' AND v_order_status != 'delivered' THEN
-                SET can_review = 0;
-                SET reason = 'Đơn hàng chưa hoàn thành';
-            ELSE
-                SET can_review = 1;
-                SET reason = 'OK';
-            END IF;
-            
-        ELSEIF p_order_type = 'c2c' THEN
-            -- Kiểm tra đơn hàng C2C
-            SELECT order_status, buyer_id INTO v_order_status, v_buyer_id
-            FROM c2c_orders
-            WHERE id = p_order_id;
-            
-            IF v_buyer_id != p_reviewer_id THEN
-                SET can_review = 0;
-                SET reason = 'Bạn không phải người mua';
-            ELSEIF v_order_status != 'completed' AND v_order_status != 'delivered' THEN
-                SET can_review = 0;
-                SET reason = 'Đơn hàng chưa hoàn thành';
-            ELSE
-                SET can_review = 1;
-                SET reason = 'OK';
-            END IF;
-            
-        ELSE
-            -- Review trực tiếp (không qua đơn hàng)
-            -- Cho phép nhưng không đánh dấu verified
-            SET can_review = 1;
-            SET reason = 'OK - Không qua đơn hàng';
-        END IF;
-    END IF;
-END$$
-
-CREATE DEFINER=`root`@`localhost` PROCEDURE `update_product_stock` (IN `p_product_id` INT, IN `p_quantity_change` INT, IN `p_change_type` ENUM('sale','return','restock','adjustment','initial'), IN `p_note` TEXT, IN `p_created_by` INT, IN `p_order_id` INT)   BEGIN
-    DECLARE v_old_quantity INT;
-    DECLARE v_new_quantity INT;
-    DECLARE v_track_inventory TINYINT;
-    
-    -- Bắt đầu transaction
-    START TRANSACTION;
-    
-    -- Lấy số lượng hiện tại và check có track inventory không
-    SELECT stock_quantity, track_inventory
-    INTO v_old_quantity, v_track_inventory
-    FROM products
-    WHERE id = p_product_id
-    FOR UPDATE;
-    
-    -- Chỉ update nếu sản phẩm có track inventory
-    IF v_track_inventory = 1 THEN
-        -- Tính số lượng mới
-        SET v_new_quantity = COALESCE(v_old_quantity, 0) + p_quantity_change;
-        
-        -- Không cho phép số lượng âm
-        IF v_new_quantity < 0 THEN
-            SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Số lượng tồn kho không đủ';
-        END IF;
-        
-        -- Cập nhật tồn kho
-        UPDATE products
-        SET stock_quantity = v_new_quantity
-        WHERE id = p_product_id;
-        
-        -- Ghi lại lịch sử
-        INSERT INTO inventory_history (
-            product_id, 
-            order_id, 
-            change_type, 
-            quantity_change, 
-            old_quantity, 
-            new_quantity, 
-            note, 
-            created_by
-        ) VALUES (
-            p_product_id,
-            p_order_id,
-            p_change_type,
-            p_quantity_change,
-            COALESCE(v_old_quantity, 0),
-            v_new_quantity,
-            p_note,
-            p_created_by
-        );
-    END IF;
-    
-    COMMIT;
-END$$
-
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -347,7 +225,7 @@ CREATE TABLE `livestream_orders` (
 INSERT INTO `livestream_orders` (`id`, `order_code`, `user_id`, `livestream_id`, `total_amount`, `status`, `payment_method`, `vnpay_txn_ref`, `created_at`, `updated_at`, `delivery_name`, `delivery_phone`, `delivery_province`, `delivery_district`, `delivery_ward`, `delivery_street`, `delivery_address`) VALUES
 (18, 'LIVE202509275579', 4, 20, 190000.00, 'confirmed', 'wallet', NULL, '2025-09-27 00:27:59', '2025-09-27 00:27:59', 'hoangandeptraisomot', '0934838366', '22', '195', '6793', '1233', '1233, Phường Cẩm Trung, Thành phố Cẩm Phả, Tỉnh Quảng Ninh'),
 (19, 'LIVE202509278840', 4, 21, 190000.00, 'cancelled', 'wallet', NULL, '2025-09-27 07:19:54', '2025-09-27 07:20:14', 'hoangandeptraisomot', '0934838366', '11', '95', '3148', '123', '123, Phường Sông Đà, Thị xã Mường Lay, Tỉnh Điện Biên'),
-(20, 'LIVE202511168090', 5, 22, 12500000.00, 'confirmed', 'wallet', NULL, '2025-11-16 22:49:38', '2025-11-16 22:49:38', 'hoangan2', '0934838366', '11', '96', '3163', '123', '123, Xã Mường Toong, Huyện Mường Nhé, Tỉnh Điện Biên');
+(20, 'LIVE202511168090', 5, 22, 12500000.00, 'delivered', 'wallet', NULL, '2025-11-16 22:49:38', '2025-11-17 12:10:21', 'hoangan2', '0934838366', '11', '96', '3163', '123', '123, Xã Mường Toong, Huyện Mường Nhé, Tỉnh Điện Biên');
 
 -- --------------------------------------------------------
 
@@ -642,26 +520,27 @@ INSERT INTO `otp_verification` (`id`, `email`, `phone`, `otp`, `created_at`, `ex
 
 CREATE TABLE `parent_categories` (
   `parent_category_id` int(11) NOT NULL,
-  `parent_category_name` varchar(100) NOT NULL
+  `parent_category_name` varchar(100) NOT NULL,
+  `is_hidden` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `parent_categories`
 --
 
-INSERT INTO `parent_categories` (`parent_category_id`, `parent_category_name`) VALUES
-(1, 'Điện tử'),
-(2, 'Thời trang'),
-(3, 'Nhà cửa & Đời sống'),
-(4, 'Xe cộ'),
-(5, 'Giải trí & Thể thao'),
-(6, 'Sách & Văn phòng phẩm'),
-(7, 'Mẹ & Bé'),
-(8, 'Thú cưng'),
-(9, 'Đồ công nghiệp & Văn phòng'),
-(10, 'Đồ thủ công & Nghệ thuật'),
-(11, 'Sưu tầm & Cổ vật'),
-(12, 'Khác');
+INSERT INTO `parent_categories` (`parent_category_id`, `parent_category_name`, `is_hidden`) VALUES
+(1, 'Điện tử', 0),
+(2, 'Thời trang', 0),
+(3, 'Nhà cửa & Đời sống', 0),
+(4, 'Xe cộ', 0),
+(5, 'Giải trí & Thể thao', 0),
+(6, 'Sách & Văn phòng phẩm', 0),
+(7, 'Mẹ & Bé', 0),
+(8, 'Thú cưng', 0),
+(9, 'Đồ công nghiệp & Văn phòng', 0),
+(10, 'Đồ thủ công & Nghệ thuật', 0),
+(11, 'Sưu tầm & Cổ vật', 0),
+(12, 'Khác', 0);
 
 -- --------------------------------------------------------
 
@@ -716,9 +595,9 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `user_id`, `category_id`, `title`, `description`, `price`, `image`, `status`, `sale_status`, `created_date`, `updated_date`, `note`, `stock_quantity`, `is_livestream_product`, `low_stock_alert`, `track_inventory`) VALUES
-(1, 2, 1, 'iPhone 14 Pro Max', 'Điện thoại iPhone 14 Pro Max 128GB màu tím, còn bảo hành 6 tháng', 25000000.00, 'iphone14.jpg', 'Từ chối duyệt', 'Đang bán', '2025-01-01 10:00:00', '2025-11-17 11:22:04', '..........', NULL, 0, 5, 0),
-(4, 4, 1, 'Cần bán 15 thường 128gb ngoại hình 99%', 'Vừa mua nhưng vì có vấn đề gia đình nên tôi cần bán nó để xoay sở...\r\n15 thường blue\r\n128gb\r\nmã mỹ\r\npin 100%\r\nngoại hình 99%\r\nphụ kiện đầy đủ...\r\nanh chị có thể tham khảo sơ qua, nếu có nhu cầu thì liên hệ em ạ', 12500000.00, '68c27f614ad28.jpg,68c27f614ae24.jpg,68c27f614aee5.jpg,68c27f614afbf.jpg', 'Từ chối duyệt', 'Đang bán', '2025-09-11 09:50:57', '2025-11-17 10:49:47', 'okkokoo', NULL, 0, 5, 0),
-(5, 5, 8, 'Áo Polo Nam Revvour Floral Luxe', 'Hàng tôi vừa mới mua 290.000đ nhưng không vừa size nên tôi muốn pass lại, áo size L. ai cần liên hệ tôi', 190000.00, '68c45ff293915.jpg,68c45ff293a4a.jpg,68c45ff293b49.jpg,68c45ff293f36.jpg', 'Đã duyệt', 'Đang bán', '2025-09-13 01:01:22', '2025-09-13 01:01:22', '', NULL, 0, 5, 0),
+(1, 2, 1, 'iPhone 14 Pro Max', 'Điện thoại iPhone 14 Pro Max 128GB màu tím, còn bảo hành 6 tháng', 25000000.00, 'iphone14.jpg', 'Đã duyệt', 'Đã ẩn', '2025-01-01 10:00:00', '2025-11-21 14:19:21', '..........', NULL, 0, 5, 0),
+(4, 4, 1, 'Cần bán 15 thường 128gb ngoại hình 99%', 'Vừa mua nhưng vì có vấn đề gia đình nên tôi cần bán nó để xoay sở...\r\n15 thường blue\r\n128gb\r\nmã mỹ\r\npin 100%\r\nngoại hình 99%\r\nphụ kiện đầy đủ...\r\nanh chị có thể tham khảo sơ qua, nếu có nhu cầu thì liên hệ em ạ', 12500000.00, '68c27f614ad28.jpg,68c27f614ae24.jpg,68c27f614aee5.jpg,68c27f614afbf.jpg', 'Đã duyệt', 'Đang bán', '2025-09-11 09:50:57', '2025-11-21 14:14:18', 'okkokoo', NULL, 0, 5, 0),
+(5, 5, 8, 'Áo Polo Nam Revvour Floral Luxe', 'Hàng tôi vừa mới mua 290.000đ nhưng không vừa size nên tôi muốn pass lại, áo size L. ai cần liên hệ tôi', 190000.00, '68c45ff293915.jpg,68c45ff293a4a.jpg,68c45ff293b49.jpg,68c45ff293f36.jpg', 'Đã duyệt', 'Đã ẩn', '2025-09-13 01:01:22', '2025-11-21 14:11:10', '', NULL, 0, 5, 0),
 (6, 5, 8, 'Áo Polo Nam Revvour Floral Luxe', 'Hàng tôi vừa mới mua 290.000đ nhưng không vừa size nên tôi muốn pass lại, áo size L. ai cần liên hệ tôi', 190000.00, '68c46043f1705.jpg,68c46043f1836.jpg,68c46043f1945.jpg,68c46043f1a15.jpg', 'Đã duyệt', 'Đang bán', '2025-09-13 01:02:43', '2025-09-13 01:02:43', '', NULL, 0, 5, 0),
 (7, 4, 1, 'Cần bán 15 thường 128gb ngoại hình 99%', 'Vừa mua nhưng vì có vấn đề gia đình nên tôi cần bán nó để xoay sở...\r\n15 thường blue\r\n128gb\r\nmã mỹ\r\npin 100%\r\nngoại hình 99%\r\nphụ kiện đầy đủ...\r\nanh chị có thể tham khảo sơ qua, nếu có nhu cầu thì liên hệ em ạ', 12500000.00, '68c27f614ad28.jpg,68c27f614ae24.jpg,68c27f614aee5.jpg,68c27f614afbf.jpg', 'Đã duyệt', 'Đang bán', '2025-09-11 09:50:57', '2025-09-11 14:50:57', '', NULL, 0, 5, 0),
 (8, 5, 1, 'iPhone 14 Pro Max', 'Điện thoại iPhone 14 Pro Max 128GB màu tím, còn bảo hành 6 tháng', 25000000.00, 'iphone14.jpg', 'Đã duyệt', 'Đang bán', '2025-01-01 10:00:00', '2025-09-05 14:11:37', 'Hàng chính hãng', NULL, 0, 5, 0),
@@ -733,76 +612,77 @@ INSERT INTO `products` (`id`, `user_id`, `category_id`, `title`, `description`, 
 CREATE TABLE `product_categories` (
   `id` int(11) NOT NULL,
   `category_name` varchar(100) NOT NULL,
-  `parent_category_id` int(11) DEFAULT NULL
+  `parent_category_id` int(11) DEFAULT NULL,
+  `is_hidden` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `product_categories`
 --
 
-INSERT INTO `product_categories` (`id`, `category_name`, `parent_category_id`) VALUES
-(1, 'Điện thoại', 1),
-(2, 'Laptop', 1),
-(3, 'Máy tính bảng', 1),
-(4, 'Máy ảnh & Máy quay', 1),
-(5, 'Âm thanh (loa, tai nghe, micro)', 1),
-(6, 'Thiết bị đeo thông minh', 1),
-(7, 'Linh kiện điện tử', 1),
-(8, 'Quần áo nam', 2),
-(9, 'Quần áo nữ', 2),
-(10, 'Giày dép', 2),
-(11, 'Túi xách & Ví', 2),
-(12, 'Trang sức & Phụ kiện', 2),
-(13, 'Đồng hồ', 2),
-(14, 'Đồ vintage & second-hand', 2),
-(15, 'Nội thất', 3),
-(16, 'Đồ gia dụng', 3),
-(17, 'Trang trí nhà cửa', 3),
-(18, 'Dụng cụ bếp', 3),
-(19, 'Đồ cũ sưu tầm trong gia đình', 3),
-(20, 'Xe máy', 4),
-(21, 'Ô tô', 4),
-(22, 'Xe đạp', 4),
-(23, 'Xe điện', 4),
-(24, 'Phụ tùng xe', 4),
-(25, 'Đồ bảo hộ & Phụ kiện xe', 4),
-(26, 'Nhạc cụ', 5),
-(27, 'Thiết bị chơi game', 5),
-(28, 'Đồ thể thao', 5),
-(29, 'Đồ dã ngoại', 5),
-(30, 'Bộ sưu tập', 5),
-(31, 'Sách giáo khoa', 6),
-(32, 'Sách tham khảo', 6),
-(33, 'Tiểu thuyết', 6),
-(34, 'Truyện tranh', 6),
-(35, 'Văn phòng phẩm', 6),
-(36, 'Đồ lưu niệm học tập', 6),
-(37, 'Quần áo trẻ em', 7),
-(38, 'Đồ chơi trẻ em', 7),
-(39, 'Xe đẩy & Ghế ăn', 7),
-(40, 'Sữa & đồ ăn cho bé', 7),
-(41, 'Đồ sơ sinh', 7),
-(42, 'Phụ kiện cho mẹ', 7),
-(43, 'Thức ăn', 8),
-(44, 'Chuồng & Lồng', 8),
-(45, 'Đồ chơi thú cưng', 8),
-(46, 'Phụ kiện thú cưng', 8),
-(47, 'Thuốc & sản phẩm chăm sóc', 8),
-(48, 'Máy in & Máy photocopy', 9),
-(49, 'Máy chiếu', 9),
-(50, 'Thiết bị văn phòng', 9),
-(51, 'Công cụ & Máy móc cũ', 9),
-(52, 'Thiết bị điện công nghiệp', 9),
-(53, 'Đồ gốm sứ', 10),
-(54, 'Đồ mỹ nghệ', 10),
-(55, 'Tranh vẽ & Tượng', 10),
-(56, 'Đồ handmade', 10),
-(57, 'Vật liệu thủ công', 10),
-(58, 'Đồ cổ', 11),
-(59, 'Tiền xu & Tem', 11),
-(60, 'Đồ sưu tầm hiếm', 11),
-(61, 'Đồ cổ trang trí', 11),
-(62, 'Khác', 12);
+INSERT INTO `product_categories` (`id`, `category_name`, `parent_category_id`, `is_hidden`) VALUES
+(1, 'Điện thoại', 1, 0),
+(2, 'Laptop', 1, 0),
+(3, 'Máy tính bảng', 1, 0),
+(4, 'Máy ảnh & Máy quay', 1, 0),
+(5, 'Âm thanh (loa, tai nghe, micro)', 1, 0),
+(6, 'Thiết bị đeo thông minh', 1, 0),
+(7, 'Linh kiện điện tử', 1, 0),
+(8, 'Quần áo nam', 2, 0),
+(9, 'Quần áo nữ', 2, 0),
+(10, 'Giày dép', 2, 0),
+(11, 'Túi xách & Ví', 2, 0),
+(12, 'Trang sức & Phụ kiện', 2, 0),
+(13, 'Đồng hồ', 2, 0),
+(14, 'Đồ vintage & second-hand', 2, 0),
+(15, 'Nội thất', 3, 0),
+(16, 'Đồ gia dụng', 3, 0),
+(17, 'Trang trí nhà cửa', 3, 0),
+(18, 'Dụng cụ bếp', 3, 0),
+(19, 'Đồ cũ sưu tầm trong gia đình', 3, 0),
+(20, 'Xe máy', 4, 0),
+(21, 'Ô tô', 4, 0),
+(22, 'Xe đạp', 4, 0),
+(23, 'Xe điện', 4, 0),
+(24, 'Phụ tùng xe', 4, 0),
+(25, 'Đồ bảo hộ & Phụ kiện xe', 4, 0),
+(26, 'Nhạc cụ', 5, 0),
+(27, 'Thiết bị chơi game', 5, 0),
+(28, 'Đồ thể thao', 5, 0),
+(29, 'Đồ dã ngoại', 5, 0),
+(30, 'Bộ sưu tập', 5, 0),
+(31, 'Sách giáo khoa', 6, 0),
+(32, 'Sách tham khảo', 6, 0),
+(33, 'Tiểu thuyết', 6, 0),
+(34, 'Truyện tranh', 6, 0),
+(35, 'Văn phòng phẩm', 6, 0),
+(36, 'Đồ lưu niệm học tập', 6, 0),
+(37, 'Quần áo trẻ em', 7, 0),
+(38, 'Đồ chơi trẻ em', 7, 0),
+(39, 'Xe đẩy & Ghế ăn', 7, 0),
+(40, 'Sữa & đồ ăn cho bé', 7, 0),
+(41, 'Đồ sơ sinh', 7, 0),
+(42, 'Phụ kiện cho mẹ', 7, 0),
+(43, 'Thức ăn', 8, 0),
+(44, 'Chuồng & Lồng', 8, 0),
+(45, 'Đồ chơi thú cưng', 8, 0),
+(46, 'Phụ kiện thú cưng', 8, 0),
+(47, 'Thuốc & sản phẩm chăm sóc', 8, 0),
+(48, 'Máy in & Máy photocopy', 9, 0),
+(49, 'Máy chiếu', 9, 0),
+(50, 'Thiết bị văn phòng', 9, 0),
+(51, 'Công cụ & Máy móc cũ', 9, 0),
+(52, 'Thiết bị điện công nghiệp', 9, 0),
+(53, 'Đồ gốm sứ', 10, 0),
+(54, 'Đồ mỹ nghệ', 10, 0),
+(55, 'Tranh vẽ & Tượng', 10, 0),
+(56, 'Đồ handmade', 10, 0),
+(57, 'Vật liệu thủ công', 10, 0),
+(58, 'Đồ cổ', 11, 0),
+(59, 'Tiền xu & Tem', 11, 0),
+(60, 'Đồ sưu tầm hiếm', 11, 0),
+(61, 'Đồ cổ trang trí', 11, 0),
+(62, 'Khác', 12, 0);
 
 -- --------------------------------------------------------
 
@@ -994,11 +874,11 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `phone`, `address`, `role_id`, `account_type`, `business_verified`, `avatar`, `birth_date`, `created_date`, `updated_date`, `is_active`, `is_verified`, `balance`) VALUES
-(1, '', '', '202cb962ac59075b964b07152d234b70', '', '', 1, 'ca_nhan', 0, 'avatar1.jpg', '1990-01-01', '2025-01-01', '2025-11-17 10:56:13', 1, 1, 0.00),
+(1, 'Hoàng Nam ', 'admin@choviet.com', 'e10adc3949ba59abbe56e057f20f883e', '0934838364', '58 đường số 15 phường Linh Chiểu, Tp Thủ Đức, 12', 1, 'ca_nhan', 0, 'avatar1.jpg', '1990-01-01', '2025-01-01', '2025-11-18 12:32:43', 1, 1, 0.00),
 (2, 'user01', 'admincontent@choviet.com', '202cb962ac59075b964b07152d234b70', '0987654321', 'TP.HCM', 4, 'ca_nhan', 0, 'avatar2.jpg', '1995-05-15', '2025-01-02', '2025-11-05 17:15:51', 1, 1, 0.00),
 (3, 'admin', 'adminbusiness@choviet.com', '202cb962ac59075b964b07152d234b70', NULL, NULL, 5, 'ca_nhan', 0, NULL, NULL, '2025-09-05', '2025-11-05 17:16:29', 1, 1, 0.00),
 (4, 'hoangandeptraiso234', 'hoangan2711.npha@gmail.com', '787a1458649a2df9166ebabf580ac665', '0934838366', '58 đường số 15 phường Linh Chiểu, Tp Thủ Đức, 12', 2, 'doanh_nghiep', 0, '1757577336_68c28078bebc4.jpg', '2003-11-27', '2025-09-05', '2025-11-17 11:13:51', 1, 1, 810000.00),
-(5, 'hoangan2', 'hoangan2912.npha@gmail.com', '787a1458649a2df9166ebabf580ac665', NULL, NULL, 2, 'doanh_nghiep', 0, NULL, NULL, '2025-09-05', '2025-11-05 19:15:12', 1, 1, 0.00);
+(5, 'hoangan2', 'hoangan2912.npha@gmail.com', '787a1458649a2df9166ebabf580ac665', NULL, NULL, 2, 'doanh_nghiep', 0, NULL, NULL, '2025-09-05', '2025-11-21 10:43:45', 1, 1, 0.00);
 
 -- --------------------------------------------------------
 

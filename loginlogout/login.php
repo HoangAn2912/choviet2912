@@ -16,6 +16,23 @@ include_once("controller/cLoginLogout.php");
             margin: 0;
             padding: 20px;
         min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            background-image: url('../img/login.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            z-index: -1;
     }
         
         .form-container {
@@ -24,7 +41,10 @@ include_once("controller/cLoginLogout.php");
             padding: 30px;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 1;
         }
         
         .form-group {

@@ -42,16 +42,22 @@ class cqlthongtin {
         return $data;
     }
     
-    function getpaginatedusers($offset, $limit, $statusFilter = 'all') {
+    function getpaginatedusers($offset, $limit, $statusFilter = 'all', $search = '') {
         $p = new qlthongtin();
-        $data = $p->selectPaginatedUsers($offset, $limit, $statusFilter);
+        $data = $p->selectPaginatedUsers($offset, $limit, $statusFilter, $search);
         return $data;
     }
     
-    // Count total users with optional status filter
-    function countUsers($statusFilter = 'all') {
+    // Count total users with optional status filter and search
+    function countUsers($statusFilter = 'all', $search = '') {
         $p = new qlthongtin();
-        return $p->countTotalUsers($statusFilter);
+        return $p->countTotalUsers($statusFilter, $search);
+    }
+    
+    // Get user statistics
+    function getUserStats() {
+        $p = new qlthongtin();
+        return $p->getUserStats();
     }
 
     // Add new user

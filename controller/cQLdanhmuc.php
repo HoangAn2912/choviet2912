@@ -73,6 +73,27 @@ class cLoaiSanPham {
         }
     }
     
+    // Hide parent category
+    public function hideParentCategory($id) {
+        // Check if there are child categories
+        $childCount = $this->model->countChildCategories($id);
+        
+        if ($childCount > 0) {
+            return array(
+                'success' => false, 
+                'message' => 'Không thể ẩn danh mục cha này vì có ' . $childCount . ' danh mục con thuộc danh mục này'
+            );
+        }
+        
+        $result = $this->model->hideParentCategory($id);
+        
+        if ($result) {
+            return array('success' => true);
+        } else {
+            return array('success' => false, 'message' => 'Không thể ẩn danh mục cha');
+        }
+    }
+    
     // Count child categories for a parent
     public function aacountChildCategories($parentId) {
         return $this->model->countChildCategories($parentId);
@@ -86,13 +107,13 @@ class cLoaiSanPham {
     }
     
     // Get paginated child categories with filters
-    public function getPaginatedChildCategories($offset, $limit, $parentFilter = 'all', $searchTerm = '') {
-        return $this->model->getPaginatedChildCategories($offset, $limit, $parentFilter, $searchTerm);
+    public function getPaginatedChildCategories($offset, $limit, $parentFilter = 'all', $searchTerm = '', $showHidden = false) {
+        return $this->model->getPaginatedChildCategories($offset, $limit, $parentFilter, $searchTerm, $showHidden);
     }
     
     // Count child categories for pagination
-    public function countChildCategories($parentFilter = 'all', $searchTerm = '') {
-        return $this->model->countChildCategories($parentFilter, $searchTerm);
+    public function countChildCategories($parentFilter = 'all', $searchTerm = '', $showHidden = false) {
+        return $this->model->countChildCategories($parentFilter, $searchTerm, $showHidden);
     }
     
     // Get child categories by parent ID
@@ -175,6 +196,49 @@ class cLoaiSanPham {
             return array('success' => true);
         } else {
             return array('success' => false, 'message' => 'Không thể xóa danh mục con');
+        }
+    }
+    
+    // Hide child category
+    public function hideChildCategory($id) {
+        // Check if there are products using this category
+        $productCount = $this->model->countProductsInCategory($id);
+        
+        if ($productCount > 0) {
+            return array(
+                'success' => false, 
+                'message' => 'Không thể ẩn danh mục này vì có ' . $productCount . ' sản phẩm thuộc danh mục này'
+            );
+        }
+        
+        $result = $this->model->hideChildCategory($id);
+        
+        if ($result) {
+            return array('success' => true);
+        } else {
+            return array('success' => false, 'message' => 'Không thể ẩn danh mục con');
+        }
+    }
+    
+    // Restore (unhide) parent category
+    public function restoreParentCategory($id) {
+        $result = $this->model->restoreParentCategory($id);
+        
+        if ($result) {
+            return array('success' => true);
+        } else {
+            return array('success' => false, 'message' => 'Không thể hiển thị lại danh mục cha');
+        }
+    }
+    
+    // Restore (unhide) child category
+    public function restoreChildCategory($id) {
+        $result = $this->model->restoreChildCategory($id);
+        
+        if ($result) {
+            return array('success' => true);
+        } else {
+            return array('success' => false, 'message' => 'Không thể hiển thị lại danh mục con');
         }
     }
     

@@ -233,7 +233,7 @@ class LoginLogoutController {
     private function redirectBasedOnRole($role) {
         switch ((int) $role) {
             case 1: // admin
-                header("Location: " . $this->baseUrl . "ad");
+                header("Location: " . $this->baseUrl . "admin");
                 break;
             case 2: // user (mặc định)
                 // Fix double slash: rtrim baseUrl để loại bỏ trailing slash nếu có
@@ -241,13 +241,13 @@ class LoginLogoutController {
                 break;
             case 3: // moderator
                 // Điều hướng tới trang phù hợp cho moderator (ví dụ quản lý danh mục)
-                header("Location: " . $this->baseUrl . "ad/loaisanpham");
+                header("Location: " . $this->baseUrl . "admin?qldanhmuc");
                 break;
             case 4: // adcontent
-                header("Location: " . $this->baseUrl . "ad/edit-banner");
+                header("Location: " . $this->baseUrl . "admin?qlbanner");
                 break;
             case 5: // adbusiness
-                header("Location: " . $this->baseUrl . "ad/qldoanhthu");
+                header("Location: " . $this->baseUrl . "admin");
                 break;
             default:
                 $this->redirectWithError('login', '❌ Quyền không hợp lệ!');

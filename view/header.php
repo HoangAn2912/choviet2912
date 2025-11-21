@@ -209,24 +209,201 @@ if (isset($_SESSION['user_id'])) {
             }
         }
 
-        /* Navbar Dropright (Danh mục sidebar) */
-        .dropright .dropdown-menu {
+        /* ========================================
+           DANH MỤC SIDEBAR - STYLES MỚI
+        ======================================== */
+        
+        /* Container danh mục sidebar */
+        #navbar-vertical {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+            border-radius: 0 0 8px 8px !important;
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        #navbar-vertical::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #navbar-vertical::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        #navbar-vertical::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        
+        #navbar-vertical::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Danh mục cha - Nav Item */
+        .navbar-vertical .nav-item {
+            position: relative;
+            margin: 0 !important;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .navbar-vertical .nav-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* Danh mục cha - Nav Link */
+        .navbar-vertical .nav-link {
+            padding: 14px 20px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            color: #333 !important;
+            text-decoration: none !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            transition: all 0.3s ease !important;
+            background: #fff !important;
+            border-left: 4px solid transparent !important;
+            position: relative;
+        }
+        
+        .navbar-vertical .nav-link:hover {
+            background: linear-gradient(to right, #FFF9E6 0%, #FFE5B4 100%) !important;
+            color: #8B6914 !important;
+            padding-left: 24px !important;
+            border-left-color: #FFD333 !important;
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(255, 211, 51, 0.2);
+        }
+        
+        .navbar-vertical .nav-link.show {
+            background: linear-gradient(to right, #FFF9E6 0%, #FFE5B4 100%) !important;
+            color: #8B6914 !important;
+            border-left-color: #FFD333 !important;
+        }
+        
+        /* Icon góc phải trong danh mục cha */
+        .navbar-vertical .nav-link .fa-angle-right {
+            font-size: 14px;
+            transition: all 0.3s ease;
+            color: #999;
+        }
+        
+        .navbar-vertical .nav-link:hover .fa-angle-right,
+        .navbar-vertical .nav-link.show .fa-angle-right {
+            color: #8B6914 !important;
+            transform: translateX(5px) rotate(90deg);
+        }
+        
+        /* Dropdown menu chứa danh mục con */
+        .navbar-vertical .dropright .dropdown-menu {
             left: 100% !important;
             top: 0 !important;
-            margin-left: 0.125rem !important;
-            border-radius: 8px !important;
+            margin-left: 8px !important;
+            border-radius: 12px !important;
+            border: none !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+            padding: 8px 0 !important;
+            min-width: 220px;
+            max-width: 280px;
+            animation: slideInRight 0.3s ease;
+            background: #fff !important;
         }
-
-        /* Vertical Navbar Dropdown */
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* Danh mục con - Dropdown Item */
         .navbar-vertical .dropdown-item {
-            padding: 10px 20px !important;
-            font-size: 13px;
+            padding: 12px 20px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            color: #555 !important;
+            text-decoration: none !important;
+            transition: all 0.25s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            position: relative;
+            border-left: 3px solid transparent;
         }
-
+        
+        .navbar-vertical .dropdown-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #FFD333;
+            transform: scaleY(0);
+            transition: transform 0.25s ease;
+        }
+        
         .navbar-vertical .dropdown-item:hover {
-            background: #f8f9fa !important;
-            color: #D19C97 !important;
+            background: linear-gradient(to right, #FFF9E6 0%, #FFE5B4 100%) !important;
+            color: #8B6914 !important;
+            padding-left: 28px !important;
+            transform: translateX(3px);
+            border-left-color: #FFD333;
+        }
+        
+        .navbar-vertical .dropdown-item:hover::before {
+            transform: scaleY(1);
+        }
+        
+        .navbar-vertical .dropdown-item:active {
+            background: linear-gradient(to right, #FFE5B4 0%, #FFD700 100%) !important;
+            color: #8B6914 !important;
+        }
+        
+        /* Divider trong dropdown */
+        .navbar-vertical .dropdown-divider {
+            margin: 6px 0 !important;
+            border-top: 1px solid #e9ecef !important;
+        }
+        
+        /* Danh mục không có con - Nav Link đơn giản */
+        .navbar-vertical .nav-item:not(.dropdown) .nav-link {
+            cursor: pointer;
+        }
+        
+        .navbar-vertical .nav-item:not(.dropdown) .nav-link:hover {
+            background: linear-gradient(to right, #FFF9E6 0%, #FFE5B4 100%) !important;
+            color: #8B6914 !important;
             padding-left: 24px !important;
+            border-left-color: #FFD333 !important;
+        }
+        
+        /* Responsive - Mobile */
+        @media (max-width: 991px) {
+            .navbar-vertical .dropright .dropdown-menu {
+                position: static !important;
+                left: auto !important;
+                top: auto !important;
+                margin-left: 0 !important;
+                margin-top: 5px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+                border-radius: 8px !important;
+            }
+            
+            .navbar-vertical .nav-link {
+                padding: 12px 16px !important;
+                font-size: 13px !important;
+            }
+            
+            .navbar-vertical .dropdown-item {
+                padding: 10px 16px 10px 32px !important;
+                font-size: 12px !important;
+            }
         }
 
         /* Badge/Count in Dropdown */
@@ -434,7 +611,7 @@ if (isset($_SESSION['user_id'])) {
                     <i class="fa fa-angle-down text-dark"></i>
                 </a>
                 <nav class="collapse position-absolute navbar navbar-vertical navbar-light align-items-start p-0 bg-light" id="navbar-vertical" style="width: calc(100% - 30px); z-index: 999;">
-                <div class="navbar-nav w-100">
+                <div class="w-100">
                     <?php if (!empty($data)) : ?>
                         <?php foreach ($data as $parent) : ?>
                             <?php if (!empty($parent['con'])) : ?>

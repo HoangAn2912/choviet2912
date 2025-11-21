@@ -1,0 +1,409 @@
+/**
+ * CSS cho Admin Panel
+ * Tổng hợp từ admin template
+ */
+
+/* ============================================
+   PAGE BODY WRAPPER
+   ============================================ */
+.page-body-wrapper {
+    min-height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: row;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0 !important;
+    margin-top: 60px;
+}
+
+.page-body-wrapper.full-page-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    padding-top: 0;
+}
+
+/* ============================================
+   MAIN PANEL
+   ============================================ */
+.main-panel {
+    transition: width 0.25s ease, margin 0.25s ease;
+    width: calc(100% - 257px);
+    min-height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+@media (max-width: 991px) {
+    .main-panel {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+/* ============================================
+   CONTENT WRAPPER
+   ============================================ */
+.content-wrapper {
+    background: #f3f3f3;
+    padding: 20px;
+    padding-top: 20px !important;
+    margin-top: 0 !important;
+    padding-bottom: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: calc(100vh - 60px);
+    box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+    .content-wrapper {
+        padding: 15px;
+    }
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
+.sidebar {
+    min-height: calc(100vh - 60px);
+    background: #ffffff;
+    font-family: "Roboto", sans-serif;
+    font-weight: 300;
+    width: 257px;
+    position: relative;
+    z-index: 11;
+    transition: width 0.25s ease;
+    border-right: 1px solid #e0e0e0;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.03);
+}
+
+.sidebar .nav {
+    overflow: visible;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+    flex-direction: column;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.sidebar .nav .nav-item {
+    width: 100%;
+    margin-bottom: 3px;
+    padding: 0 12px;
+}
+
+.sidebar .nav .nav-item .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 13px 16px;
+    white-space: nowrap;
+    color: #3e4b5b;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+    font-size: 0.9rem;
+    font-weight: 400;
+    border-radius: 8px;
+    margin: 0 8px;
+}
+
+.sidebar .nav .nav-item .nav-link:hover {
+    background: #f8f9fa;
+    color: #007bff;
+    border-left-color: #007bff;
+    transform: translateX(2px);
+}
+
+.sidebar .nav .nav-item .nav-link.active,
+.sidebar .nav .nav-item .nav-link:focus {
+    background: #e7f3ff;
+    color: #007bff;
+    border-left-color: #007bff;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,123,255,0.1);
+}
+
+.sidebar .nav .nav-item .nav-link .menu-icon {
+    margin-right: 14px;
+    font-size: 1.3rem;
+    width: 26px;
+    text-align: center;
+    color: inherit;
+    transition: all 0.3s ease;
+}
+
+.sidebar .nav .nav-item .nav-link:hover .menu-icon {
+    transform: scale(1.1);
+}
+
+.sidebar .nav .nav-item .nav-link.active .menu-icon,
+.sidebar .nav .nav-item .nav-link:focus .menu-icon {
+    color: #007bff;
+}
+
+@media (min-width: 992px) {
+    .sidebar {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        height: calc(100vh - 60px);
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    
+    .main-panel {
+        margin-left: 257px;
+    }
+    
+    .page-body-wrapper {
+        padding-top: 0 !important;
+    }
+}
+
+@media (max-width: 991px) {
+    .sidebar {
+        position: fixed;
+        top: 60px;
+        left: -257px;
+        z-index: 999;
+        transition: left 0.25s ease;
+    }
+    
+    .sidebar.sidebar-offcanvas {
+        left: 0;
+    }
+}
+
+/* ============================================
+   NAVBAR / HEADER
+   ============================================ */
+.navbar {
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    height: 60px;
+    padding: 0;
+    z-index: 1000;
+}
+
+.navbar-brand-wrapper {
+    width: 257px;
+    height: 60px;
+    background: #ffffff;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar-brand-inner-wrapper {
+    padding: 0 20px;
+}
+
+.navbar-brand-inner-wrapper b {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.navbar-menu-wrapper {
+    flex: 1;
+    height: 60px;
+    padding: 0 20px;
+}
+
+.navbar-nav {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-nav-right {
+    margin-left: auto;
+}
+
+/* Profile Dropdown */
+.nav-profile {
+    position: relative;
+}
+
+.nav-profile .dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    left: auto !important;
+    z-index: 1050 !important;
+}
+
+.nav-profile .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #333;
+    cursor: pointer;
+}
+
+.nav-profile .nav-link:hover {
+    background: #f8f9fa;
+}
+
+.nav-profile-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+    border: 2px solid #e0e0e0;
+}
+
+.nav-profile-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+}
+
+.nav-profile .nav-link i.mdi-chevron-down {
+    font-size: 1rem;
+    color: #666;
+    transition: transform 0.3s ease;
+}
+
+.nav-profile .nav-link[aria-expanded="true"] i.mdi-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.navbar-dropdown {
+    min-width: 200px;
+    padding: 8px 0;
+    margin-top: 8px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    left: auto !important;
+    z-index: 1050 !important;
+    display: none;
+}
+
+.navbar-dropdown.show,
+.dropdown-menu.show {
+    display: block !important;
+}
+
+.nav-profile {
+    position: relative;
+}
+
+.nav-profile .dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    left: auto !important;
+    z-index: 1050 !important;
+}
+
+.navbar-dropdown .dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    border: none;
+    background: transparent;
+    width: 100%;
+}
+
+.navbar-dropdown .dropdown-item:hover {
+    background: #f8f9fa;
+    color: #007bff;
+}
+
+.navbar-dropdown .dropdown-item i {
+    width: 20px;
+    text-align: center;
+}
+
+.navbar-dropdown .dropdown-divider {
+    margin: 8px 0;
+    border-top: 1px solid #e0e0e0;
+}
+
+.navbar-dropdown li:last-child .dropdown-item {
+    color: #dc3545;
+}
+
+.navbar-dropdown li:last-child .dropdown-item:hover {
+    background: #fff5f5;
+    color: #dc3545;
+}
+
+.navbar-dropdown li {
+    list-style: none;
+}
+
+/* ============================================
+   CONTAINER ADMIN
+   ============================================ */
+.admin-container,
+.user-container,
+.qldonhang-container,
+.qlgiaodich-container,
+.doanhthu-container,
+.banner-container,
+.category-container,
+.kdbaidang-container,
+.info-admin-container,
+.info-insert-container,
+.info-update-container {
+    margin: 0 auto !important;
+    padding: 0 !important;
+    max-width: 1400px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Loại bỏ khung xanh từ container-fluid và page-body-wrapper */
+.container-fluid,
+.page-body-wrapper,
+.content-wrapper,
+.main-panel {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Loại bỏ khung xanh từ info-admin-container và các card */
+.info-admin-container .admin-card,
+.info-admin-container .card,
+.info-admin-container .card-header,
+.info-admin-container .card-body {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+

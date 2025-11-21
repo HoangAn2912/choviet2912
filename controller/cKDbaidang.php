@@ -21,6 +21,10 @@ class ckdbaidang {
         $p = new kdbaidang();
         return $p->tuChoiBai($id, $ghichu);
     }
+    public function getanbai($id){
+        $p = new kdbaidang();
+        return $p->anBai($id);
+    }
     function getPaginatedPosts($offset, $limit, $status = '', $product_type = '', $search = '') {
         $p = new kdbaidang();
         $data = $p->selectPaginatedPosts($offset, $limit, $status, $product_type, $search);

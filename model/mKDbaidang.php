@@ -187,6 +187,20 @@ class kdbaidang {
         $conn->close();
         return $result;
     }
+    
+    public function anBai($id) {
+        $p = new Connect();
+        $conn = $p->connect();
+        
+        // Update sale_status to "Đã ẩn"
+        $query = "UPDATE products SET sale_status = 'Đã ẩn', updated_date = NOW() WHERE id = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("i", $id);
+        $result = $stmt->execute();
+        $stmt->close();
+        $conn->close();
+        return $result;
+    }
     // Get paginated and filtered posts
     function selectPaginatedPosts($offset, $limit, $status = '', $product_type = '', $search = '') {
         $p = new Connect();

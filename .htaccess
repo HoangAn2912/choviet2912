@@ -1,10 +1,13 @@
 RewriteEngine On
 RewriteBase /
 
-# Nếu truy cập /ad/abc → rewrite về admin.php?abc
+# Nếu truy cập /admin → vào admin.php
+RewriteRule ^admin/?$ admin.php [QSA,L]
+
+# Nếu truy cập /ad/abc → rewrite về admin.php?abc (backward compatibility)
 RewriteRule ^ad/([a-zA-Z0-9_-]+)$ admin.php?$1 [QSA,L]
 
-# Nếu chỉ là /ad → vào admin.php
+# Nếu chỉ là /ad → vào admin.php (backward compatibility)
 RewriteRule ^ad/?$ admin.php [L]
 
 # Bỏ qua file/thư mục có thật (css, js, ảnh, vendor, v.v.)

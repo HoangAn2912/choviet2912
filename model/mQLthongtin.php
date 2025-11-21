@@ -273,8 +273,8 @@ class qlthongtin{
         return $rs;
     }
     
-	// Get paginated users with optional status filter
-    function selectPaginatedUsers($offset, $limit, $statusFilter = 'all') {
+	// Get paginated users with optional status filter and search
+    function selectPaginatedUsers($offset, $limit, $statusFilter = 'all', $search = '') {
         $con = new Connect();
         $p = $con->connect();
         
@@ -286,7 +286,13 @@ class qlthongtin{
             $whereClause .= " AND is_active = 0";
         }
         
-        $sql = "SELECT * FROM users {$whereClause} ORDER BY id LIMIT {$offset}, {$limit}";
+        // Add search condition
+        if (!empty($search)) {
+            $search = mysqli_real_escape_string($p, $search);
+            $whereClause .= " AND (username LIKE '%{$search}%' OR email LIKE '%{$search}%' OR phone LIKE '%{$search}%')";
+        }
+        
+        $sql = "SELECT * FROM users {$whereClause} ORDER BY id DESC LIMIT {$offset}, {$limit}";
         $rs = mysqli_query($p, $sql);
         
         $data = array();
@@ -297,8 +303,8 @@ class qlthongtin{
         return $data;
     }
     
-    // Count total users with optional status filter
-    function countTotalUsers($statusFilter = 'all') {
+    // Count total users with optional status filter and search
+    function countTotalUsers($statusFilter = 'all', $search = '') {
         $con = new Connect();
         $p = $con->connect();
         
@@ -310,11 +316,45 @@ class qlthongtin{
             $whereClause .= " AND is_active = 0";
         }
         
+        // Add search condition
+        if (!empty($search)) {
+            $search = mysqli_real_escape_string($p, $search);
+            $whereClause .= " AND (username LIKE '%{$search}%' OR email LIKE '%{$search}%' OR phone LIKE '%{$search}%')";
+        }
+        
         $sql = "SELECT COUNT(*) as total FROM users {$whereClause}";
         $rs = mysqli_query($p, $sql);
         $row = mysqli_fetch_assoc($rs);
         
         return $row['total'];
+    }
+    
+    // Get user statistics
+    function getUserStats() {
+        $con = new Connect();
+        $p = $con->connect();
+        
+        $stats = array();
+        
+        // Total users (role_id = 2)
+        $sql = "SELECT COUNT(*) as total FROM users WHERE role_id = 2";
+        $rs = mysqli_query($p, $sql);
+        $row = mysqli_fetch_assoc($rs);
+        $stats['total_users'] = $row['total'];
+        
+        // Active users
+        $sql = "SELECT COUNT(*) as total FROM users WHERE role_id = 2 AND is_active = 1";
+        $rs = mysqli_query($p, $sql);
+        $row = mysqli_fetch_assoc($rs);
+        $stats['active_users'] = $row['total'];
+        
+        // Disabled users
+        $sql = "SELECT COUNT(*) as total FROM users WHERE role_id = 2 AND is_active = 0";
+        $rs = mysqli_query($p, $sql);
+        $row = mysqli_fetch_assoc($rs);
+        $stats['disabled_users'] = $row['total'];
+        
+        return $stats;
     }
 
 	public function insertuser($hoten, $email, $mk, $sdt, $dc, $anh) {

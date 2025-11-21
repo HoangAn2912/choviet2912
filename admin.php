@@ -15,5 +15,5 @@ if (isset($_GET['action']) && $_GET['action'] == 'logout') {
     exit;
 }
 
-include_once("view/admin.php");
+include_once("view/admin/admin.php");
 ?>

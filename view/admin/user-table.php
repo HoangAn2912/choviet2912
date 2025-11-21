@@ -8,7 +8,7 @@ if ($_SESSION['role'] != 1) {
     exit;
 }
 
-include_once("controller/cQLthongtin.php");
+include_once(__DIR__ . "/../../controller/cQLthongtin.php");
 $p = new cqlthongtin();
 
 // Pagination settings
@@ -68,13 +68,13 @@ if (isset($_GET['restore']) && isset($_GET['id'])) {
 
 // Function to generate pagination URL
 function getPaginationUrl($page, $statusFilter, $search) {
-    $url = "?taikhoan&page={$page}";
+    $url = "taikhoan&page={$page}";
     if ($statusFilter !== 'all') $url .= "&status_filter={$statusFilter}";
     if (!empty($search)) $url .= "&search=" . urlencode($search);
     return $url;
 }
 
-require_once __DIR__ . '/../helpers/url_helper.php';
+require_once __DIR__ . '/../../helpers/url_helper.php';
 ?>
 
 <style>
@@ -134,10 +134,16 @@ require_once __DIR__ . '/../helpers/url_helper.php';
     }
     
     .user-avatar {
-        width: 50px;
-        height: 50px;
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+        max-width: 50px !important;
+        max-height: 50px !important;
+        aspect-ratio: 1 / 1;
         object-fit: cover;
-        border-radius: 50%;
+        object-position: center;
+        border-radius: 4px;
         border: 2px solid #dee2e6;
         display: block;
         margin: 0 auto;
@@ -306,12 +312,15 @@ require_once __DIR__ . '/../helpers/url_helper.php';
 </style>
 
 <div class="user-container admin-container">
-    <?php if (isset($_GET['status'])): ?>
-        <?php if ($_GET['status'] == 'disabled'): ?>
-        <div class="alert alert-success action-message">
-            <i class="mdi mdi-check-circle"></i>
-            Người dùng đã được vô hiệu hóa thành công.
-        </div>
+    <div class="admin-card">
+        <h3 class="admin-card-title">Quản lý tài khoản</h3>
+        
+        <?php if (isset($_GET['status'])): ?>
+            <?php if ($_GET['status'] == 'disabled'): ?>
+            <div class="alert alert-success action-message">
+                <i class="mdi mdi-check-circle"></i>
+                Người dùng đã được vô hiệu hóa thành công.
+            </div>
         <?php elseif ($_GET['status'] == 'restored'): ?>
         <div class="alert alert-success action-message">
             <i class="mdi mdi-check-circle"></i>
@@ -354,12 +363,12 @@ require_once __DIR__ . '/../helpers/url_helper.php';
             
             <div class="form-group">
                 <label>Tìm kiếm</label>
-                <input type="text" name="search" placeholder="Tên, email hoặc số điện thoại..." value="<?php echo htmlspecialchars($search); ?>">
+                <input type="text" name="search" class="form-control" placeholder="Tên, email hoặc số điện thoại..." value="<?php echo htmlspecialchars($search); ?>">
             </div>
             
             <div class="form-group">
                 <label>Trạng thái</label>
-                <select name="status_filter">
+                <select name="status_filter" class="form-control">
                     <option value="all" <?php echo $statusFilter === 'all' ? 'selected' : ''; ?>>Tất cả trạng thái</option>
                     <option value="active" <?php echo $statusFilter === 'active' ? 'selected' : ''; ?>>Hoạt động</option>
                     <option value="disabled" <?php echo $statusFilter === 'disabled' ? 'selected' : ''; ?>>Vô hiệu hóa</option>
@@ -367,10 +376,12 @@ require_once __DIR__ . '/../helpers/url_helper.php';
             </div>
             
             <div class="form-group">
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" class="btn btn-primary">Lọc</button>
-                    <a href="?taikhoan" class="btn btn-secondary">Đặt lại</a>
-                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="mdi mdi-filter"></i> Lọc
+                </button>
+                <a href="?taikhoan" class="btn btn-secondary" style="margin-left: 10px;">
+                    <i class="mdi mdi-refresh"></i> Đặt lại
+                </a>
             </div>
         </form>
     </div>
@@ -392,8 +403,8 @@ require_once __DIR__ . '/../helpers/url_helper.php';
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th style="width: 80px; text-align: center;">Ảnh đại diện</th>
                         <th style="width: 70px; text-align: center;">ID</th>
+                        <th style="width: 80px; text-align: center;">Ảnh đại diện</th>
                         <th style="min-width: 150px;">Họ và tên</th>
                         <th style="min-width: 200px;">Email</th>
                         <th style="width: 130px;">Số điện thoại</th>
@@ -421,10 +432,10 @@ require_once __DIR__ . '/../helpers/url_helper.php';
                                 ?>
                                 <tr class="<?php echo $rowClass; ?>">
                                     <td>
-                                        <img src="<?php echo $avatarPath; ?>" alt="Avatar" class="user-avatar" onerror="this.src='<?php echo getBasePath(); ?>/img/default-avatar.jpg'">
+                                        <strong>#<?php echo $u['id']; ?></strong>
                                     </td>
                                     <td>
-                                        <strong>#<?php echo $u['id']; ?></strong>
+                                        <img src="<?php echo $avatarPath; ?>" alt="Avatar" class="user-avatar" onerror="this.src='<?php echo getBasePath(); ?>/img/default-avatar.jpg'">
                                     </td>
                                     <td>
                                         <div style="word-wrap: break-word;">
@@ -460,19 +471,13 @@ require_once __DIR__ . '/../helpers/url_helper.php';
                                                 <i class="mdi mdi-pencil"></i> Sửa
                                             </a>
                                             <?php if ($isActive): ?>
-                                                <a href="?taikhoan&disable&id=<?php echo $u['id']; ?>&page=<?php echo $currentPage; ?>&status_filter=<?php echo $statusFilter; ?>&search=<?php echo urlencode($search); ?>"
-                                                    class="btn btn-danger btn-sm"
-                                                    onclick="return confirm('Bạn có chắc chắn muốn vô hiệu hóa tài khoản này?');"
-                                                    title="Vô hiệu hóa">
+                                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#disableUserModal" data-id="<?php echo $u['id']; ?>" data-name="<?php echo htmlspecialchars($u['username']); ?>" title="Vô hiệu hóa">
                                                     <i class="mdi mdi-account-off"></i> Vô hiệu hóa
-                                                </a>
+                                                </button>
                                             <?php else: ?>
-                                                <a href="?taikhoan&restore&id=<?php echo $u['id']; ?>&page=<?php echo $currentPage; ?>&status_filter=<?php echo $statusFilter; ?>&search=<?php echo urlencode($search); ?>"
-                                                    class="btn btn-success btn-sm"
-                                                    onclick="return confirm('Bạn có chắc chắn muốn khôi phục tài khoản này?');"
-                                                    title="Khôi phục">
+                                                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#restoreUserModal" data-id="<?php echo $u['id']; ?>" data-name="<?php echo htmlspecialchars($u['username']); ?>" title="Khôi phục">
                                                     <i class="mdi mdi-account-check"></i> Khôi phục
-                                                </a>
+                                                </button>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -487,37 +492,51 @@ require_once __DIR__ . '/../helpers/url_helper.php';
     <!-- Pagination -->
     <?php if ($totalPages > 1): ?>
         <div class="pagination-info">
-            Hiển thị <?php echo count($data); ?> trên tổng số <?php echo number_format($totalUsers); ?> tài khoản
+            Hiển thị <?php echo count($data); ?> trên tổng số <?php echo number_format($totalUsers); ?> bản ghi
         </div>
         <div class="pagination">
             <?php if ($currentPage > 1): ?>
-                <a href="<?php echo getPaginationUrl(1, $statusFilter, $search); ?>">« Đầu</a>
-                <a href="<?php echo getPaginationUrl($currentPage - 1, $statusFilter, $search); ?>">‹ Trước</a>
+                <a href="?<?php echo getPaginationUrl($currentPage - 1, $statusFilter, $search); ?>">&lt;</a>
             <?php endif; ?>
             
             <?php
-                $startPage = max(1, $currentPage - 2);
-                $endPage = min($totalPages, $startPage + 4);
+                // Determine range of page numbers to show (current page ± 1)
+                $startPage = max(1, $currentPage - 1);
+                $endPage = min($totalPages, $currentPage + 1);
                 
-                if ($endPage - $startPage < 4) {
-                    $startPage = max(1, $endPage - 4);
-                }
+                // Show first page if not in range
+                if ($startPage > 1): ?>
+                    <a href="?<?php echo getPaginationUrl(1, $statusFilter, $search); ?>">1</a>
+                    <?php if ($startPage > 2): ?>
+                        <span class="ellipsis">...</span>
+                    <?php endif; ?>
+                <?php endif;
                 
+                // Generate page links
                 for ($i = $startPage; $i <= $endPage; $i++):
             ?>
                 <?php if ($i == $currentPage): ?>
                     <span class="current"><?php echo $i; ?></span>
                 <?php else: ?>
-                    <a href="<?php echo getPaginationUrl($i, $statusFilter, $search); ?>"><?php echo $i; ?></a>
+                    <a href="?<?php echo getPaginationUrl($i, $statusFilter, $search); ?>"><?php echo $i; ?></a>
                 <?php endif; ?>
             <?php endfor; ?>
             
+            <?php
+                // Show last page if not in range
+                if ($endPage < $totalPages): ?>
+                    <?php if ($endPage < $totalPages - 1): ?>
+                        <span class="ellipsis">...</span>
+                    <?php endif; ?>
+                    <a href="?<?php echo getPaginationUrl($totalPages, $statusFilter, $search); ?>"><?php echo $totalPages; ?></a>
+                <?php endif; ?>
+            
             <?php if ($currentPage < $totalPages): ?>
-                <a href="<?php echo getPaginationUrl($currentPage + 1, $statusFilter, $search); ?>">Sau ›</a>
-                <a href="<?php echo getPaginationUrl($totalPages, $statusFilter, $search); ?>">Cuối »</a>
+                <a href="?<?php echo getPaginationUrl($currentPage + 1, $statusFilter, $search); ?>">&gt;</a>
             <?php endif; ?>
         </div>
     <?php endif; ?>
+    </div>
 </div>
 
 <!-- Modal Chi tiết tài khoản -->
@@ -664,4 +683,80 @@ window.onclick = function(event) {
         closeUserModal();
     }
 }
+
+// Disable User Modal
+document.getElementById('disableUserModal')?.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const id = button.getAttribute('data-id');
+    const name = button.getAttribute('data-name');
+    
+    document.getElementById('disableUserId').value = id;
+    document.getElementById('disableUserName').textContent = name;
+});
+
+// Restore User Modal
+document.getElementById('restoreUserModal')?.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const id = button.getAttribute('data-id');
+    const name = button.getAttribute('data-name');
+    
+    document.getElementById('restoreUserId').value = id;
+    document.getElementById('restoreUserName').textContent = name;
+});
 </script>
+
+<!-- Disable User Modal -->
+<div class="modal fade" id="disableUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="GET" action="">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Vô hiệu hóa tài khoản</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn vô hiệu hóa tài khoản "<span id="disableUserName"></span>"?</p>
+                    <p>Sau khi vô hiệu hóa, tài khoản này sẽ không thể đăng nhập vào hệ thống.</p>
+                    <input type="hidden" name="taikhoan" value="">
+                    <input type="hidden" name="disable" value="">
+                    <input type="hidden" name="id" id="disableUserId">
+                    <input type="hidden" name="page" value="<?php echo $currentPage; ?>">
+                    <input type="hidden" name="status_filter" value="<?php echo $statusFilter; ?>">
+                    <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger">Xác nhận vô hiệu hóa</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Restore User Modal -->
+<div class="modal fade" id="restoreUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="GET" action="">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Khôi phục tài khoản</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn khôi phục tài khoản "<span id="restoreUserName"></span>"?</p>
+                    <p>Sau khi khôi phục, tài khoản này sẽ có thể đăng nhập vào hệ thống trở lại.</p>
+                    <input type="hidden" name="taikhoan" value="">
+                    <input type="hidden" name="restore" value="">
+                    <input type="hidden" name="id" id="restoreUserId">
+                    <input type="hidden" name="page" value="<?php echo $currentPage; ?>">
+                    <input type="hidden" name="status_filter" value="<?php echo $statusFilter; ?>">
+                    <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success">Xác nhận khôi phục</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
