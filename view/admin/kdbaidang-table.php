@@ -126,15 +126,18 @@ $waiting_count = 0;
 $approved_count = 0;
 $rejected_count = 0;
 $sold_count = 0;
+$hidden_count = 0;
 
 foreach($all_data as $item) {
     if($item['status'] == "Chờ duyệt") $waiting_count++;
     if($item['status'] == "Đã duyệt") $approved_count++;
     if($item['status'] == "Từ chối duyệt") $rejected_count++;
     if($item['sale_status'] == "Đã bán") $sold_count++;
+    if($item['sale_status'] == "Đã ẩn") $hidden_count++;
 }
 ?>
 <?php require_once __DIR__ . '/../../helpers/url_helper.php'; ?>
+<link rel="stylesheet" href="<?php echo getBasePath() ?>/css/admin-common.css">
 <style>
         /* CSS riêng cho trang kiểm duyệt bài đăng */
         /* CSS riêng cho trang kiểm duyệt bài đăng - chỉ override nếu cần */
@@ -206,6 +209,13 @@ foreach($all_data as $item) {
         }
         
         /* Status cards CSS đã được định nghĩa trong admin-common.css */
+        .status-card.hidden {
+            border-top: 3px solid #6c757d;
+        }
+        
+        .status-card.hidden .count {
+            color: #6c757d;
+        }
         
         /* Image styling in table */
         .admin-table img {
@@ -256,8 +266,8 @@ foreach($all_data as $item) {
 <div class="kdbaidang-container">
         <div class="admin-card">
             <h3 class="admin-card-title">
-                Kiểm Duyệt Bài Đăng
-                <span style="font-size: 0.9rem; color: #666; font-weight: normal;">(<?php echo $totalPosts; ?> bài đăng)</span>
+                Kiểm duyệt bài viết
+                <span style="font-size: 0.9rem; color: #666; font-weight: normal;">(<?php echo $totalPosts; ?> bài viết)</span>
             </h3>
                         
                         <?php if (!empty($message)): ?>
@@ -281,22 +291,30 @@ foreach($all_data as $item) {
                         <?php endif; ?>
                         
                         <!-- Status Summary Cards -->
-                        <div class="status-summary">
-                            <div class="status-card waiting">
-                                <div class="count"><?php echo $waiting_count; ?></div>
-                                <div class="label">Chờ duyệt</div>
+                        <div class="stats-grid">
+                            <div class="stat-card warning">
+                                <h3>Chờ duyệt</h3>
+                                <div class="number"><?php echo number_format($waiting_count); ?></div>
                             </div>
-                            <div class="status-card approved">
-                                <div class="count"><?php echo $approved_count; ?></div>
-                                <div class="label">Đã duyệt</div>
+                            <div class="stat-card success">
+                                <h3>Đã duyệt</h3>
+                                <div class="number"><?php echo number_format($approved_count); ?></div>
                             </div>
-                            <div class="status-card rejected">
-                                <div class="count"><?php echo $rejected_count; ?></div>
-                                <div class="label">Từ chối</div>
+                            <div class="stat-card danger">
+                                <h3>Từ chối</h3>
+                                <div class="number"><?php echo number_format($rejected_count); ?></div>
                             </div>
-                            <div class="status-card sold">
-                                <div class="count"><?php echo $sold_count; ?></div>
-                                <div class="label">Đã bán</div>
+                            <div class="stat-card primary">
+                                <h3>Đã bán</h3>
+                                <div class="number"><?php echo number_format($sold_count); ?></div>
+                            </div>
+                            <div class="stat-card secondary">
+                                <h3>Đã ẩn</h3>
+                                <div class="number"><?php echo number_format($hidden_count); ?></div>
+                            </div>
+                            <div class="stat-card info">
+                                <h3>Tổng số bài viết</h3>
+                                <div class="number"><?php echo number_format($totalPosts); ?></div>
                             </div>
                         </div>
                         
@@ -462,7 +480,7 @@ foreach($all_data as $item) {
                                             </td>
                                             <td>
                                                 <a href="/admin?qlkdbaiviet&id='.$r['id'].'" class="btn btn-primary btn-sm">
-                                                    <i class="fa fa-eye"></i> Chi tiết
+                                                    Chi tiết
                                                 </a>
                                             </td>';
                                             echo '<td>';
@@ -471,21 +489,21 @@ foreach($all_data as $item) {
                                             // Hiển thị nút Duyệt cho bài viết "Chờ duyệt"
                                             if($trang_thai == "Chờ duyệt"){
                                                 echo '<button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="'.$r['id'].'">
-                                                    <i class="fa fa-check"></i> Duyệt
+                                                    Duyệt
                                                 </button>';
                                             }
                                             
                                             // Hiển thị nút Duyệt lại cho bài viết "Từ chối duyệt"
                                             if($trang_thai == "Từ chối duyệt"){
                                                 echo '<button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="'.$r['id'].'">
-                                                    <i class="fa fa-redo"></i> Duyệt lại
+                                                    Duyệt lại
                                                 </button>';
                                             }
                                             
                                             // Hiển thị nút Ẩn bài cho bài viết đã duyệt và đang bán
                                             if($trang_thai == "Đã duyệt" && $trang_thai_ban == "Đang bán"){
                                                 echo '<button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#hideModal" data-id="'.$r['id'].'">
-                                                    <i class="fa fa-eye-slash"></i> Ẩn bài
+                                                    Ẩn bài
                                                 </button>';
                                             }
                                             

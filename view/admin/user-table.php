@@ -76,11 +76,9 @@ function getPaginationUrl($page, $statusFilter, $search) {
 
 require_once __DIR__ . '/../../helpers/url_helper.php';
 ?>
-
+<link rel="stylesheet" href="<?php echo getBasePath() ?>/css/admin-common.css">
 <style>
     /* CSS riêng cho trang quản lý tài khoản */
-    /* Import common admin styles */
-    @import url('../css/admin-common.css');
     
     /* CSS riêng cho trang quản lý tài khoản - chỉ override nếu cần */
     .user-container {
@@ -458,7 +456,7 @@ require_once __DIR__ . '/../../helpers/url_helper.php';
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="status-badge <?php echo $isActive ? 'success' : 'danger'; ?>" style="display: inline-block;">
+                                        <span class="status-badge <?php echo $isActive ? 'active' : 'danger'; ?>">
                                             <?php echo $statusText; ?>
                                         </span>
                                     </td>
@@ -626,7 +624,7 @@ function showUserDetails(userId) {
                         <div class="detail-row">
                             <span class="detail-label">Trạng thái:</span>
                             <span class="detail-value">
-                                <span class="status-badge ${user.is_active == 1 ? 'success' : 'danger'}">
+                                <span class="status-badge ${user.is_active == 1 ? 'active' : 'danger'}">
                                     ${user.is_active == 1 ? 'Hoạt động' : 'Vô hiệu hóa'}
                                 </span>
                             </span>

@@ -132,48 +132,52 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
 <div class="container-scroller">
     <!-- partial:partials/_navbar.html -->  
     <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
-    <div class="navbar-brand-wrapper d-flex justify-content-center">
-        <div class="navbar-brand-inner-wrapper d-flex justify-content-between align-items-center w-100">
-        <b>Admin</b>
+    <!-- Header gộp thành 1 thẻ duy nhất -->
+    <div class="navbar-header-wrapper d-flex align-items-center w-100">
+        <!-- Left: Admin Brand -->
+        <div class="navbar-brand-section d-flex align-items-center" style="padding: 0 30px !important;">
+            <b class="navbar-brand-text">Admin</b>
         </div>
-    </div>
-    <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
-        <ul class="navbar-nav me-lg-4 w-100">
-        <li class="nav-item d-none d-lg-block w-100">
-            <div class="d-flex align-items-center justify-content-center h-100">
-                <span style="font-size: 1.2rem; font-weight: 600; color: #333;">
-                    <i class="mdi mdi-store"></i> CHỢ VIỆT - Hệ thống quản lý
-                </span>
-            </div>
-        </li>
-        </ul>
-        <ul class="navbar-nav navbar-nav-right">
-        <li class="nav-item nav-profile dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="true" id="profileDropdown" aria-expanded="false" onclick="event.preventDefault();">
-                <img src="/img/<?php echo htmlspecialchars($_SESSION['avatar'] ?? 'default-avatar.jpg'); ?>" alt="profile" class="nav-profile-img" onerror="this.src='/img/default-avatar.jpg'" />
-                <span class="nav-profile-name"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></span>
-                <i class="mdi mdi-chevron-down ms-2"></i>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end navbar-dropdown" aria-labelledby="profileDropdown" id="profileDropdownMenu">
-                <li><a class="dropdown-item" href="/admin?thongtincanhan">
-                    <i class="mdi mdi-account text-primary me-2"></i>
-                    Thông tin cá nhân
-                </a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="?action=logout">
-                    <i class="mdi mdi-logout text-danger me-2"></i>
-                Đăng xuất
-                </a></li>
+        
+        <!-- Center: System Title (Desktop only) -->
+        <div class="navbar-title-section d-none d-lg-flex align-items-center justify-content-center flex-grow-1">
+            <span class="navbar-title-text" style="font-weight: 700 !important;">
+                <i class="mdi mdi-store"></i> CHỢ VIỆT - Hệ thống quản lý
+            </span>
+        </div>
+        
+        <!-- Right: Profile + Hamburger (nằm bên phải) -->
+        <div class="navbar-actions-section d-flex align-items-center" style="padding: 0 30px !important; margin-left: auto;">
+            <!-- Profile Dropdown -->
+            <ul class="navbar-nav navbar-nav-right d-flex align-items-center" style="margin-right: 10px;">
+            <li class="nav-item nav-profile dropdown">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="true" id="profileDropdown" aria-expanded="false" onclick="event.preventDefault();">
+                    <img src="/img/<?php echo htmlspecialchars($_SESSION['avatar'] ?? 'default-avatar.jpg'); ?>" alt="profile" class="nav-profile-img" onerror="this.src='/img/default-avatar.jpg'" />
+                    <span class="nav-profile-name d-none d-lg-inline"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end navbar-dropdown" aria-labelledby="profileDropdown" id="profileDropdownMenu">
+                    <li><a class="dropdown-item" href="/admin?thongtincanhan">
+                        <i class="mdi mdi-account text-primary me-2"></i>
+                        Thông tin cá nhân
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="?action=logout">
+                        <i class="mdi mdi-logout text-danger me-2"></i>
+                    Đăng xuất
+                    </a></li>
+                </ul>
+            </li>
             </ul>
-        </li>
-        </ul>
-        <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button"
-        data-toggle="offcanvas">
-        <span class="mdi mdi-menu"></span>
-        </button>
+            <!-- Hamburger Button (Mobile only) - nằm bên phải nhất -->
+            <button class="navbar-toggler d-lg-none" type="button" id="sidebarToggle" aria-label="Toggle sidebar">
+                <span class="mdi mdi-menu"></span>
+            </button>
+        </div>
     </div>
     </nav>
     <!-- partial -->
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <div class="container-fluid page-body-wrapper">      
     <!-- partial:partials/_sidebar.html -->
     <nav class="sidebar sidebar-offcanvas" id="sidebar">
@@ -211,6 +215,12 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
                         <i class="mdi mdi-chart-line menu-icon"></i>
                         Quản lý doanh thu
                     </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link ' . ($currentPage == 'qlgiaodich' ? 'active' : '') . '" href="/admin?qlgiaodich">
+                        <i class="mdi mdi-swap-horizontal menu-icon"></i>
+                        Quản lý giao dịch
+                    </a>
                 </li>';
             }
             
@@ -236,12 +246,6 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
                         <i class="mdi mdi-file-document-edit menu-icon"></i>
                         Quản lý bài viết
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link ' . ($currentPage == 'qlbanner' ? 'active' : '') . '" href="/admin?qlbanner">
-                        <i class="mdi mdi-image-edit menu-icon"></i>
-                        Quản lý Banner
-                    </a>
                 </li>';
             }
             if($_SESSION['role'] == 5 || $_SESSION['role'] == 1){
@@ -250,11 +254,14 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
                         <i class="mdi mdi-cart-outline menu-icon"></i>
                         Quản lý đơn hàng
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link ' . ($currentPage == 'qlgiaodich' ? 'active' : '') . '" href="/admin?qlgiaodich">
-                        <i class="mdi mdi-swap-horizontal menu-icon"></i>
-                        Quản lý giao dịch
+                </li>';
+            }
+            // Quản lý Banner - Hiển thị cuối cùng
+            if($_SESSION['role'] == 4 || $_SESSION['role'] == 1){
+                echo '<li class="nav-item">
+                    <a class="nav-link ' . ($currentPage == 'qlbanner' ? 'active' : '') . '" href="/admin?qlbanner">
+                        <i class="mdi mdi-image-edit menu-icon"></i>
+                        Quản lý Banner
                     </a>
                 </li>';
             }
@@ -410,6 +417,76 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
     // Fallback: Chạy sau khi tất cả script load xong
     window.addEventListener('load', function() {
         setTimeout(initDropdown, 200);
+    });
+})();
+
+// Sidebar Toggle for Mobile
+(function() {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    
+    if (!sidebar || !sidebarToggle || !sidebarOverlay) {
+        return;
+    }
+    
+    function toggleSidebar() {
+        sidebar.classList.toggle('sidebar-offcanvas');
+        sidebarOverlay.classList.toggle('active');
+        
+        // Prevent body scroll when sidebar is open on mobile
+        if (sidebar.classList.contains('sidebar-offcanvas')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+    
+    function closeSidebar() {
+        sidebar.classList.remove('sidebar-offcanvas');
+        sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Toggle sidebar when hamburger button is clicked
+    sidebarToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSidebar();
+    });
+    
+    // Close sidebar when overlay is clicked
+    sidebarOverlay.addEventListener('click', function() {
+        closeSidebar();
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 991) {
+            const isClickInsideSidebar = sidebar.contains(e.target);
+            const isClickOnToggle = sidebarToggle.contains(e.target);
+            
+            if (!isClickInsideSidebar && !isClickOnToggle && sidebar.classList.contains('sidebar-offcanvas')) {
+                closeSidebar();
+            }
+        }
+    });
+    
+    // Close sidebar when window is resized to desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 991) {
+            closeSidebar();
+        }
+    });
+    
+    // Close sidebar when a menu item is clicked on mobile
+    const sidebarLinks = sidebar.querySelectorAll('.nav-link');
+    sidebarLinks.forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 991) {
+                setTimeout(closeSidebar, 200);
+            }
+        });
     });
 })();
 </script>

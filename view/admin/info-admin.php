@@ -109,7 +109,11 @@
     function e($text) {
         return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
     }
+    
+    // Kiểm tra nếu trang này được load trong admin.php thì không cần include header/footer
+    $isAdminFrame = isset($_GET['admin_frame']) || strpos($_SERVER['REQUEST_URI'], '/admin') !== false;
 ?>
+<?php if (!$isAdminFrame): ?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -120,34 +124,237 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <!-- Custom CSS -->
+    <!-- Admin CSS -->
+    <link rel="stylesheet" href="/admin/src/assets/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="<?= getBasePath() ?>/css/admin-style.css">
     <link rel="stylesheet" href="<?= getBasePath() ?>/css/admin-common.css">
-    <style>
-        /* CSS riêng cho trang thông tin cá nhân - chỉ override nếu cần */
-        /* Loại bỏ khung xanh từ container-fluid và page-body-wrapper */
-        .container-fluid,
-        .page-body-wrapper,
-        .content-wrapper {
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
+<?php else: ?>
+<!-- Load Bootstrap Icons khi được include trong admin.php -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<?php endif; ?>
+<style>
+        /* CSS riêng cho trang thông tin cá nhân - chỉnh cho phù hợp với admin */
+        .info-admin-container {
+            padding: 20px !important;
+            margin: 0 !important;
         }
         
-        /* Loại bỏ khung xanh từ main-panel */
-        .main-panel {
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* Loại bỏ shadow và border của admin-card */
         .info-admin-container .admin-card {
-            margin-bottom: 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+            border-radius: 10px !important;
+        }
+        
+        /* Profile header */
+        .info-admin-container .profile-header {
+            margin-bottom: 30px !important;
+            padding: 20px 0 !important;
+            border-bottom: 2px solid #f0f0f0 !important;
+        }
+        
+        .info-admin-container .avatar-preview {
+            border: 4px solid #f0f0f0 !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+        }
+        
+        .info-admin-container .btn-change-avatar {
+            background: #FFD333 !important;
+            color: #333 !important;
+            border: none !important;
+            padding: 8px 16px !important;
+            border-radius: 5px !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .info-admin-container .btn-change-avatar:hover {
+            background: #ffd700 !important;
+            color: #000 !important;
+        }
+        
+        .avatar-role-info {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .role-label {
+            font-weight: 600;
+        }
+        
+        .role-text {
+            color: #007bff;
+            font-weight: 500;
+        }
+        
+        /* Form sections */
+        .info-admin-container .form-section {
+            margin-bottom: 30px !important;
+            padding-bottom: 25px !important;
+            border-bottom: 1px solid #f0f0f0 !important;
+        }
+        
+        .info-admin-container .form-section:last-of-type {
+            border-bottom: none !important;
+        }
+        
+        .info-admin-container .section-title {
+            font-size: 1.1rem !important;
+            font-weight: 600 !important;
+            color: #333 !important;
+            margin-bottom: 20px !important;
+            display: flex !important;
+            align-items: center !important;
+            padding-bottom: 10px !important;
+            border-bottom: 2px solid #f0f0f0 !important;
+        }
+        
+        .info-admin-container .form-group {
+            margin-bottom: 20px !important;
+        }
+        
+        .info-admin-container .form-label {
+            font-weight: 600 !important;
+            color: #333 !important;
+            margin-bottom: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        .info-admin-container .form-label i {
+            margin-right: 5px !important;
+            color: #666 !important;
+        }
+        
+        .info-admin-container .form-control, 
+        .info-admin-container .form-select {
+            border: 1px solid #ddd !important;
+            border-radius: 5px !important;
+            padding: 10px 12px !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .info-admin-container .form-control:focus, 
+        .info-admin-container .form-select:focus {
+            border-color: #FFD333 !important;
+            box-shadow: 0 0 0 0.2rem rgba(255, 211, 51, 0.25) !important;
+            outline: none !important;
+        }
+        
+        .form-text {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* File upload */
+        .file-upload-wrapper {
+            position: relative;
+        }
+        
+        .file-input {
+            padding: 8px 12px;
+        }
+        
+        .file-hint {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 0.875rem;
+        }
+        
+        /* Form actions */
+        .info-admin-container .form-actions {
+            display: flex !important;
+            gap: 10px !important;
+            margin-top: 30px !important;
+            padding-top: 20px !important;
+            border-top: 2px solid #f0f0f0 !important;
+        }
+        
+        .info-admin-container .btn-update {
+            background: #007bff !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px 20px !important;
+            border-radius: 5px !important;
+            font-weight: 500 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .info-admin-container .btn-update:hover {
+            background: #0056b3 !important;
+            color: white !important;
+        }
+        
+        .info-admin-container .btn-outline-secondary {
+            background: #f8f9fa !important;
+            color: #333 !important;
+            border: 1px solid #ddd !important;
+            padding: 10px 20px !important;
+            border-radius: 5px !important;
+            font-weight: 500 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .info-admin-container .btn-outline-secondary:hover {
+            background: #e9ecef !important;
+            color: #333 !important;
+        }
+        
+        /* Card header */
+        .info-admin-container .card-header {
+            padding: 20px !important;
+            border-bottom: 2px solid #f0f0f0 !important;
+            background: #f8f9fa !important;
+        }
+        
+        .info-admin-container .card-title {
+            margin: 0 !important;
+            font-size: 1.5rem !important;
+            font-weight: 600 !important;
+            color: #333 !important;
+        }
+        
+        .info-admin-container .card-body {
+            padding: 30px !important;
+        }
+        
+        /* Alert messages */
+        .alert {
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .info-admin-container {
+                padding: 10px;
+            }
+            
+            .card-body {
+                padding: 20px;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn-update, .btn-outline-secondary {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
+<?php if (!$isAdminFrame): ?>
 </head>
 <body>
+<?php endif; ?>
     <div class="info-admin-container">
         <div class="admin-card">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -357,5 +564,7 @@
         }
     });
     </script>
+<?php if (!$isAdminFrame): ?>
 </body>
 </html>
+<?php endif; ?>

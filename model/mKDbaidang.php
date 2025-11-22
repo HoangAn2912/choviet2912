@@ -51,8 +51,18 @@ class kdbaidang {
         $p = new Connect();
         $con = $p->connect();
 
-        $sql = "SELECT * FROM products sp join users nd on sp.user_id = nd.id 
-                join product_categories lsp on sp.category_id = lsp.id where sp.id = '$id'";
+        $sql = "SELECT sp.*, 
+                nd.id as user_id,
+                nd.username, 
+                nd.email, 
+                nd.phone, 
+                nd.address,
+                nd.avatar,
+                lsp.category_name 
+                FROM products sp 
+                JOIN users nd ON sp.user_id = nd.id 
+                JOIN product_categories lsp ON sp.category_id = lsp.id 
+                WHERE sp.id = '$id'";
         $kq = mysqli_query($con, $sql);
         $i = mysqli_num_rows($kq);
 
@@ -60,6 +70,11 @@ class kdbaidang {
             while ($r = mysqli_fetch_array($kq)) {
                 $id = $r['id'];
                 $ten_nguoi_ban = $r['username'];
+                $user_id = $r['user_id'];
+                $user_email = $r['email'];
+                $user_phone = $r['phone'];
+                $user_address = $r['address'];
+                $user_avatar = $r['avatar'];
                 $category_name = $r['category_name'];
                 $title = $r['title'];
                 $comment = $r['description'];
@@ -74,6 +89,11 @@ class kdbaidang {
                 $dl[] = array(
                     'id' => $id,
                     'ho_ten' => $ten_nguoi_ban,
+                    'user_id' => $user_id,
+                    'user_email' => $user_email,
+                    'user_phone' => $user_phone,
+                    'user_address' => $user_address,
+                    'user_avatar' => $user_avatar,
                     'category_name' => $category_name,
                     'title' => $title,
                     'comment' => $comment,

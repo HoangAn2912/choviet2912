@@ -63,10 +63,16 @@
 }
 
     ?>
-
+    
+    <?php 
+    // Kiểm tra nếu trang này được load trong admin.php thì không cần include header/footer
+    $isAdminFrame = isset($_GET['admin_frame']) || strpos($_SERVER['REQUEST_URI'], '/admin') !== false;
+    require_once __DIR__ . '/../../helpers/url_helper.php';
+    ?>
+    
+    <?php if (!$isAdminFrame): ?>
     <!DOCTYPE html>
     <html lang="en">
-
     <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -75,9 +81,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <?php require_once __DIR__ . '/../../helpers/url_helper.php'; ?>
-    <link rel="stylesheet" href="<?= getBasePath() ?>/css/admin-them.css">
+    <!-- Admin CSS -->
+    <link rel="stylesheet" href="/admin/src/assets/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="<?= getBasePath() ?>/css/admin-style.css">
     <link rel="stylesheet" href="<?= getBasePath() ?>/css/admin-common.css">
+    <link rel="stylesheet" href="<?= getBasePath() ?>/css/admin-them.css">
     <style>
         /* CSS riêng cho trang thêm người dùng - chỉ override nếu cần */
         .info-insert-container {
@@ -109,8 +117,8 @@
         }
     </style>
     </head>
-
     <body>
+    <?php endif; ?>
     <div class="info-insert-container">
         <div class="card">
             <div class="card-header">
@@ -186,6 +194,7 @@
 
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <?php if (!$isAdminFrame): ?>
     </body>
-
     </html>
+    <?php endif; ?>

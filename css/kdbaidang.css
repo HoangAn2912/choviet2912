@@ -221,6 +221,14 @@
             border-top: 3px solid #2196F3;
         }
         
+        .status-card.hidden {
+            border-top: 3px solid #6c757d;
+        }
+        
+        .status-card.hidden .count {
+            color: #6c757d;
+        }
+        
         .pagination {
             display: flex;
             justify-content: center;

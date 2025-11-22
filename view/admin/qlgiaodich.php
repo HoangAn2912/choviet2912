@@ -239,7 +239,7 @@ function getPaginationUrl($page, $filter, $search) {
 
             <!-- Statistics -->
             <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card info">
                 <h3>Tổng Giao Dịch</h3>
                 <div class="number"><?php echo number_format($stats['total_transactions']); ?></div>
             </div>
@@ -253,7 +253,7 @@ function getPaginationUrl($page, $filter, $search) {
             </div>
             <div class="stat-card primary">
                 <h3>Tổng Tiền Nạp</h3>
-                <div class="number"><?php echo number_format($stats['total_amount'], 0, ',', '.'); ?> VND</div>
+                <div class="number"><?php echo number_format($stats['total_amount'], 0, ',', '.'); ?> ₫</div>
             </div>
         </div>
 

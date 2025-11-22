@@ -80,19 +80,27 @@
     function e($text) {
         return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
     }
+    
+    // Kiểm tra nếu trang này được load trong admin.php thì không cần include header/footer
+    $isAdminFrame = isset($_GET['admin_frame']) || strpos($_SERVER['REQUEST_URI'], '/admin') !== false;
 ?>
+<?php if (!$isAdminFrame): ?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản trị - Chỉnh sửa người dùng</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <!-- Custom CSS -->
+    <!-- Admin CSS -->
+    <link rel="stylesheet" href="/admin/src/assets/vendors/mdi/css/materialdesignicons.min.css">
     <?php require_once __DIR__ . '/../../helpers/url_helper.php'; ?>
-    <link rel="stylesheet" href="<?= getBasePath() ?>/css/infoad.css">
+    <link rel="stylesheet" href="<?= getBasePath() ?>/css/admin-style.css">
     <link rel="stylesheet" href="<?= getBasePath() ?>/css/admin-common.css">
+    <link rel="stylesheet" href="<?= getBasePath() ?>/css/infoad.css">
     <style>
         /* CSS riêng cho trang sửa người dùng - chỉ override nếu cần */
         .info-update-container {
@@ -125,6 +133,7 @@
     </style>
 </head>
 <body>
+<?php endif; ?>
     <div class="info-update-container">
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -248,5 +257,7 @@ value="<?php echo e($u['phone']); ?>">
             })
     })()
     </script>
+<?php if (!$isAdminFrame): ?>
 </body>
 </html>
+<?php endif; ?>

@@ -139,7 +139,7 @@ $status_colors = [
     'cancelled' => 'danger'
 ];
 ?>
-
+<link rel="stylesheet" href="<?php echo getBasePath() ?>/css/admin-common.css">
 <style>
     /* CSS riêng cho trang quản lý đơn hàng */
     /* CSS riêng cho trang quản lý đơn hàng - chỉ override nếu cần */
@@ -154,31 +154,8 @@ $status_colors = [
         margin-bottom: 30px; 
     }
     
-    .stat-card { 
-        background: white; 
-        padding: 20px; 
-        border-radius: 10px; 
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-    }
-    
-    .stat-card h3 { 
-        color: #666; 
-        font-size: 0.9rem; 
-        margin-bottom: 10px; 
-        text-transform: uppercase; 
-    }
-    
-    .stat-card .number { 
-        font-size: 2rem; 
-        font-weight: bold; 
-        color: #333; 
-    }
-    
-    .stat-card.success .number { color: #28a745; }
-    .stat-card.warning .number { color: #ffc107; }
-    .stat-card.danger .number { color: #dc3545; }
-    .stat-card.primary .number { color: #007bff; }
-    .stat-card.info .number { color: #17a2b8; }
+    /* CSS cho stat-card đã được định nghĩa trong admin-common.css */
+    /* Chỉ override nếu cần thiết */
     
     .filters { 
         background: white; 
@@ -254,6 +231,50 @@ $status_colors = [
     
     .table tr:hover { background: #f8f9fa; }
     
+    /* Giới hạn độ rộng cột Mã Đơn - rút ngắn để số tiền hiển thị 1 hàng */
+    .admin-table th:first-child,
+    .admin-table td:first-child {
+        max-width: 150px;
+        min-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Giới hạn độ rộng cột Streamer (cột thứ 3) */
+    .admin-table th:nth-child(3),
+    .admin-table td:nth-child(3) {
+        max-width: 150px;
+        min-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Giới hạn độ rộng cột Người Mua (cột thứ 4) - bao gồm tên và email */
+    .admin-table th:nth-child(4),
+    .admin-table td:nth-child(4) {
+        max-width: 180px;
+        min-width: 150px;
+    }
+    
+    /* Rút ngắn tên người mua */
+    .admin-table td:nth-child(4) > div:first-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+    
+    /* Rút ngắn email */
+    .admin-table td:nth-child(4) small {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+    
     /* Truncate text dài cho cột Livestream - chỉ 1 dòng */
     .table td:nth-child(2) {
         max-width: 300px;
@@ -306,7 +327,42 @@ $status_colors = [
     .btn-primary { background: #007bff; color: white; }
     .btn-success { background: #28a745; color: white; }
     .btn-danger { background: #dc3545; color: white; }
-    .btn-info { background: #17a2b8; color: white; }
+    .btn-info { 
+        background: #FFD333; 
+        color: #333; 
+        border: 1px solid #ffd700;
+        font-weight: 500;
+    }
+    .btn-info:hover { 
+        background: #ffd700; 
+        color: #000;
+        opacity: 0.9;
+    }
+    .btn-info:focus {
+        background: #FFD333;
+        color: #333;
+        border-color: #ffd700;
+        box-shadow: 0 0 0 0.2rem rgba(255, 211, 51, 0.25);
+    }
+    /* Style cho select dropdown của nút Cập nhật */
+    select.btn-info {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background: #FFD333;
+        padding-right: 12px;
+    }
+    select.btn-info:hover {
+        background-color: #ffd700;
+    }
+    select.btn-info option {
+        background: white;
+        color: #333;
+        padding: 8px;
+    }
+    select.btn-info option:hover {
+        background: #FFD333;
+    }
     .btn:hover { opacity: 0.8; }
     
     .pagination { 
@@ -596,7 +652,17 @@ $status_colors = [
                 <?php else: ?>
                     <?php foreach ($orders as $order): ?>
                         <tr>
-                            <td><strong>#<?php echo htmlspecialchars($order['order_code']); ?></strong></td>
+                            <td title="#<?php echo htmlspecialchars($order['order_code']); ?>">
+                                <strong>#<?php 
+                                $orderCode = htmlspecialchars($order['order_code']);
+                                // Rút ngắn mã đơn hàng nếu quá dài
+                                if (mb_strlen($orderCode) > 12) {
+                                    echo mb_substr($orderCode, 0, 12) . '...';
+                                } else {
+                                    echo $orderCode;
+                                }
+                                ?></strong>
+                            </td>
                             <td>
                                 <div class="livestream-cell">
                                     <?php 
@@ -625,10 +691,37 @@ $status_colors = [
                                     </span>
                                 </div>
                             </td>
-                            <td><?php echo htmlspecialchars($order['seller_name'] ?? 'N/A'); ?></td>
+                            <td title="<?php echo htmlspecialchars($order['seller_name'] ?? 'N/A'); ?>">
+                                <?php 
+                                $sellerName = htmlspecialchars($order['seller_name'] ?? 'N/A');
+                                if (mb_strlen($sellerName) > 15) {
+                                    echo mb_substr($sellerName, 0, 15) . '...';
+                                } else {
+                                    echo $sellerName;
+                                }
+                                ?>
+                            </td>
                             <td>
-                                <div><?php echo htmlspecialchars($order['buyer_name'] ?? 'N/A'); ?></div>
-                                <small style="color: #666;"><?php echo htmlspecialchars($order['buyer_email'] ?? ''); ?></small>
+                                <div title="<?php echo htmlspecialchars($order['buyer_name'] ?? 'N/A'); ?>">
+                                    <?php 
+                                    $buyerName = htmlspecialchars($order['buyer_name'] ?? 'N/A');
+                                    if (mb_strlen($buyerName) > 15) {
+                                        echo mb_substr($buyerName, 0, 15) . '...';
+                                    } else {
+                                        echo $buyerName;
+                                    }
+                                    ?>
+                                </div>
+                                <small style="color: #666;" title="<?php echo htmlspecialchars($order['buyer_email'] ?? ''); ?>">
+                                    <?php 
+                                    $buyerEmail = htmlspecialchars($order['buyer_email'] ?? '');
+                                    if (mb_strlen($buyerEmail) > 20) {
+                                        echo mb_substr($buyerEmail, 0, 20) . '...';
+                                    } else {
+                                        echo $buyerEmail;
+                                    }
+                                    ?>
+                                </small>
                             </td>
                             <td class="amount"><?php echo number_format($order['total_amount'], 0, ',', '.'); ?> đ</td>
                             <td>

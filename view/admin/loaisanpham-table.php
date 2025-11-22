@@ -170,6 +170,7 @@ function getPaginationUrl($page, $parentFilter, $searchTerm, $showHidden = false
 ?>
 
 <?php require_once __DIR__ . '/../../helpers/url_helper.php'; ?>
+<link rel="stylesheet" href="<?php echo getBasePath() ?>/css/admin-common.css">
 <style>
     /* CSS riêng cho trang quản lý danh mục */
     /* CSS riêng cho trang quản lý danh mục - chỉ override nếu cần */
@@ -414,14 +415,18 @@ function getPaginationUrl($page, $parentFilter, $searchTerm, $showHidden = false
         <?php endif; ?>
         
         <!-- Statistics Cards -->
-        <div class="stats-cards">
-          <div class="stats-card parent">
-            <div class="value"><?php echo $stats['total_parent_categories']; ?></div>
-            <div class="label">Danh mục cha</div>
+        <div class="stats-grid">
+          <div class="stat-card primary">
+            <h3>Tổng danh mục cha</h3>
+            <div class="number"><?php echo number_format($stats['total_parent_categories']); ?></div>
           </div>
-          <div class="stats-card child">
-            <div class="value"><?php echo $stats['total_child_categories']; ?></div>
-            <div class="label">Danh mục con</div>
+          <div class="stat-card success">
+            <h3>Tổng danh mục con</h3>
+            <div class="number"><?php echo number_format($stats['total_child_categories']); ?></div>
+          </div>
+          <div class="stat-card info">
+            <h3>Tổng số danh mục</h3>
+            <div class="number"><?php echo number_format($stats['total_parent_categories'] + $stats['total_child_categories']); ?></div>
           </div>
         </div>
         
@@ -509,12 +514,6 @@ function getPaginationUrl($page, $parentFilter, $searchTerm, $showHidden = false
               <div class="form-group">
                 <label for="search">Tìm kiếm</label>
                 <input type="text" name="search" id="search" class="form-control" placeholder="Tên danh mục" value="<?php echo $searchTerm; ?>">
-              </div>
-              <div class="form-group">
-                <label for="show_hidden" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" name="show_hidden" id="show_hidden" value="1" <?php echo $showHidden ? 'checked' : ''; ?> style="width: auto; margin: 0;">
-                  Hiển thị danh mục đã ẩn (mặc định: bật)
-                </label>
               </div>
               <div class="form-group">
                 <button type="submit" class="btn btn-primary">

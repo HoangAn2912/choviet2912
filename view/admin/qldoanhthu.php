@@ -95,7 +95,6 @@ $chartDataJson = json_encode(array_values($chartData));
 <link rel="stylesheet" href="<?php echo getBasePath() ?>/css/admin-common.css">
 <style>
     /* CSS riêng cho trang quản lý doanh thu */
-    /* CSS riêng cho trang quản lý doanh thu - chỉ override nếu cần */
     .doanhthu-container {
         /* Đã được định nghĩa trong admin-common.css */
     }
@@ -116,6 +115,88 @@ $chartDataJson = json_encode(array_values($chartData));
         padding-bottom: 15px;
         border-bottom: 2px solid #f0f0f0;
     }
+    
+    /* Filters base styles */
+    .doanhthu-container .filters {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .doanhthu-container .filters form {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+    
+    .doanhthu-container .filters .form-group {
+        flex: 1 1 auto;
+        min-width: 180px;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* Đảm bảo form-group không bị đè */
+    .doanhthu-container .filters .form-group > * {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* Date range wrapper - Đảm bảo không bị thu nhỏ quá */
+    .doanhthu-container .filters .date-range-wrapper {
+        min-width: 300px;
+        flex: 1 1 auto;
+    }
+    
+    .doanhthu-container .filters .date-range-wrapper input {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    /* Form actions group - đảm bảo không wrap sớm */
+    .doanhthu-container .filters .form-actions-group {
+        flex: 0 0 auto;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        white-space: nowrap;
+    }
+    
+    /* Date range wrapper - Desktop */
+    .doanhthu-container .date-range-wrapper {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+        flex-wrap: nowrap;
+    }
+    
+    .doanhthu-container .date-range-wrapper input {
+        flex: 1;
+        min-width: 0;
+        width: auto;
+    }
+    
+    .doanhthu-container .date-separator {
+        color: #666;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    .doanhthu-container .btn-reset {
+        margin-left: 10px;
+    }
+    
+    /* Đảm bảo form-control không overflow */
+    .doanhthu-container .filters .form-control {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
 </style>
 
 <div class="doanhthu-container">
@@ -132,9 +213,9 @@ $chartDataJson = json_encode(array_values($chartData));
             
             <div class="form-group">
               <label>Khoảng thời gian</label>
-              <div style="display: flex; gap: 10px; align-items: center;">
+              <div class="date-range-wrapper">
                 <input type="date" class="form-control" name="start_date" value="<?php echo $startDate; ?>" placeholder="Từ ngày">
-                <span style="color: #666;">đến</span>
+                <span class="date-separator">đến</span>
                 <input type="date" class="form-control" name="end_date" value="<?php echo $endDate; ?>" placeholder="Đến ngày">
               </div>
             </div>
@@ -151,11 +232,11 @@ $chartDataJson = json_encode(array_values($chartData));
               </select>
             </div>
             
-            <div class="form-group">
+            <div class="form-group form-actions-group">
               <button type="submit" class="btn btn-primary">
                 <i class="mdi mdi-filter"></i> Lọc
               </button>
-              <a href="<?= getBasePath() ?>/admin" class="btn btn-secondary" style="margin-left: 10px;">
+              <a href="<?= getBasePath() ?>/admin" class="btn btn-secondary btn-reset">
                 <i class="mdi mdi-refresh"></i> Đặt lại
               </a>
             </div>
@@ -187,7 +268,7 @@ $chartDataJson = json_encode(array_values($chartData));
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+      <div class="chart-topusers-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
         <!-- Revenue Chart -->
         <div class="admin-card">
           <h4 class="admin-card-title">Biểu đồ doanh thu theo tháng (<?php echo $year; ?>)</h4>
@@ -446,9 +527,190 @@ $chartDataJson = json_encode(array_values($chartData));
     color: #333;
   }
   
+  /* Date range wrapper - Desktop */
+  .date-range-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .date-separator {
+    color: #666;
+    white-space: nowrap;
+  }
+  
+  .btn-reset {
+    margin-left: 10px;
+  }
+  
+  /* Tablet large - Tránh đè khi màn hình vừa phải */
+  @media (min-width: 992px) and (max-width: 1400px) {
+    .doanhthu-container .filters {
+      padding: 18px !important;
+    }
+    
+    .doanhthu-container .filters form {
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: flex-end;
+    }
+    
+    .doanhthu-container .filters .form-group {
+      flex: 1 1 calc(50% - 7.5px);
+      min-width: 220px;
+      max-width: 100%;
+      margin-bottom: 0;
+    }
+    
+    /* Khoảng thời gian - full width khi wrap */
+    .doanhthu-container .filters .form-group:first-child {
+      flex: 1 1 100%;
+      min-width: 100%;
+    }
+    
+    .doanhthu-container .filters .date-range-wrapper {
+      min-width: 300px;
+      max-width: 100%;
+      display: flex;
+      gap: 10px;
+      flex-wrap: nowrap;
+    }
+    
+    .doanhthu-container .filters .date-range-wrapper input {
+      flex: 1;
+      min-width: 120px;
+      max-width: none;
+    }
+    
+    .doanhthu-container .filters .form-actions-group {
+      flex: 1 1 100%;
+      justify-content: flex-start;
+      margin-top: 5px;
+      gap: 10px;
+    }
+    
+    .doanhthu-container .filters .form-actions-group .btn {
+      flex: 0 0 auto;
+    }
+  }
+  
+  /* Tablet medium - Xử lý màn hình nhỏ hơn một chút */
+  @media (min-width: 992px) and (max-width: 1200px) {
+    .doanhthu-container .filters .form-group {
+      flex: 1 1 100%;
+      min-width: 100%;
+    }
+    
+    .doanhthu-container .filters .date-range-wrapper {
+      min-width: 100%;
+    }
+  }
+  
+  /* Desktop lớn - Tối ưu layout */
+  @media (min-width: 1401px) {
+    .doanhthu-container .filters form {
+      flex-wrap: nowrap;
+      gap: 15px;
+    }
+    
+    .doanhthu-container .filters .form-group {
+      flex: 1 1 auto;
+      min-width: 180px;
+      max-width: none;
+    }
+    
+    .doanhthu-container .filters .form-actions-group {
+      flex: 0 0 auto;
+      margin-top: 0;
+    }
+  }
+  
+  @media (max-width: 991px) {
+    /* Fix form filters responsive - với selector cụ thể hơn */
+    .doanhthu-container .filters {
+      padding: 15px !important;
+    }
+    
+    .doanhthu-container .filters form {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 15px !important;
+      align-items: stretch !important;
+    }
+    
+    .doanhthu-container .filters .form-group {
+      width: 100% !important;
+      margin-bottom: 0 !important;
+      flex: none !important;
+      min-width: 0 !important;
+    }
+    
+    .doanhthu-container .filters .form-group label {
+      display: block !important;
+      margin-bottom: 8px !important;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    /* Date range inputs - stack vertically on mobile */
+    .doanhthu-container .filters .date-range-wrapper {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+      align-items: stretch !important;
+    }
+    
+    .doanhthu-container .filters .date-range-wrapper input {
+      width: 100% !important;
+      flex: 1 !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+    
+    .doanhthu-container .filters .date-separator {
+      display: none !important;
+    }
+    
+    .doanhthu-container .filters .form-group .form-control {
+      width: 100% !important;
+      padding: 10px !important;
+      font-size: 0.9rem !important;
+      box-sizing: border-box !important;
+    }
+    
+    .doanhthu-container .filters .form-actions-group {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+      width: 100% !important;
+    }
+    
+    .doanhthu-container .filters .form-actions-group .btn {
+      width: 100% !important;
+      margin-left: 0 !important;
+      margin-top: 0 !important;
+    }
+    
+    .doanhthu-container .filters .form-actions-group .btn-reset {
+      margin-left: 0 !important;
+    }
+    
+    .doanhthu-container .filters .form-actions-group a.btn {
+      display: block !important;
+      text-align: center !important;
+    }
+  }
+  
   @media (max-width: 768px) {
     .doanhthu-container > div[style*="grid"] {
       grid-template-columns: 1fr !important;
+    }
+    
+    /* Chart and Top Users grid - stack vertically on mobile */
+    .chart-topusers-grid {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 20px !important;
     }
   }
   
