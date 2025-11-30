@@ -3,40 +3,36 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// Livestream WebSocket variables
 let livestreamClients = {};
 let livestreamRooms = {};
 
-// Cấu hình động - có thể thay đổi theo môi trường
 let CONFIG = {
   hostname: process.env.HOSTNAME || 'localhost',
   port: process.env.PORT || 8080,
-  basePath: process.env.BASE_PATH || '' // Nếu project ở root thì để empty string, nếu trong folder thì thêm '/folder_name'
+  basePath: process.env.BASE_PATH || ''
 };
 
-console.log("🟡 Đang chạy đúng file server.js JSON");
-console.log("🔍 Current working directory:", process.cwd());
-console.log("🔍 CONFIG loaded:", CONFIG);
+console.log("Đang chạy đúng file server.js JSON");
+console.log("Thư mục làm việc hiện tại:", process.cwd());
+console.log("Đã tải CONFIG:", CONFIG);
 
-// Thử load config từ file nếu có
 try {
   const configPath = path.join(__dirname, '../config/server_config.js');
   if (fs.existsSync(configPath)) {
     const fileConfig = require(configPath);
     CONFIG = { ...CONFIG, ...fileConfig };
-    console.log('📁 Đã load config từ file:', configPath);
+    console.log('Đã load config từ file:', configPath);
   }
 } catch (err) {
-  console.log('⚠️ Không thể load config file, sử dụng config mặc định');
+  console.log('Không thể load config file, sử dụng config mặc định');
 }
 
-console.log('🔧 Config hiện tại:', CONFIG);
+console.log('Config hiện tại:', CONFIG);
 
-// Tạo WebSocket server trên port riêng
 const wss = new WebSocket.Server({ port: CONFIG.wsPort || 3000 });
 
-console.log(`🚀 WebSocket server đang chạy trên port ${CONFIG.wsPort || 3000}`);
-console.log(`🔌 WebSocket server sẵn sàng nhận kết nối`);
+console.log(`WebSocket server đang chạy trên port ${CONFIG.wsPort || 3000}`);
+console.log(`WebSocket server sẵn sàng nhận kết nối`);
 let clients = {};
 
 wss.on('connection', function connection(ws) {
@@ -44,8 +40,6 @@ wss.on('connection', function connection(ws) {
     const data = JSON.parse(message);
 
     if (data.type === 'register') {
-      // Xác thực đơn giản bằng HMAC nếu có secret, payload: {user_id, ts, sig}
-      // sig = HMAC_SHA256(user_id + ":" + ts, secret)
       try {
         const hasSecret = !!CONFIG.wsSecret;
         if (hasSecret) {
@@ -57,7 +51,6 @@ wss.on('connection', function connection(ws) {
             ws.close(4001, 'missing auth fields');
             return;
           }
-          // chống replay: lệch thời gian tối đa 5 phút
           const now = Math.floor(Date.now() / 1000);
           const delta = Math.abs(now - parseInt(ts, 10));
           if (delta > 300) {
@@ -76,7 +69,7 @@ wss.on('connection', function connection(ws) {
         }
         clients[data.user_id] = ws;
         ws.user_id = data.user_id;
-        console.log(`🟢 User ${data.user_id} đã kết nối`);
+        console.log(`User ${data.user_id} đã kết nối`);
       } catch (e) {
         console.error('Auth error:', e);
         ws.close(4000, 'auth error');
@@ -91,32 +84,27 @@ wss.on('connection', function connection(ws) {
       const ids = [from, to].sort((a, b) => a - b);
       const fileName = `chat_${ids[0]}_${ids[1]}.json`;
 
-      // ✅ Sửa lỗi: Đảm bảo đường dẫn luôn đúng với thư mục choviet29
-      // Sử dụng cấu hình từ file config nếu có, nếu không thì dùng đường dẫn tương đối
       let chatFolderPath;
       if (CONFIG.chatPath) {
         chatFolderPath = CONFIG.chatPath;
       } else {
-        // Sử dụng process.cwd() để lấy thư mục hiện tại thay vì __dirname
         const currentDir = process.cwd();
         chatFolderPath = path.join(currentDir, "chat");
       }
       
       const filePath = path.join(chatFolderPath, fileName);
       
-      console.log("🔍 Chat folder path:", chatFolderPath);
-      console.log("🔍 Full file path:", filePath);
+      console.log("Đường dẫn thư mục chat:", chatFolderPath);
+      console.log("Đường dẫn file đầy đủ:", filePath);
 
-      // ✅ Tạo thư mục chat nếu chưa có
       if (!fs.existsSync(chatFolderPath)) {
         fs.mkdirSync(chatFolderPath, { recursive: true });
       }
 
-      // ✅ Nếu file chưa tồn tại thì tạo file trống và lưu DB
       if (!fs.existsSync(filePath)) {
         try {
           fs.writeFileSync(filePath, "[]");
-          console.log("📁 Đã tạo file mới:", filePath);
+          console.log("Đã tạo file mới:", filePath);
 
           const postFileName = JSON.stringify({ from, to, file_name: fileName });
           const req2 = http.request({
@@ -129,41 +117,36 @@ wss.on('connection', function connection(ws) {
               'Content-Length': Buffer.byteLength(postFileName)
             }
           }, res => {
-            console.log('📁 Đã lưu tên file vào DB:', fileName);
+            console.log('Đã lưu tên file vào DB:', fileName);
           });
-          req2.on('error', error => console.error("❌ Lỗi lưu tên file:", error));
+          req2.on('error', error => console.error("Lỗi lưu tên file:", error));
           req2.write(postFileName);
           req2.end();
 
         } catch (err) {
-          console.error("❌ Lỗi tạo file:", err);
+          console.error("Lỗi tạo file:", err);
         }
       }
 
-      // ✅ Đọc và cập nhật file JSON
       let messages = [];
       try {
         const fileContent = fs.readFileSync(filePath, 'utf-8');
         messages = JSON.parse(fileContent);
       } catch (err) {
-        console.error("❌ Lỗi đọc file JSON:", err);
+        console.error("Lỗi đọc file JSON:", err);
       }
 
-      // Lưu field chuẩn 'content' (giữ tương thích khi nhận noi_dung từ client cũ)
       messages.push({ from, to, content: (noi_dung || content), timestamp });
 
       fs.writeFile(filePath, JSON.stringify(messages, null, 2), err => {
-        if (err) console.error("❌ Lỗi ghi file JSON:", err);
-        else console.log("✅ Đã lưu tin nhắn vào file:", fileName);
+        if (err) console.error("Lỗi ghi file JSON:", err);
+        else console.log("Đã lưu tin nhắn vào file:", fileName);
       });
 
-      // ✅ Gửi tin nhắn về 2 phía
-      // Phát về client với field chuẩn 'content'
       const socketMessage = JSON.stringify({ type: 'message', from, to, content: (noi_dung || content), timestamp });
       if (clients[to]) clients[to].send(socketMessage);
       if (clients[from]) clients[from].send(socketMessage);
 
-      // ✅ Cập nhật chưa đọc cho người nhận
       try {
         const unreadFile = path.join(chatFolderPath, `unread_${to}.json`);
         let unread = {};
@@ -172,15 +155,13 @@ wss.on('connection', function connection(ws) {
         }
         unread[from] = (unread[from] || 0) + 1;
         fs.writeFileSync(unreadFile, JSON.stringify(unread, null, 2));
-        // Thông báo realtime
         if (clients[to]) {
           clients[to].send(JSON.stringify({ type: 'unread', from, to, count: unread[from] }));
         }
       } catch (e) {
-        console.error('❌ Lỗi cập nhật unread:', e);
+        console.error('Lỗi cập nhật unread:', e);
       }
 
-      // ✅ Gọi API lưu vào DB nếu cần (gửi cả noi_dung và content để tương thích API)
       const postData = JSON.stringify({ from, to, noi_dung: (noi_dung || content), content: (content || noi_dung), product_id: product_id || null });
       const req = http.request({
         hostname: CONFIG.hostname,
@@ -192,17 +173,16 @@ wss.on('connection', function connection(ws) {
           'Content-Length': Buffer.byteLength(postData)
         }
       }, res => {
-        console.log('📩 Gửi API chat-api.php:', res.statusCode);
-        res.on('data', chunk => console.log('📦 Nội dung:', chunk.toString()));
+        console.log('Gửi API chat-api.php:', res.statusCode);
+        res.on('data', chunk => console.log('Nội dung:', chunk.toString()));
       });
-      req.on('error', error => console.error("❌ Lỗi gọi API PHP:", error));
+      req.on('error', error => console.error("Lỗi gọi API PHP:", error));
       req.write(postData);
       req.end();
     }
 
-    // ✅ Đánh dấu đã đọc một hội thoại: { type: 'mark_read', from, to }
     if (data.type === 'mark_read') {
-      const { from, to } = data; // from: đối tác, to: user hiện tại
+      const { from, to } = data;
       try {
         let chatFolderPath;
         if (CONFIG.chatPath) {
@@ -222,12 +202,11 @@ wss.on('connection', function connection(ws) {
           clients[to].send(JSON.stringify({ type: 'unread_summary', to, unread }));
         }
       } catch (e) {
-        console.error('❌ Lỗi mark_read:', e);
+        console.error('Lỗi mark_read:', e);
       }
       return;
     }
     
-    // Xử lý livestream messages
     if (data.type && (data.type.startsWith('join_livestream') || 
                      data.type.startsWith('leave_livestream') || 
                      data.type.startsWith('livestream_') || 
@@ -240,7 +219,7 @@ wss.on('connection', function connection(ws) {
                      data.type.startsWith('webrtc_') ||
                      data.type.startsWith('request_') ||
                      data.type.startsWith('get_'))) {
-      console.log('🎯 Processing livestream message:', data.type, 'for livestream:', data.livestream_id);
+      console.log('Xử lý message livestream:', data.type, 'cho livestream:', data.livestream_id);
       handleLivestreamMessage(ws, data);
       return;
     }
@@ -249,17 +228,15 @@ wss.on('connection', function connection(ws) {
   ws.on('close', () => {
     if (ws.user_id && clients[ws.user_id]) {
       delete clients[ws.user_id];
-      console.log(`🔴 User ${ws.user_id} đã ngắt kết nối`);
+      console.log(`User ${ws.user_id} đã ngắt kết nối`);
     }
     
-    // Xóa client khỏi livestream rooms và thông báo cho các client khác
     Object.keys(livestreamRooms).forEach(roomId => {
       if (livestreamRooms[roomId]) {
         const index = livestreamRooms[roomId].indexOf(ws);
         if (index > -1) {
           livestreamRooms[roomId].splice(index, 1);
           
-          // Thông báo cho tất cả clients (bao gồm streamer và viewer) về số người xem mới
           const newCount = livestreamRooms[roomId].length;
           broadcastToLivestream(roomId, {
             type: 'viewers_count_update',
@@ -267,12 +244,11 @@ wss.on('connection', function connection(ws) {
             viewers_count: newCount
           });
           
-          console.log(`📊 Livestream ${roomId} viewers count updated to ${newCount}`);
+          console.log(`Livestream ${roomId} viewers count updated to ${newCount}`);
         }
       }
     });
     
-    // Xóa khỏi livestreamClients
     Object.keys(livestreamClients).forEach(clientId => {
       if (livestreamClients[clientId].ws === ws) {
         delete livestreamClients[clientId];
@@ -281,10 +257,7 @@ wss.on('connection', function connection(ws) {
   });
 });
 
-// =============================================
-// LIVESTREAM WEBSOCKET HANDLERS
-// =============================================
-
+// Xử lý định tuyến các message liên quan đến livestream
 function handleLivestreamMessage(ws, data) {
   switch (data.type) {
     case 'join_livestream':
@@ -318,14 +291,12 @@ function handleLivestreamMessage(ws, data) {
       handleLivestreamLike(ws, data);
       break;
     case 'livestream_like_broadcast':
-      // Frontend đã ghi vào database, chỉ cần broadcast số lượt thích mới
       const { livestream_id } = data;
       if (livestream_id) {
-        console.log('📡 Broadcasting like count update for livestream:', livestream_id);
+        console.log('Đang broadcast cập nhật số lượt thích cho livestream:', livestream_id);
         fetchLikeCount(livestream_id);
       }
       break;
-    // WebRTC signaling bridge
     case 'webrtc_offer':
     case 'webrtc_answer':
     case 'webrtc_ice':
@@ -342,10 +313,11 @@ function handleLivestreamMessage(ws, data) {
       handleOrderCreated(ws, data);
       break;
     default:
-      console.log('❓ Unknown livestream message type:', data.type);
+      console.log('Loại message livestream không xác định:', data.type);
   }
 }
 
+// Xử lý khi user tham gia vào phòng livestream
 function joinLivestream(ws, data) {
   const { livestream_id, user_id, user_type } = data;
   
@@ -353,7 +325,6 @@ function joinLivestream(ws, data) {
     livestreamRooms[livestream_id] = [];
   }
   
-  // Kiểm tra xem client đã trong room chưa
   const alreadyInRoom = livestreamRooms[livestream_id].includes(ws);
   
   if (!alreadyInRoom) {
@@ -364,7 +335,6 @@ function joinLivestream(ws, data) {
   ws.user_id = user_id;
   ws.user_type = user_type || 'viewer';
   
-  // Lưu vào livestreamClients
   const clientId = `${user_id}_${livestream_id}`;
   livestreamClients[clientId] = {
     ws: ws,
@@ -374,24 +344,20 @@ function joinLivestream(ws, data) {
   };
   
   const currentViewersCount = livestreamRooms[livestream_id].length;
-  console.log(`🎥 User ${user_id} (${user_type || 'viewer'}) đã tham gia livestream ${livestream_id}. Tổng viewers: ${currentViewersCount}`);
+  console.log(`User ${user_id} (${user_type || 'viewer'}) đã tham gia livestream ${livestream_id}. Tổng viewers: ${currentViewersCount}`);
   
-  // Gửi thông tin phòng cho client vừa join
   ws.send(JSON.stringify({
     type: 'livestream_joined',
     livestream_id: livestream_id,
     viewers_count: currentViewersCount
   }));
   
-  // Thông báo cho TẤT CẢ clients (bao gồm streamer và viewer) về số người xem mới
-  // KHÔNG exclude ws để cả người vừa join cũng nhận được cập nhật
   broadcastToLivestream(livestream_id, {
     type: 'viewers_count_update',
     livestream_id: livestream_id,
     viewers_count: currentViewersCount
   });
   
-  // Thông báo có người mới join (optional, để hiển thị thông báo)
   if (!alreadyInRoom) {
     broadcastToLivestream(livestream_id, {
       type: 'viewer_joined',
@@ -401,6 +367,7 @@ function joinLivestream(ws, data) {
   }
 }
 
+// Xử lý khi user rời khỏi phòng livestream
 function leaveLivestream(ws, data) {
   const { livestream_id } = data;
   
@@ -412,22 +379,21 @@ function leaveLivestream(ws, data) {
   }
   
   const newCount = livestreamRooms[livestream_id] ? livestreamRooms[livestream_id].length : 0;
-  console.log(`🎥 User đã rời livestream ${livestream_id}. Còn lại: ${newCount} viewers`);
+  console.log(`User đã rời livestream ${livestream_id}. Còn lại: ${newCount} viewers`);
   
-  // Thông báo cho TẤT CẢ clients (bao gồm streamer và viewer) về số người xem mới
   broadcastToLivestream(livestream_id, {
     type: 'viewers_count_update',
     livestream_id: livestream_id,
     viewers_count: newCount
   });
   
-  // Thông báo có người rời (optional)
   broadcastToLivestream(livestream_id, {
     type: 'viewer_left',
     viewers_count: newCount
   }, ws);
 }
 
+// Xử lý tin nhắn chat trong phòng livestream
 function handleLivestreamChat(ws, data) {
   const { livestream_id, user_id, message, username } = data;
   
@@ -440,12 +406,12 @@ function handleLivestreamChat(ws, data) {
     timestamp: new Date().toISOString()
   };
   
-  // Broadcast tin nhắn đến tất cả client trong livestream
   broadcastToLivestream(livestream_id, chatMessage);
   
-  console.log(`💬 Chat trong livestream ${livestream_id}: ${username}: ${message}`);
+  console.log(`Chat trong livestream ${livestream_id}: ${username}: ${message}`);
 }
 
+// Xử lý ghim sản phẩm trong livestream để hiển thị nổi bật
 function handlePinProduct(ws, data) {
   const { livestream_id, product_id, product_info } = data;
   
@@ -457,12 +423,12 @@ function handlePinProduct(ws, data) {
     timestamp: new Date().toISOString()
   };
   
-  // Broadcast sản phẩm được ghim đến tất cả client
   broadcastToLivestream(livestream_id, pinMessage);
   
-  console.log(`📌 Sản phẩm ${product_id} được ghim trong livestream ${livestream_id}`);
+  console.log(`Sản phẩm ${product_id} được ghim trong livestream ${livestream_id}`);
 }
 
+// Xử lý bỏ ghim sản phẩm trong livestream
 function handleUnpinProduct(ws, data) {
   const { livestream_id } = data;
   
@@ -472,12 +438,12 @@ function handleUnpinProduct(ws, data) {
     timestamp: new Date().toISOString()
   };
   
-  // Broadcast sản phẩm bỏ ghim đến tất cả client
   broadcastToLivestream(livestream_id, unpinMessage);
   
-  console.log(`📌 Sản phẩm đã bỏ ghim trong livestream ${livestream_id}`);
+  console.log(`Sản phẩm đã bỏ ghim trong livestream ${livestream_id}`);
 }
 
+// Xử lý thêm sản phẩm vào giỏ hàng livestream
 function handleAddToCart(ws, data) {
   const { livestream_id, user_id, product_id, quantity, price } = data;
   
@@ -492,12 +458,12 @@ function handleAddToCart(ws, data) {
     timestamp: new Date().toISOString()
   };
   
-  // Chỉ gửi cho user cụ thể
   ws.send(JSON.stringify(cartMessage));
   
-  console.log(`🛒 User ${user_id} thêm sản phẩm ${product_id} vào giỏ hàng livestream ${livestream_id}`);
+  console.log(`User ${user_id} thêm sản phẩm ${product_id} vào giỏ hàng livestream ${livestream_id}`);
 }
 
+// Xử lý xóa sản phẩm khỏi giỏ hàng livestream
 function handleRemoveFromCart(ws, data) {
   const { livestream_id, user_id, product_id } = data;
   
@@ -510,12 +476,12 @@ function handleRemoveFromCart(ws, data) {
     timestamp: new Date().toISOString()
   };
   
-  // Chỉ gửi cho user cụ thể
   ws.send(JSON.stringify(cartMessage));
   
-  console.log(`🛒 User ${user_id} xóa sản phẩm ${product_id} khỏi giỏ hàng livestream ${livestream_id}`);
+  console.log(`User ${user_id} xóa sản phẩm ${product_id} khỏi giỏ hàng livestream ${livestream_id}`);
 }
 
+// Xử lý cập nhật số lượng sản phẩm trong giỏ hàng livestream
 function handleUpdateCartQuantity(ws, data) {
   const { livestream_id, user_id, product_id, quantity } = data;
   
@@ -529,12 +495,12 @@ function handleUpdateCartQuantity(ws, data) {
     timestamp: new Date().toISOString()
   };
   
-  // Chỉ gửi cho user cụ thể
   ws.send(JSON.stringify(cartMessage));
   
-  console.log(`🛒 User ${user_id} cập nhật số lượng sản phẩm ${product_id} trong giỏ hàng livestream ${livestream_id}`);
+  console.log(`User ${user_id} cập nhật số lượng sản phẩm ${product_id} trong giỏ hàng livestream ${livestream_id}`);
 }
 
+// Xử lý broadcast thống kê livestream đến tất cả clients
 function handleLivestreamStats(ws, data) {
   const { livestream_id, stats } = data;
   
@@ -545,26 +511,23 @@ function handleLivestreamStats(ws, data) {
     timestamp: new Date().toISOString()
   };
   
-  // Broadcast thống kê đến tất cả client
   broadcastToLivestream(livestream_id, statsMessage);
   
-  console.log(`📊 Cập nhật thống kê livestream ${livestream_id}`);
+  console.log(`Cập nhật thống kê livestream ${livestream_id}`);
 }
 
-// Xử lý lượt thích livestream
+// Xử lý khi user thích livestream, ghi vào database và broadcast số lượt thích
 function handleLivestreamLike(ws, data) {
   const { livestream_id, user_id } = data;
   
   if (!livestream_id || !user_id) {
-    console.log('❌ Missing livestream_id or user_id for like', { livestream_id, user_id });
+    console.log('Thiếu livestream_id hoặc user_id cho like', { livestream_id, user_id });
     return;
   }
   
-  console.log(`❤️ User ${user_id} liked livestream ${livestream_id}`);
-  console.log(`🔍 Calling API: http://${CONFIG.hostname}:${CONFIG.port}${CONFIG.basePath}/api/livestream-api.php`);
+  console.log(`User ${user_id} đã thích livestream ${livestream_id}`);
+  console.log(`Gọi API: http://${CONFIG.hostname}:${CONFIG.port}${CONFIG.basePath}/api/livestream-api.php`);
   
-  // Gọi API PHP để ghi vào database (không giới hạn số lần thích)
-  // API dùng form data, không phải JSON
   const querystring = require('querystring');
   const postData = querystring.stringify({
     action: 'record_interaction',
@@ -585,36 +548,35 @@ function handleLivestreamLike(ws, data) {
     }
   };
   
-  console.log(`📤 POST Request to: http://${options.hostname}:${options.port}${options.path}`);
-  console.log(`📤 POST Data:`, postData);
+  console.log(`POST Request đến: http://${options.hostname}:${options.port}${options.path}`);
+  console.log(`Dữ liệu POST:`, postData);
   
   const req = http.request(options, (res) => {
-    console.log(`📥 Response status: ${res.statusCode} ${res.statusMessage}`);
+    console.log(`Trạng thái response: ${res.statusCode} ${res.statusMessage}`);
     let responseData = '';
     res.on('data', (chunk) => {
       responseData += chunk;
     });
     res.on('end', () => {
-      console.log(`📥 Response data:`, responseData);
+      console.log(`Dữ liệu response:`, responseData);
       try {
         const result = JSON.parse(responseData);
         if (result.success) {
-          console.log('✅ Like recorded successfully');
-          // Lấy số lượt thích mới từ API
+          console.log('Đã ghi nhận lượt thích thành công');
           fetchLikeCount(livestream_id);
         } else {
-          console.error('❌ Failed to record like:', result.message);
+          console.error('Lỗi ghi nhận lượt thích:', result.message);
         }
       } catch (e) {
-        console.error('❌ Error parsing like response:', e);
-        console.error('❌ Raw response:', responseData);
+        console.error('Lỗi phân tích response like:', e);
+        console.error('Response thô:', responseData);
       }
     });
   });
   
   req.on('error', (error) => {
-    console.error('❌ Error calling like API:', error);
-    console.error('❌ Error details:', {
+    console.error('Lỗi gọi API like:', error);
+    console.error('Chi tiết lỗi:', {
       code: error.code,
       message: error.message,
       hostname: options.hostname,
@@ -627,31 +589,30 @@ function handleLivestreamLike(ws, data) {
   req.end();
 }
 
-// Lấy số lượt thích mới và broadcast
+// Lấy số lượt thích từ API và broadcast cho tất cả clients
 function fetchLikeCount(livestream_id) {
   const apiPath = CONFIG.basePath + '/api/livestream-api.php?action=get_realtime_stats&livestream_id=' + livestream_id;
-  console.log(`🔍 Fetching like count from: http://${CONFIG.hostname}:${CONFIG.port}${apiPath}`);
+  console.log(`Đang lấy số lượt thích từ: http://${CONFIG.hostname}:${CONFIG.port}${apiPath}`);
   
   const req = http.get({
     hostname: CONFIG.hostname,
     port: CONFIG.port,
     path: apiPath
   }, (res) => {
-    console.log(`📥 Like count response status: ${res.statusCode}`);
+    console.log(`Trạng thái response số lượt thích: ${res.statusCode}`);
     let responseData = '';
     res.on('data', (chunk) => {
       responseData += chunk;
     });
     res.on('end', () => {
-      console.log(`📥 Like count response data:`, responseData);
+      console.log(`Dữ liệu response số lượt thích:`, responseData);
       try {
         const result = JSON.parse(responseData);
         if (result.success && result.stats) {
           const likeCount = result.stats.like_count || 0;
           
-          console.log(`📊 Current like count: ${likeCount} for livestream ${livestream_id}`);
+          console.log(`Số lượt thích hiện tại: ${likeCount} cho livestream ${livestream_id}`);
           
-          // Broadcast số lượt thích mới cho tất cả clients (viewer và streamer)
           broadcastToLivestream(livestream_id, {
             type: 'livestream_like_count',
             livestream_id: livestream_id,
@@ -659,21 +620,21 @@ function fetchLikeCount(livestream_id) {
             timestamp: new Date().toISOString()
           });
           
-          console.log(`❤️ Broadcasted like count: ${likeCount} for livestream ${livestream_id}`);
+          console.log(`Đã broadcast số lượt thích: ${likeCount} cho livestream ${livestream_id}`);
         } else {
-          console.error('❌ Failed to get like count:', result.message || 'Unknown error');
-          console.error('❌ Result:', result);
+          console.error('Lỗi lấy số lượt thích:', result.message || 'Lỗi không xác định');
+          console.error('Kết quả:', result);
         }
       } catch (e) {
-        console.error('❌ Error parsing like count response:', e);
-        console.error('❌ Raw response:', responseData);
+        console.error('Lỗi phân tích response số lượt thích:', e);
+        console.error('Response thô:', responseData);
       }
     });
   });
   
   req.on('error', (error) => {
-    console.error('❌ Error fetching like count:', error);
-    console.error('❌ Error details:', {
+    console.error('Lỗi lấy số lượt thích:', error);
+    console.error('Chi tiết lỗi:', {
       code: error.code,
       message: error.message,
       hostname: CONFIG.hostname,
@@ -683,18 +644,17 @@ function fetchLikeCount(livestream_id) {
   });
 }
 
-// Xử lý khi có đơn hàng mới được tạo
+// Xử lý khi có đơn hàng mới từ livestream, broadcast thông báo và lấy thống kê mới
 function handleOrderCreated(ws, data) {
   const { livestream_id, order_id, order_code, total_amount } = data;
   
   if (!livestream_id) {
-    console.log('❌ Missing livestream_id for order_created');
+    console.log('Thiếu livestream_id cho order_created');
     return;
   }
   
-  console.log(`📦 Order created: ${order_code || order_id} for livestream ${livestream_id}, amount: ${total_amount}`);
+  console.log(`Đơn hàng đã tạo: ${order_code || order_id} cho livestream ${livestream_id}, số tiền: ${total_amount}`);
   
-  // Broadcast thông báo đơn hàng mới cho streamer
   broadcastToLivestream(livestream_id, {
     type: 'order_created',
     livestream_id: livestream_id,
@@ -704,16 +664,15 @@ function handleOrderCreated(ws, data) {
     timestamp: new Date().toISOString()
   });
   
-  // Sau đó fetch và broadcast thống kê mới (số đơn hàng và doanh thu)
   setTimeout(() => {
     fetchLivestreamStats(livestream_id);
-  }, 500); // Delay nhỏ để đảm bảo database đã commit
+  }, 500);
 }
 
-// Lấy thống kê livestream và broadcast
+// Lấy thống kê chi tiết livestream từ API và broadcast cho tất cả clients
 function fetchLivestreamStats(livestream_id) {
   const apiPath = CONFIG.basePath + '/api/livestream-api.php?action=get_realtime_stats&livestream_id=' + livestream_id;
-  console.log(`🔍 Fetching livestream stats from: http://${CONFIG.hostname}:${CONFIG.port}${apiPath}`);
+  console.log(`Đang lấy thống kê livestream từ: http://${CONFIG.hostname}:${CONFIG.port}${apiPath}`);
   
   const req = http.get({
     hostname: CONFIG.hostname,
@@ -730,9 +689,8 @@ function fetchLivestreamStats(livestream_id) {
         if (result.success && result.stats) {
           const stats = result.stats;
           
-          console.log(`📊 Livestream stats:`, stats);
+          console.log(`Thống kê livestream:`, stats);
           
-          // Broadcast thống kê mới cho streamer
           broadcastToLivestream(livestream_id, {
             type: 'livestream_stats_update',
             livestream_id: livestream_id,
@@ -745,19 +703,20 @@ function fetchLivestreamStats(livestream_id) {
             timestamp: new Date().toISOString()
           });
           
-          console.log(`📊 Broadcasted stats update for livestream ${livestream_id}`);
+          console.log(`Đã broadcast cập nhật thống kê cho livestream ${livestream_id}`);
         }
       } catch (e) {
-        console.error('❌ Error parsing stats response:', e);
+        console.error('Lỗi phân tích response thống kê:', e);
       }
     });
   });
   
   req.on('error', (error) => {
-    console.error('❌ Error fetching stats:', error);
+    console.error('Lỗi lấy thống kê:', error);
   });
 }
 
+// Gửi message đến tất cả clients trong phòng livestream (có thể loại trừ 1 client)
 function broadcastToLivestream(livestream_id, message, excludeWs = null) {
   if (livestreamRooms[livestream_id]) {
     let sentCount = 0;
@@ -772,52 +731,50 @@ function broadcastToLivestream(livestream_id, message, excludeWs = null) {
       }
     });
     if (sentCount > 0) {
-      console.log(`📡 Broadcasted "${message.type}" to ${sentCount} clients in livestream ${livestream_id}`);
+      console.log(`Đã broadcast "${message.type}" đến ${sentCount} clients trong livestream ${livestream_id}`);
     }
   } else {
-    console.log(`⚠️ No clients in livestream room ${livestream_id}`);
+    console.log(`Không có clients trong phòng livestream ${livestream_id}`);
   }
 }
 
-// Forward WebRTC signaling messages between streamer and viewers in the same room
+// Chuyển tiếp WebRTC signaling (offer, answer, ICE) giữa streamer và viewers
 function forwardWebRTCSignal(ws, data) {
   const { livestream_id, type } = data;
-  console.log(`🔄 Forwarding ${type} for livestream ${livestream_id}`);
+  console.log(`Đang chuyển tiếp ${type} cho livestream ${livestream_id}`);
   
   if (!livestream_id) {
-    console.log('❌ No livestream_id in WebRTC signal');
+    console.log('Không có livestream_id trong WebRTC signal');
     return;
   }
 
-  // Relay to everyone else in the same room
   if (livestreamRooms[livestream_id]) {
-    console.log(`📡 Found ${livestreamRooms[livestream_id].length} clients in room ${livestream_id}`);
+    console.log(`Tìm thấy ${livestreamRooms[livestream_id].length} clients trong phòng ${livestream_id}`);
     livestreamRooms[livestream_id].forEach((client, index) => {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
-        console.log(`📤 Sending ${type} to client ${index} (readyState: ${client.readyState})`);
+        console.log(`Đang gửi ${type} đến client ${index} (readyState: ${client.readyState})`);
         try {
           client.send(JSON.stringify(data));
         } catch (error) {
-          console.log(`❌ Error sending to client ${index}:`, error.message);
+          console.log(`Lỗi gửi đến client ${index}:`, error.message);
         }
       } else {
-        console.log(`❌ Client ${index} not ready (readyState: ${client.readyState})`);
+        console.log(`Client ${index} chưa sẵn sàng (readyState: ${client.readyState})`);
       }
     });
   } else {
-    console.log(`❌ No room found for livestream ${livestream_id}`);
+    console.log(`Không tìm thấy phòng cho livestream ${livestream_id}`);
   }
 }
 
+// Xử lý cập nhật trạng thái livestream (bắt đầu/kết thúc) và thông báo cho viewers
 function handleLivestreamStatusUpdate(ws, data) {
   const { livestream_id, status } = data;
   
-  // Tìm tất cả viewers của livestream này
   const viewers = Object.values(livestreamClients).filter(client => 
     client.livestream_id === livestream_id && client.type === 'viewer'
   );
   
-  // Gửi thông báo status update cho tất cả viewers
   viewers.forEach(viewer => {
     const statusMessage = {
       type: status === 'dang_live' ? 'livestream_started' : 'livestream_stopped',
@@ -829,19 +786,18 @@ function handleLivestreamStatusUpdate(ws, data) {
     viewer.ws.send(JSON.stringify(statusMessage));
   });
   
-  console.log(`📺 Livestream ${livestream_id} status updated to ${status}, notified ${viewers.length} viewers`);
+  console.log(`Trạng thái livestream ${livestream_id} đã cập nhật thành ${status}, đã thông báo cho ${viewers.length} viewers`);
 }
 
+// Kiểm tra và gửi trạng thái hiện tại của livestream cho viewer
 function handleGetLivestreamStatus(ws, data) {
   const { livestream_id } = data;
   
-  // Kiểm tra xem livestream có đang live không
   const streamer = Object.values(livestreamClients).find(client => 
     client.livestream_id === livestream_id && client.type === 'streamer'
   );
   
   if (streamer) {
-    // Gửi thông báo livestream đã bắt đầu
     const statusMessage = {
       type: 'livestream_started',
       livestream_id: livestream_id,
@@ -850,8 +806,8 @@ function handleGetLivestreamStatus(ws, data) {
     };
     
     ws.send(JSON.stringify(statusMessage));
-    console.log(`📺 Sent livestream status to viewer for livestream ${livestream_id}`);
+    console.log(`Đã gửi trạng thái livestream cho viewer của livestream ${livestream_id}`);
   } else {
-    console.log(`📺 No active streamer found for livestream ${livestream_id}`);
+    console.log(`Không tìm thấy streamer đang hoạt động cho livestream ${livestream_id}`);
   }
 }

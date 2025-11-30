@@ -2,18 +2,18 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-include_once("controller/cLivestream.php");
-include_once("model/mLivestream.php");
+include_once("../controller/cLivestream.php");
+include_once("../model/mLivestream.php");
 
 // Kiểm tra đăng nhập
 if (!isset($_SESSION['user_id'])) {
-    header('Location: index.php?login');
+    header('Location: ../index.php?login');
     exit;
 }
 
 $livestream_id = $_GET['livestream_id'] ?? null;
 if (!$livestream_id) {
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -22,7 +22,7 @@ $cart = $model->getCart($_SESSION['user_id'], $livestream_id);
 $livestream = $model->getLivestreamById($livestream_id);
 
 // Lấy thông tin user
-include_once("model/mUser.php");
+include_once("../model/mUser.php");
 $mUser = new mUser();
 $user = $mUser->getUserById($_SESSION['user_id']);
 
@@ -32,7 +32,7 @@ if (!$user) {
 }
 
 // Lấy số dư từ transfer_accounts (cùng cơ sở dữ liệu với nạp tiền)
-include_once("controller/vnpay/connection.php");
+include_once("../controller/vnpay/connection.php");
 try {
     $stmt = $pdo->prepare("SELECT balance FROM transfer_accounts WHERE user_id = ?");
     $stmt->execute([$_SESSION['user_id']]);
@@ -43,11 +43,11 @@ try {
 }
 
 if (empty($cart['items'])) {
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
-include_once("view/header.php");
+include_once("header.php");
 ?>
 
 <!-- API địa chỉ Việt Nam -->
@@ -676,11 +676,11 @@ include_once("view/header.php");
                                 <div class="order-item">
                                     <?php 
                                     $itemImage = $item['anh_dau'] ?? $item['image'] ?? 'default-product.jpg';
-                                    if (!file_exists('img/' . $itemImage)) {
+                                    if (!file_exists('../img/' . $itemImage)) {
                                         $itemImage = 'default-product.jpg';
                                     }
                                     ?>
-                                    <img src="img/<?= htmlspecialchars($itemImage) ?>" 
+                                    <img src="../img/<?= htmlspecialchars($itemImage) ?>" 
                                          alt="<?= htmlspecialchars($item['title']) ?>" 
                                          class="order-item-image">
                                     <div class="order-item-info">
@@ -801,7 +801,7 @@ function processCheckout() {
     formData.append('street', document.getElementById('street').value);
     formData.append('address', document.getElementById('address').value);
 
-    fetch('api/livestream-api.php', {
+    fetch('../api/livestream-api.php', {
         method: 'POST',
         body: formData
     })
@@ -824,7 +824,7 @@ function processCheckout() {
                     if (data.redirect_url) {
                         window.location.href = data.redirect_url;
                     } else {
-                        window.location.href = '?my-orders';
+                        window.location.href = '../index.php?my-orders';
                     }
                 }, 1500);
             }
@@ -1040,4 +1040,5 @@ document.getElementById('street').addEventListener('input', updateAddress);
 document.getElementById('ward').addEventListener('change', updateAddress);
 </script>
 
-<?php include_once("view/footer.php"); ?>
+<?php include_once("footer.php"); ?>
+

@@ -751,6 +751,69 @@ class mLivestream {
         ];
     }
 
+    /**
+     * Lấy số lượng livestream đang live và sắp live
+     * @return array ['live_count' => int, 'upcoming_count' => int]
+     */
+    public function getLivestreamCounts() {
+        // Đếm số livestream đang live
+        $live_sql = "SELECT COUNT(*) as count 
+                    FROM livestream 
+                    WHERE status IN ('dang_live', 'dang_dien_ra', 'dang_phat')";
+        $live_result = $this->conn->query($live_sql);
+        $live_data = $live_result->fetch_assoc();
+        $live_count = $live_data['count'] ?? 0;
+        
+        // Đếm số livestream sắp live (chưa bắt đầu)
+        $upcoming_sql = "SELECT COUNT(*) as count 
+                        FROM livestream 
+                        WHERE status IN ('chua_bat_dau', 'cho_phat', 'dang_chuan_bi')
+                        AND (start_time IS NULL OR start_time > NOW())";
+        $upcoming_result = $this->conn->query($upcoming_sql);
+        $upcoming_data = $upcoming_result->fetch_assoc();
+        $upcoming_count = $upcoming_data['count'] ?? 0;
+        
+        return [
+            'live_count' => (int)$live_count,
+            'upcoming_count' => (int)$upcoming_count
+        ];
+    }
+
+    /**
+     * Lấy danh sách livestream đang live để hiển thị trên trang chủ
+     * @param int $limit Số lượng livestream cần lấy
+     * @return array
+     */
+    public function getActiveLivestreamsForHomepage($limit = 10) {
+        $sql = "SELECT l.*, u.username, u.avatar,
+                       COUNT(DISTINCT lv.user_id) as current_viewers,
+                       COUNT(DISTINCT lp.id) as product_count
+                FROM livestream l 
+                LEFT JOIN users u ON l.user_id = u.id 
+                LEFT JOIN livestream_viewers lv ON l.id = lv.livestream_id 
+                LEFT JOIN livestream_products lp ON l.id = lp.livestream_id
+                WHERE l.status IN ('dang_live', 'dang_dien_ra', 'dang_phat')
+                GROUP BY l.id 
+                ORDER BY current_viewers DESC, l.created_date DESC
+                LIMIT ?";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $livestreams = [];
+        while ($row = $result->fetch_assoc()) {
+            // Xử lý ảnh livestream
+            if (empty($row['image'])) {
+                $row['image'] = 'default-live.jpg';
+            }
+            $livestreams[] = $row;
+        }
+        
+        return $livestreams;
+    }
+
     // Lấy danh sách đơn hàng của user
     public function getUserOrders($user_id, $status_filter = null, $limit = 20, $offset = 0) {
         $sql = "SELECT DISTINCT

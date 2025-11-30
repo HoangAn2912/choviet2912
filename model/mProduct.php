@@ -255,6 +255,48 @@ class mProduct {
         
         return $data;
     }
+
+    /**
+     * Lấy sản phẩm hot nhất (dựa trên số lượng đơn hàng thành công)
+     * @param int $limit Số lượng sản phẩm cần lấy
+     * @return array
+     */
+    public function getHotProducts($limit = 10) {
+        $sql = "SELECT sp.*, nd.username, nd.avatar, nd.phone, nd.address,
+                       COALESCE(SUM(CASE WHEN lo.status != 'cancelled' THEN loi.quantity ELSE 0 END), 0) as total_sold,
+                       COALESCE(COUNT(DISTINCT CASE WHEN lo.status != 'cancelled' THEN lo.id END), 0) as successful_orders
+                FROM products sp 
+                JOIN users nd ON sp.user_id = nd.id 
+                LEFT JOIN livestream_order_items loi ON sp.id = loi.product_id
+                LEFT JOIN livestream_orders lo ON loi.order_id = lo.id
+                WHERE sp.sale_status = 'Đang bán' AND sp.status = 'Đã duyệt'
+                GROUP BY sp.id
+                ORDER BY 
+                    total_sold DESC,
+                    successful_orders DESC,
+                    sp.updated_date DESC,
+                    sp.created_date DESC
+                LIMIT ?";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = [];
+
+        while ($row = $result->fetch_assoc()) {
+            // Xử lý ảnh sản phẩm
+            if (!empty($row['image'])) {
+                $dsAnh = array_map('trim', explode(',', $row['image']));
+                $row['anh_dau'] = $dsAnh[0] ?? '';
+            } else {
+                $row['anh_dau'] = '';
+            }
+            $data[] = $row;
+        }
+        
+        return $data;
+    }
     
     
 }

@@ -20,7 +20,7 @@ $status_filter = $_GET['status'] ?? null;
 $orders = $model->getUserOrders($_SESSION['user_id'], $status_filter);
 
 
-include_once("view/header.php");
+include_once("header.php");
 ?>
 
 <style>
@@ -517,7 +517,7 @@ include_once("view/header.php");
                         echo $status_names[$status_filter] ?? $status_filter;
                         ?>
                     </strong>
-                    <a href="?my-orders" class="btn btn-sm btn-outline-light ml-2">
+                    <a href="index.php?my-orders" class="btn btn-sm btn-outline-light ml-2">
                         <i class="fas fa-times"></i> Xóa lọc
                     </a>
                 </div>
@@ -643,7 +643,14 @@ include_once("view/header.php");
                                 foreach ($orderDetails['items'] as $item):
                             ?>
                                 <div class="order-item">
-                                    <img src="<?= htmlspecialchars($item['anh_dau'] ?? 'img/default-product.jpg') ?>" 
+                                    <?php 
+                                    $itemImage = $item['anh_dau'] ?? 'img/default-product.jpg';
+                                    // Đường dẫn ảnh từ gốc project
+                                    if (strpos($itemImage, 'img/') !== 0) {
+                                        $itemImage = 'img/' . basename($itemImage);
+                                    }
+                                    ?>
+                                    <img src="<?= htmlspecialchars($itemImage) ?>" 
                                          alt="<?= htmlspecialchars($item['product_title']) ?>" 
                                          class="order-item-image">
                                     <div class="order-item-info">
@@ -785,4 +792,5 @@ function toggleTimeline(orderId) {
 }
 </script>
 
-<?php include_once("view/footer.php"); ?>
+<?php include_once("footer.php"); ?>
+

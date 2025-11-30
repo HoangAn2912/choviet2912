@@ -147,7 +147,7 @@ $controller = new cDetailProduct();
         } else if(isset($_GET['cart'])){
             include_once("view/index.php");
         } else if(isset($_GET['checkout'])){
-            include_once("checkout.php");
+            include_once("view/checkout.php");
         } else if (isset($_GET['detail']) && isset($_GET['id'])) {
             $id = $_GET['id'];
             $controller->showDetail($id); 
@@ -325,7 +325,7 @@ $controller = new cDetailProduct();
             include_once("view/livestream_viewer.php");
         } else if(isset($_GET['my-orders'])){
             // Trang quản lý đơn hàng
-            include_once("my_orders.php");
+            include_once("view/my_orders.php");
         } else if(isset($_GET['vnpay-create'])){
             // Tạo thanh toán VNPay
             include_once("controller/vnpay/vnpay_create_payment.php");

@@ -17,6 +17,11 @@ class cProduct {
         $m = new mProduct();
         return $m->searchProducts($keyword);
     }
+
+    public function getHotProducts($limit = 10) {
+        $m = new mProduct();
+        return $m->getHotProducts($limit);
+    }
     
 
 }

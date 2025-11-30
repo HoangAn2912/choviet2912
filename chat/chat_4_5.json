@@ -10,5 +10,17 @@
     "to": 5,
     "content": "Sản phẩm này còn không?",
     "timestamp": "2025-11-10T13:24:33.432Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "content": "Giá có thương lượng không?",
+    "timestamp": "2025-11-26T15:40:18.130Z"
+  },
+  {
+    "from": 4,
+    "to": 5,
+    "content": "có",
+    "timestamp": "2025-11-26T15:40:36.246Z"
   }
 ]
