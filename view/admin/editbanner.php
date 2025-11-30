@@ -267,7 +267,7 @@ if (isset($_GET['edit'])) {
                                                 <td><?= date('d/m/Y H:i', strtotime($banner['created_at'])) ?></td>
                                                 <td>
                                                     <div class="actions">
-                                                        <a href="qlbanner?edit=<?= $banner['id'] ?>" class="btn btn-info btn-sm">
+                                                        <a href="?qlbanner&edit=<?= $banner['id'] ?>" class="btn btn-info btn-sm">
                                                             <i class="fas fa-edit"></i> Sửa
                                                         </a>
                                                         <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteBannerModal" data-id="<?= $banner['id'] ?>" data-name="<?= htmlspecialchars($banner['title'] ?? 'Banner #' . $banner['id']) ?>">

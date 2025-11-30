@@ -51,12 +51,25 @@
         if (!isset($message) || $message === '') {
             $result = $p->getinsertuser($hoten, $email, $mk, $phone, $address, $anh);
 
-            if ($result) {
-                require_once __DIR__ . '/../../helpers/url_helper.php';
-                header("Location: ?taikhoan&status=added");
-                exit();
+            // Xử lý kết quả (có thể là boolean hoặc array)
+            if (is_array($result)) {
+                if ($result['success'] === true) {
+                    require_once __DIR__ . '/../../helpers/url_helper.php';
+                    header("Location: ?taikhoan&status=added");
+                    exit();
+                } else {
+                    $errorMsg = $result['error'] ?? 'Không thể thêm người dùng.';
+                    $message = '<div class="alert alert-danger">' . htmlspecialchars($errorMsg) . '</div>';
+                }
             } else {
-                $message = '<div class="alert alert-danger">Không thể thêm người dùng. Email có thể đã tồn tại.</div>';
+                // Backward compatibility với kết quả boolean
+                if ($result) {
+                    require_once __DIR__ . '/../../helpers/url_helper.php';
+                    header("Location: ?taikhoan&status=added");
+                    exit();
+                } else {
+                    $message = '<div class="alert alert-danger">Không thể thêm người dùng. Email hoặc số điện thoại có thể đã tồn tại.</div>';
+                }
             }
         }
     }

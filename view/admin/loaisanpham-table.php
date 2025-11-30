@@ -517,10 +517,10 @@ function getPaginationUrl($page, $parentFilter, $searchTerm, $showHidden = false
               </div>
               <div class="form-group">
                 <button type="submit" class="btn btn-primary">
-                  <i class="mdi mdi-filter"></i> Lọc
+                  <i class="bi bi-funnel-fill"></i> Lọc
                 </button>
                 <a href="?qldanhmuc" class="btn btn-secondary" style="margin-left: 10px;">
-                  <i class="mdi mdi-refresh"></i> Đặt lại
+                  <i class="bi bi-arrow-clockwise"></i> Đặt lại
                 </a>
               </div>
             </form>

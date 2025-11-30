@@ -198,7 +198,8 @@ require_once __DIR__ . '/../../helpers/url_helper.php';
         gap: 15px;
     }
     
-    .modal {
+    /* Custom Modal (Chi tiết tài khoản) */
+    #userModal {
         display: none;
         position: fixed;
         top: 0;
@@ -206,11 +207,15 @@ require_once __DIR__ . '/../../helpers/url_helper.php';
         width: 100%;
         height: 100%;
         background: rgba(0,0,0,0.5);
-        z-index: 1000;
+        z-index: 1050;
         overflow-y: auto;
     }
     
-    .modal-content {
+    #userModal.show {
+        display: block;
+    }
+    
+    #userModal .modal-content {
         background: white;
         margin: 3% auto;
         padding: 30px;
@@ -221,6 +226,65 @@ require_once __DIR__ . '/../../helpers/url_helper.php';
         overflow-y: auto;
         box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         position: relative;
+        z-index: 1051;
+    }
+    
+    /* Bootstrap Modal Override - Fix z-index và backdrop */
+    .modal.fade {
+        z-index: 1055 !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 1050 !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    .modal-backdrop.show {
+        opacity: 0.5 !important;
+    }
+    
+    .modal-dialog {
+        z-index: 1056 !important;
+        margin: 1.75rem auto;
+    }
+    
+    .modal-content {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-header {
+        border-bottom: 1px solid #dee2e6;
+        padding: 1rem 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-footer {
+        border-top: 1px solid #dee2e6;
+        padding: 1rem 1.5rem;
+    }
+    
+    /* Đảm bảo modal không bị che bởi các element khác */
+    .modal.show {
+        display: block !important;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .modal-dialog {
+            margin: 0.5rem;
+            max-width: calc(100% - 1rem);
+        }
+        
+        #userModal .modal-content {
+            margin: 1rem auto;
+            width: 95%;
+            padding: 20px;
+        }
     }
     
     .modal-header {
@@ -375,10 +439,10 @@ require_once __DIR__ . '/../../helpers/url_helper.php';
             
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">
-                    <i class="mdi mdi-filter"></i> Lọc
+                    <i class="bi bi-funnel-fill"></i> Lọc
                 </button>
                 <a href="?taikhoan" class="btn btn-secondary" style="margin-left: 10px;">
-                    <i class="mdi mdi-refresh"></i> Đặt lại
+                    <i class="bi bi-arrow-clockwise"></i> Đặt lại
                 </a>
             </div>
         </form>
@@ -552,9 +616,28 @@ require_once __DIR__ . '/../../helpers/url_helper.php';
 
 // Show user details modal
 function showUserDetails(userId) {
+    // Đóng tất cả Bootstrap modal trước (nếu có)
+    const bootstrapModals = document.querySelectorAll('.modal.fade.show');
+    bootstrapModals.forEach(modal => {
+        if (typeof bootstrap !== 'undefined') {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) {
+                bsModal.hide();
+            }
+        }
+    });
+    
+    // Xóa backdrop của Bootstrap nếu có
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    
     // Show loading
     document.getElementById('userDetails').innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading-spinner"></div><p style="margin-top: 15px; color: #666;">Đang tải thông tin tài khoản...</p></div>';
     document.getElementById('userModal').style.display = 'block';
+    document.getElementById('userModal').classList.add('show');
     
     // Fetch user details via AJAX
     const url = new URL(window.location.href);
@@ -665,7 +748,11 @@ function showUserDetails(userId) {
 }
 
 function closeUserModal() {
-    document.getElementById('userModal').style.display = 'none';
+    const userModal = document.getElementById('userModal');
+    if (userModal) {
+        userModal.style.display = 'none';
+        userModal.classList.remove('show');
+    }
 }
 
 function formatDate(dateString) {
@@ -676,45 +763,119 @@ function formatDate(dateString) {
 
 // Close modal when clicking outside
 window.onclick = function(event) {
-    const modal = document.getElementById('userModal');
-    if (event.target === modal) {
+    const userModal = document.getElementById('userModal');
+    if (userModal && event.target === userModal) {
         closeUserModal();
     }
 }
 
-// Disable User Modal
-document.getElementById('disableUserModal')?.addEventListener('show.bs.modal', function (event) {
-    const button = event.relatedTarget;
-    const id = button.getAttribute('data-id');
-    const name = button.getAttribute('data-name');
+// Disable User Modal - Xử lý khi modal được hiển thị
+document.addEventListener('DOMContentLoaded', function() {
+    const disableModal = document.getElementById('disableUserModal');
+    if (disableModal) {
+        // Đóng custom modal trước khi mở Bootstrap modal
+        disableModal.addEventListener('show.bs.modal', function (event) {
+            // Đóng custom modal nếu đang mở
+            closeUserModal();
+            
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            
+            if (id && name) {
+                document.getElementById('disableUserId').value = id;
+                document.getElementById('disableUserName').textContent = name;
+            }
+        });
+        
+        // Xử lý khi modal được hiển thị hoàn toàn
+        disableModal.addEventListener('shown.bs.modal', function () {
+            // Đảm bảo modal có z-index cao
+            disableModal.style.zIndex = '1055';
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.zIndex = '1050';
+            }
+        });
+        
+        // Cleanup khi modal đóng
+        disableModal.addEventListener('hidden.bs.modal', function () {
+            // Xóa backdrop nếu còn sót lại
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(function(backdrop) {
+                if (!document.querySelector('.modal.show')) {
+                    backdrop.remove();
+                }
+            });
+            
+            // Đảm bảo body không bị lock
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+    }
     
-    document.getElementById('disableUserId').value = id;
-    document.getElementById('disableUserName').textContent = name;
-});
-
-// Restore User Modal
-document.getElementById('restoreUserModal')?.addEventListener('show.bs.modal', function (event) {
-    const button = event.relatedTarget;
-    const id = button.getAttribute('data-id');
-    const name = button.getAttribute('data-name');
-    
-    document.getElementById('restoreUserId').value = id;
-    document.getElementById('restoreUserName').textContent = name;
+    // Restore User Modal - Xử lý tương tự
+    const restoreModal = document.getElementById('restoreUserModal');
+    if (restoreModal) {
+        // Đóng custom modal trước khi mở Bootstrap modal
+        restoreModal.addEventListener('show.bs.modal', function (event) {
+            // Đóng custom modal nếu đang mở
+            closeUserModal();
+            
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            
+            if (id && name) {
+                document.getElementById('restoreUserId').value = id;
+                document.getElementById('restoreUserName').textContent = name;
+            }
+        });
+        
+        // Xử lý khi modal được hiển thị hoàn toàn
+        restoreModal.addEventListener('shown.bs.modal', function () {
+            // Đảm bảo modal có z-index cao
+            restoreModal.style.zIndex = '1055';
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.zIndex = '1050';
+            }
+        });
+        
+        // Cleanup khi modal đóng
+        restoreModal.addEventListener('hidden.bs.modal', function () {
+            // Xóa backdrop nếu còn sót lại
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(function(backdrop) {
+                if (!document.querySelector('.modal.show')) {
+                    backdrop.remove();
+                }
+            });
+            
+            // Đảm bảo body không bị lock
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+    }
 });
 </script>
 
 <!-- Disable User Modal -->
-<div class="modal fade" id="disableUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="disableUserModal" tabindex="-1" aria-labelledby="disableUserModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
         <form method="GET" action="">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Vô hiệu hóa tài khoản</h5>
+                    <h5 class="modal-title" id="disableUserModalLabel">
+                        <i class="bi bi-exclamation-triangle text-danger me-2"></i>Vô hiệu hóa tài khoản
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Bạn có chắc chắn muốn vô hiệu hóa tài khoản "<span id="disableUserName"></span>"?</p>
-                    <p>Sau khi vô hiệu hóa, tài khoản này sẽ không thể đăng nhập vào hệ thống.</p>
+                    <p>Bạn có chắc chắn muốn vô hiệu hóa tài khoản "<strong id="disableUserName"></strong>"?</p>
+                    <p class="text-muted small mb-0">Sau khi vô hiệu hóa, tài khoản này sẽ không thể đăng nhập vào hệ thống.</p>
                     <input type="hidden" name="taikhoan" value="">
                     <input type="hidden" name="disable" value="">
                     <input type="hidden" name="id" id="disableUserId">
@@ -723,8 +884,12 @@ document.getElementById('restoreUserModal')?.addEventListener('show.bs.modal', f
                     <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-danger">Xác nhận vô hiệu hóa</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Hủy
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-check-circle me-1"></i>Xác nhận vô hiệu hóa
+                    </button>
                 </div>
             </div>
         </form>
@@ -732,17 +897,19 @@ document.getElementById('restoreUserModal')?.addEventListener('show.bs.modal', f
 </div>
 
 <!-- Restore User Modal -->
-<div class="modal fade" id="restoreUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="restoreUserModal" tabindex="-1" aria-labelledby="restoreUserModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
         <form method="GET" action="">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Khôi phục tài khoản</h5>
+                    <h5 class="modal-title" id="restoreUserModalLabel">
+                        <i class="bi bi-check-circle text-success me-2"></i>Khôi phục tài khoản
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Bạn có chắc chắn muốn khôi phục tài khoản "<span id="restoreUserName"></span>"?</p>
-                    <p>Sau khi khôi phục, tài khoản này sẽ có thể đăng nhập vào hệ thống trở lại.</p>
+                    <p>Bạn có chắc chắn muốn khôi phục tài khoản "<strong id="restoreUserName"></strong>"?</p>
+                    <p class="text-muted small mb-0">Sau khi khôi phục, tài khoản này sẽ có thể đăng nhập vào hệ thống trở lại.</p>
                     <input type="hidden" name="taikhoan" value="">
                     <input type="hidden" name="restore" value="">
                     <input type="hidden" name="id" id="restoreUserId">
@@ -751,8 +918,12 @@ document.getElementById('restoreUserModal')?.addEventListener('show.bs.modal', f
                     <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success">Xác nhận khôi phục</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Hủy
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i>Xác nhận khôi phục
+                    </button>
                 </div>
             </div>
         </form>

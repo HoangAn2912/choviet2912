@@ -391,54 +391,120 @@ $status_colors = [
     .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
     .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     
-    .modal { 
-        display: none; 
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: 100%; 
-        background: rgba(0,0,0,0.5); 
-        z-index: 1000; 
+    /* Custom Modal (Chi tiết đơn hàng) */
+    #orderModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1050;
         overflow-y: auto;
     }
     
-    .modal-content { 
-        background: white; 
-        margin: 3% auto; 
-        padding: 30px; 
-        width: 90%; 
-        max-width: 900px; 
-        border-radius: 10px; 
+    #orderModal.show {
+        display: block;
+    }
+    
+    #orderModal .modal-content {
+        background: white;
+        margin: 3% auto;
+        padding: 30px;
+        width: 90%;
+        max-width: 900px;
+        border-radius: 10px;
         max-height: 90vh;
         overflow-y: auto;
         box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         position: relative;
+        z-index: 1051;
     }
     
-    .modal-header { 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        margin-bottom: 20px; 
+    #orderModal .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
         border-bottom: 2px solid #dee2e6;
         padding-bottom: 15px;
     }
     
-    .modal-header h3 {
+    #orderModal .modal-header h3 {
         margin: 0;
         color: #333;
     }
     
-    .close { 
-        font-size: 28px; 
-        cursor: pointer; 
+    #orderModal .close {
+        font-size: 28px;
+        cursor: pointer;
         color: #999;
         background: none;
         border: none;
     }
     
-    .close:hover { color: #333; }
+    #orderModal .close:hover {
+        color: #333;
+    }
+    
+    /* Bootstrap Modal Override - Fix z-index và backdrop */
+    .modal.fade {
+        z-index: 1055 !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 1050 !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    .modal-backdrop.show {
+        opacity: 0.5 !important;
+    }
+    
+    .modal-dialog {
+        z-index: 1056 !important;
+        margin: 1.75rem auto;
+    }
+    
+    .modal-content {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-header {
+        border-bottom: 1px solid #dee2e6;
+        padding: 1rem 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-footer {
+        border-top: 1px solid #dee2e6;
+        padding: 1rem 1.5rem;
+    }
+    
+    /* Đảm bảo modal không bị che bởi các element khác */
+    .modal.show {
+        display: block !important;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .modal-dialog {
+            margin: 0.5rem;
+            max-width: calc(100% - 1rem);
+        }
+        
+        #orderModal .modal-content {
+            margin: 1rem auto;
+            width: 95%;
+            padding: 20px;
+        }
+    }
     
     .detail-section {
         margin-bottom: 25px;
@@ -618,10 +684,10 @@ $status_colors = [
             
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">
-                    <i class="mdi mdi-filter"></i> Lọc
+                    <i class="bi bi-funnel-fill"></i> Lọc
                 </button>
                 <a href="?qldonhang" class="btn btn-secondary" style="margin-left: 10px;">
-                    <i class="mdi mdi-refresh"></i> Đặt lại
+                    <i class="bi bi-arrow-clockwise"></i> Đặt lại
                 </a>
             </div>
         </form>
@@ -821,9 +887,28 @@ $status_colors = [
 
 <script>
 function showOrderDetails(orderId) {
+    // Đóng tất cả Bootstrap modal trước (nếu có)
+    const bootstrapModals = document.querySelectorAll('.modal.fade.show');
+    bootstrapModals.forEach(modal => {
+        if (typeof bootstrap !== 'undefined') {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) {
+                bsModal.hide();
+            }
+        }
+    });
+    
+    // Xóa backdrop của Bootstrap nếu có
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    
     // Hiển thị loading
     document.getElementById('orderDetails').innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading-spinner"></div><p style="margin-top: 15px; color: #666;">Đang tải chi tiết đơn hàng...</p></div>';
     document.getElementById('orderModal').style.display = 'block';
+    document.getElementById('orderModal').classList.add('show');
     
     // Lấy URL hiện tại và tạo URL fetch
     // Đảm bảo giữ nguyên các tham số hiện tại nếu có
@@ -1018,13 +1103,58 @@ function renderProducts(items) {
 function updateStatus(orderId, newStatus) {
     if (!newStatus) return;
     
+    // Đóng custom modal nếu đang mở
+    closeModal();
+    
     // Set values for modal
     document.getElementById('updateOrderId').value = orderId;
     document.getElementById('updateOrderStatus').value = newStatus;
     
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('updateOrderStatusModal'));
-    modal.show();
+    // Kiểm tra Bootstrap đã load chưa
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap chưa được load');
+        alert('Hệ thống đang tải, vui lòng thử lại sau vài giây.');
+        return;
+    }
+    
+    // Lấy modal element
+    const modalElement = document.getElementById('updateOrderStatusModal');
+    if (!modalElement) {
+        console.error('Không tìm thấy modal updateOrderStatusModal');
+        return;
+    }
+    
+    // Tạo và hiển thị modal
+    try {
+        // Xóa instance cũ nếu có
+        const existingModal = bootstrap.Modal.getInstance(modalElement);
+        if (existingModal) {
+            existingModal.dispose();
+        }
+        
+        // Tạo modal mới với cấu hình đúng
+        const modal = new bootstrap.Modal(modalElement, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+        
+        // Xử lý sự kiện khi modal được hiển thị
+        modalElement.addEventListener('shown.bs.modal', function() {
+            // Đảm bảo modal có z-index cao
+            modalElement.style.zIndex = '1055';
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.zIndex = '1050';
+            }
+        }, { once: true });
+        
+        // Hiển thị modal
+        modal.show();
+    } catch (error) {
+        console.error('Lỗi khi hiển thị modal:', error);
+        alert('Không thể hiển thị modal. Vui lòng refresh trang.');
+    }
 }
 
 function confirmUpdateOrderStatus() {
@@ -1043,7 +1173,11 @@ function confirmUpdateOrderStatus() {
 }
 
 function closeModal() {
-    document.getElementById('orderModal').style.display = 'none';
+    const orderModal = document.getElementById('orderModal');
+    if (orderModal) {
+        orderModal.style.display = 'none';
+        orderModal.classList.remove('show');
+    }
 }
 
 function getStatusName(status) {
@@ -1079,29 +1213,68 @@ function formatDate(dateString) {
 
 // Đóng modal khi click bên ngoài
 window.onclick = function(event) {
-    const modal = document.getElementById('orderModal');
-    if (event.target === modal) {
+    const orderModal = document.getElementById('orderModal');
+    if (orderModal && event.target === orderModal) {
         closeModal();
     }
 }
+
+// Xử lý Bootstrap Modal - Update Order Status
+document.addEventListener('DOMContentLoaded', function() {
+    const updateStatusModal = document.getElementById('updateOrderStatusModal');
+    if (updateStatusModal) {
+        // Xử lý khi modal được hiển thị hoàn toàn
+        updateStatusModal.addEventListener('shown.bs.modal', function() {
+            // Đảm bảo modal có z-index cao
+            updateStatusModal.style.zIndex = '1055';
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.zIndex = '1050';
+            }
+        });
+        
+        // Cleanup khi modal đóng
+        updateStatusModal.addEventListener('hidden.bs.modal', function() {
+            // Xóa backdrop nếu còn sót lại
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(function(backdrop) {
+                if (!document.querySelector('.modal.show')) {
+                    backdrop.remove();
+                }
+            });
+            
+            // Đảm bảo body không bị lock
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+    }
+});
 </script>
 
 <!-- Update Order Status Modal -->
-<div class="modal fade" id="updateOrderStatusModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="updateOrderStatusModal" tabindex="-1" aria-labelledby="updateOrderStatusModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Cập nhật trạng thái đơn hàng</h5>
+                <h5 class="modal-title" id="updateOrderStatusModalLabel">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>Cập nhật trạng thái đơn hàng
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng này?</p>
+                <p class="text-muted small mb-0">Hành động này sẽ thay đổi trạng thái đơn hàng và có thể ảnh hưởng đến quy trình xử lý.</p>
                 <input type="hidden" id="updateOrderId">
                 <input type="hidden" id="updateOrderStatus">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" onclick="confirmUpdateOrderStatus()">Xác nhận cập nhật</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-primary" onclick="confirmUpdateOrderStatus()">
+                    <i class="bi bi-check-circle me-1"></i>Xác nhận cập nhật
+                </button>
             </div>
         </div>
     </div>

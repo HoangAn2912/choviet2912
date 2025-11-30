@@ -19,33 +19,277 @@ $db = $paymentManager->getDb();
 
 // Xử lý actions
 $message = '';
+$messageType = 'success'; // 'success' hoặc 'error'
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     switch ($action) {
         case 'update_status':
+            // Xử lý khi admin đánh dấu "Thất bại"
             $transactionId = $_POST['transaction_id'] ?? '';
-            $newStatus = $_POST['new_status'] ?? '';
+            $newStatus = $_POST['new_status'] ?? 'failed';
             
-            if ($transactionId && $newStatus) {
-                $stmt = $db->prepare("UPDATE transactions SET status = ? WHERE transaction_id = ?");
-                $stmt->bind_param("ss", $newStatus, $transactionId);
+            if (empty($transactionId)) {
+                $message = "Lỗi: Thiếu mã giao dịch!";
+                $messageType = 'error';
+                break;
+            }
+            
+            // Bắt đầu transaction để đảm bảo tính nhất quán
+            $db->begin_transaction();
+            
+            try {
+                // Lấy thông tin giao dịch với user_id và account_id
+                $stmt = $db->prepare("
+                    SELECT t.*, ta.user_id, ta.id as account_id, ta.account_number
+                    FROM transactions t 
+                    LEFT JOIN transfer_accounts ta ON t.account_id = ta.id 
+                    WHERE t.transaction_id = ? AND t.status = 'pending'
+                    FOR UPDATE
+                ");
                 
-                if ($stmt->execute()) {
-                    $message = "Cập nhật trạng thái thành công!";
-                } else {
-                    $message = "Lỗi cập nhật trạng thái!";
+                if (!$stmt) {
+                    throw new Exception("Lỗi prepare SQL: " . $db->error);
                 }
+                
+                $stmt->bind_param("s", $transactionId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $transaction = $result->fetch_assoc();
                 $stmt->close();
+                
+                if (!$transaction) {
+                    throw new Exception("Giao dịch không tồn tại, đã được xử lý, hoặc không ở trạng thái 'pending'!");
+                }
+                
+                // Chỉ cập nhật trạng thái, KHÔNG cộng tiền
+                $stmt = $db->prepare("
+                    UPDATE transactions 
+                    SET status = ?, 
+                        callback_data = ?,
+                        updated_at = NOW()
+                    WHERE transaction_id = ? AND status = 'pending'
+                ");
+                
+                if (!$stmt) {
+                    throw new Exception("Lỗi prepare SQL: " . $db->error);
+                }
+                
+                $callbackData = json_encode([
+                    'manual' => true,
+                    'admin_user' => $_SESSION['username'] ?? 'admin',
+                    'action' => 'mark_failed',
+                    'timestamp' => date('Y-m-d H:i:s')
+                ]);
+                
+                $stmt->bind_param("sss", $newStatus, $callbackData, $transactionId);
+                
+                if (!$stmt->execute()) {
+                    throw new Exception("Lỗi cập nhật trạng thái: " . $stmt->error);
+                }
+                
+                $stmt->close();
+                
+                // Commit transaction
+                $db->commit();
+                $message = "Đã cập nhật trạng thái giao dịch thành '{$newStatus}' thành công!";
+                $messageType = 'success';
+                
+            } catch (Exception $e) {
+                $db->rollback();
+                $message = "Lỗi: " . $e->getMessage();
+                $messageType = 'error';
+                error_log("Transaction update_status error: " . $e->getMessage());
             }
             break;
             
         case 'manual_complete':
+            // Xử lý khi admin đánh dấu "Hoàn thành"
             $transactionId = $_POST['transaction_id'] ?? '';
             
-            if ($transactionId) {
-                $result = $paymentManager->updateBalance($transactionId, 0, ['manual' => true, 'admin_user' => 'admin']);
-                $message = $result['success'] ? $result['message'] : $result['error'];
+            if (empty($transactionId)) {
+                $message = "Lỗi: Thiếu mã giao dịch!";
+                $messageType = 'error';
+                break;
+            }
+            
+            // Bắt đầu transaction để đảm bảo tính nhất quán
+            $db->begin_transaction();
+            
+            try {
+                // Lấy thông tin giao dịch - LẤY user_id TRỰC TIẾP TỪ transactions
+                $stmt = $db->prepare("
+                    SELECT 
+                        t.*, 
+                        t.user_id,  -- Lấy trực tiếp từ transactions
+                        t.account_id,  -- Lấy trực tiếp từ transactions
+                        ta.account_number, 
+                        ta.balance as current_balance
+                    FROM transactions t 
+                    LEFT JOIN transfer_accounts ta ON t.account_id = ta.id 
+                    WHERE t.transaction_id = ? AND t.status = 'pending'
+                    FOR UPDATE
+                ");
+                
+                if (!$stmt) {
+                    throw new Exception("Lỗi prepare SQL: " . $db->error);
+                }
+                
+                $stmt->bind_param("s", $transactionId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $transaction = $result->fetch_assoc();
+                $stmt->close();
+                
+                if (!$transaction) {
+                    throw new Exception("Giao dịch không tồn tại, đã được xử lý, hoặc không ở trạng thái 'pending'!");
+                }
+                
+                // Kiểm tra user_id từ transactions (bắt buộc)
+                if (empty($transaction['user_id'])) {
+                    throw new Exception("Giao dịch không có thông tin người dùng (user_id)!");
+                }
+                
+                $userId = intval($transaction['user_id']);
+                $accountId = !empty($transaction['account_id']) ? intval($transaction['account_id']) : null;
+                
+                // Xử lý trường hợp không có account_id hoặc account không tồn tại
+                if (empty($accountId) || empty($transaction['current_balance']) && $transaction['current_balance'] !== '0') {
+                    // Tìm account từ user_id
+                    $stmt = $db->prepare("SELECT id, balance FROM transfer_accounts WHERE user_id = ? LIMIT 1 FOR UPDATE");
+                    $stmt->bind_param("i", $userId);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $account = $result->fetch_assoc();
+                    $stmt->close();
+                    
+                    if (!$account) {
+                        // Tạo tài khoản mới nếu chưa có
+                        $accountNumber = 'ACC' . str_pad($userId, 8, '0', STR_PAD_LEFT);
+                        $stmt = $db->prepare("INSERT INTO transfer_accounts (account_number, user_id, balance) VALUES (?, ?, 0)");
+                        $stmt->bind_param("si", $accountNumber, $userId);
+                        if (!$stmt->execute()) {
+                            throw new Exception("Lỗi tạo tài khoản mới: " . $stmt->error);
+                        }
+                        $accountId = $stmt->insert_id;
+                        $stmt->close();
+                        
+                        // Cập nhật account_id vào transaction nếu chưa có
+                        if (empty($transaction['account_id'])) {
+                            $stmt = $db->prepare("UPDATE transactions SET account_id = ? WHERE transaction_id = ?");
+                            $stmt->bind_param("is", $accountId, $transactionId);
+                            $stmt->execute();
+                            $stmt->close();
+                        }
+                        
+                        $currentBalance = 0;
+                    } else {
+                        $accountId = intval($account['id']);
+                        $currentBalance = floatval($account['balance']);
+                        
+                        // Cập nhật account_id vào transaction nếu chưa có
+                        if (empty($transaction['account_id'])) {
+                            $stmt = $db->prepare("UPDATE transactions SET account_id = ? WHERE transaction_id = ?");
+                            $stmt->bind_param("is", $accountId, $transactionId);
+                            $stmt->execute();
+                            $stmt->close();
+                        }
+                    }
+                } else {
+                    $accountId = intval($accountId);
+                    $currentBalance = floatval($transaction['current_balance'] ?? 0);
+                }
+                
+                // Kiểm tra amount hợp lệ
+                $amount = floatval($transaction['amount'] ?? 0);
+                if ($amount <= 0) {
+                    throw new Exception("Số tiền giao dịch không hợp lệ: " . $amount);
+                }
+                
+                // Cộng tiền vào tài khoản của user
+                $stmt = $db->prepare("
+                    UPDATE transfer_accounts 
+                    SET balance = balance + ?
+                    WHERE id = ? AND user_id = ?
+                ");
+                
+                if (!$stmt) {
+                    throw new Exception("Lỗi prepare SQL: " . $db->error);
+                }
+                
+                $stmt->bind_param("dii", $amount, $accountId, $userId);
+                
+                if (!$stmt->execute()) {
+                    throw new Exception("Lỗi cập nhật số dư: " . $stmt->error);
+                }
+                
+                $affectedRows = $stmt->affected_rows;
+                $stmt->close();
+                
+                if ($affectedRows === 0) {
+                    throw new Exception("Không thể cập nhật số dư. Kiểm tra lại account_id={$accountId} và user_id={$userId}!");
+                }
+                
+                // Lấy số dư mới để log
+                $stmt = $db->prepare("SELECT balance FROM transfer_accounts WHERE id = ?");
+                $stmt->bind_param("i", $accountId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $newBalanceRow = $result->fetch_assoc();
+                $newBalance = floatval($newBalanceRow['balance'] ?? 0);
+                $stmt->close();
+                
+                // Cập nhật trạng thái transaction thành 'completed'
+                $callbackData = json_encode([
+                    'manual' => true,
+                    'admin_user' => $_SESSION['username'] ?? 'admin',
+                    'action' => 'manual_complete',
+                    'amount_added' => $amount,
+                    'old_balance' => $currentBalance,
+                    'new_balance' => $newBalance,
+                    'timestamp' => date('Y-m-d H:i:s')
+                ]);
+                
+                $stmt = $db->prepare("
+                    UPDATE transactions 
+                    SET status = 'completed', 
+                        callback_data = ?,
+                        updated_at = NOW()
+                    WHERE transaction_id = ? AND status = 'pending'
+                ");
+                
+                if (!$stmt) {
+                    throw new Exception("Lỗi prepare SQL: " . $db->error);
+                }
+                
+                $stmt->bind_param("ss", $callbackData, $transactionId);
+                
+                if (!$stmt->execute()) {
+                    throw new Exception("Lỗi cập nhật trạng thái giao dịch: " . $stmt->error);
+                }
+                
+                $affectedRows = $stmt->affected_rows;
+                $stmt->close();
+                
+                if ($affectedRows === 0) {
+                    // Rollback vì transaction đã bị thay đổi bởi process khác
+                    throw new Exception("Giao dịch đã được xử lý bởi process khác. Đã rollback thay đổi số dư.");
+                }
+                
+                // Commit transaction
+                $db->commit();
+                $message = "Đã hoàn thành giao dịch thành công! Đã cộng " . number_format($amount, 0, ',', '.') . " VND vào tài khoản người dùng.";
+                $messageType = 'success';
+                
+                // Log thành công
+                error_log("Manual complete transaction success: transaction_id={$transactionId}, user_id={$userId}, account_id={$accountId}, amount={$amount}, old_balance={$currentBalance}, new_balance={$newBalance}");
+                
+            } catch (Exception $e) {
+                $db->rollback();
+                $message = "Lỗi: " . $e->getMessage();
+                $messageType = 'error';
+                error_log("Transaction manual_complete error: " . $e->getMessage());
             }
             break;
     }
@@ -194,38 +438,70 @@ function getPaginationUrl($page, $filter, $search) {
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
-        .modal { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.5); 
-            z-index: 1000; 
+        /* Bootstrap Modal Override - Fix z-index và backdrop */
+        .modal {
+            z-index: 1055 !important;
         }
         
-        .modal-content { 
-            background: white; 
-            margin: 10% auto; 
-            padding: 20px; 
-            width: 90%; 
-            max-width: 500px; 
-            border-radius: 10px; 
+        .modal-backdrop {
+            z-index: 1050 !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
         }
         
-        .modal-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 20px; 
+        .modal-backdrop.show {
+            opacity: 0.5 !important;
         }
         
-        .close { 
-            font-size: 24px; 
-            cursor: pointer; 
-            background: none;
+        .modal-dialog {
+            z-index: 1056 !important;
+            margin: 1.75rem auto;
+        }
+        
+        .modal-content {
             border: none;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem 1.5rem;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid #dee2e6;
+            padding: 1rem 1.5rem;
+        }
+        
+        /* Actions buttons */
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .actions .btn {
+            white-space: nowrap;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .modal-dialog {
+                margin: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .actions .btn {
+                width: 100%;
+            }
         }
     </style>
 
@@ -234,7 +510,11 @@ function getPaginationUrl($page, $filter, $search) {
             <h3 class="admin-card-title">Quản lý giao dịch</h3>
             
             <?php if ($message): ?>
-                <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
+                <div class="alert alert-<?php echo $messageType === 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert">
+                    <i class="bi bi-<?php echo $messageType === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
+                    <?php echo htmlspecialchars($message); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             <?php endif; ?>
 
             <!-- Statistics -->
@@ -280,10 +560,10 @@ function getPaginationUrl($page, $filter, $search) {
                 
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">
-                        <i class="mdi mdi-filter"></i> Lọc
+                        <i class="bi bi-funnel-fill"></i> Lọc
                     </button>
                     <a href="?qlgiaodich" class="btn btn-secondary" style="margin-left: 10px;">
-                        <i class="mdi mdi-refresh"></i> Đặt lại
+                        <i class="bi bi-arrow-clockwise"></i> Đặt lại
                     </a>
                 </div>
             </form>
@@ -361,17 +641,13 @@ function getPaginationUrl($page, $filter, $search) {
                             <td>
                                 <div class="actions">
                                     <?php if (($transaction['status'] ?? '') === 'pending'): ?>
-                                        <button class="btn btn-success" onclick="completeTransaction('<?php echo htmlspecialchars($transaction['transaction_id'] ?? ''); ?>')">
-                                            Hoàn thành
+                                        <button class="btn btn-success btn-sm" onclick="completeTransaction('<?php echo htmlspecialchars($transaction['transaction_id'] ?? ''); ?>')">
+                                            <i class="bi bi-check-circle"></i> Hoàn thành
                                         </button>
-                                        <button class="btn btn-danger" onclick="updateStatus('<?php echo htmlspecialchars($transaction['transaction_id'] ?? ''); ?>', 'failed')">
-                                            Thất bại
+                                        <button class="btn btn-danger btn-sm" onclick="updateStatus('<?php echo htmlspecialchars($transaction['transaction_id'] ?? ''); ?>', 'failed')">
+                                            <i class="bi bi-x-circle"></i> Thất bại
                                         </button>
                                     <?php endif; ?>
-                                    
-                                    <button class="btn btn-primary" onclick="viewDetails('<?php echo htmlspecialchars($transaction['transaction_id'] ?? ''); ?>')">
-                                        Chi tiết
-                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -431,18 +707,6 @@ function getPaginationUrl($page, $filter, $search) {
         </div>
     </div>
 
-    <!-- Modal for transaction details -->
-    <div id="detailModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Chi Tiết Giao Dịch</h3>
-                <span class="close" onclick="closeModal()">&times;</span>
-            </div>
-            <div id="modalBody">
-                <!-- Content will be loaded here -->
-            </div>
-        </div>
-    </div>
 
     <!-- Hidden forms for actions -->
     <form id="statusForm" method="POST" style="display: none;">
@@ -457,119 +721,251 @@ function getPaginationUrl($page, $filter, $search) {
     </form>
 
     <script>
+        // Đảm bảo Bootstrap modal hoạt động đúng
         function updateStatus(transactionId, status) {
-            document.getElementById('updateStatusTransactionId').value = transactionId;
-            document.getElementById('updateStatusNewStatus').value = status;
-            const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
-            modal.show();
+            if (!transactionId || !status) {
+                console.error('Thiếu thông tin transactionId hoặc status');
+                return;
+            }
+            
+            // Set giá trị vào hidden inputs
+            var updateStatusTransactionId = document.getElementById('updateStatusTransactionId');
+            var updateStatusNewStatus = document.getElementById('updateStatusNewStatus');
+            
+            if (!updateStatusTransactionId || !updateStatusNewStatus) {
+                console.error('Không tìm thấy input elements');
+                return;
+            }
+            
+            updateStatusTransactionId.value = transactionId;
+            updateStatusNewStatus.value = status;
+            
+            // Kiểm tra Bootstrap đã load chưa
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap chưa được load');
+                alert('Hệ thống đang tải, vui lòng thử lại sau vài giây.');
+                return;
+            }
+            
+            // Lấy modal element
+            var modalElement = document.getElementById('updateStatusModal');
+            if (!modalElement) {
+                console.error('Không tìm thấy modal updateStatusModal');
+                return;
+            }
+            
+            // Tạo và hiển thị modal
+            try {
+                // Xóa instance cũ nếu có
+                var existingModal = bootstrap.Modal.getInstance(modalElement);
+                if (existingModal) {
+                    existingModal.dispose();
+                }
+                
+                // Tạo modal mới với cấu hình đúng
+                var modal = new bootstrap.Modal(modalElement, {
+                    backdrop: true,
+                    keyboard: true,
+                    focus: true
+                });
+                
+                // Xử lý sự kiện khi modal được hiển thị
+                modalElement.addEventListener('shown.bs.modal', function() {
+                    // Đảm bảo modal có z-index cao
+                    modalElement.style.zIndex = '1055';
+                    var backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.style.zIndex = '1050';
+                    }
+                }, { once: true });
+                
+                // Hiển thị modal
+                modal.show();
+            } catch (error) {
+                console.error('Lỗi khi hiển thị modal:', error);
+                alert('Không thể hiển thị modal. Vui lòng refresh trang.');
+            }
         }
 
         function confirmUpdateStatus() {
-            document.getElementById('statusTransactionId').value = document.getElementById('updateStatusTransactionId').value;
-            document.getElementById('newStatus').value = document.getElementById('updateStatusNewStatus').value;
+            var statusTransactionId = document.getElementById('statusTransactionId');
+            var newStatus = document.getElementById('newStatus');
+            var updateStatusTransactionId = document.getElementById('updateStatusTransactionId');
+            var updateStatusNewStatus = document.getElementById('updateStatusNewStatus');
+            
+            if (!statusTransactionId || !newStatus || !updateStatusTransactionId || !updateStatusNewStatus) {
+                alert('Lỗi: Không tìm thấy thông tin giao dịch');
+                return;
+            }
+            
+            // Copy giá trị từ modal inputs sang form inputs
+            statusTransactionId.value = updateStatusTransactionId.value;
+            newStatus.value = updateStatusNewStatus.value;
+            
+            // Đóng modal trước khi submit
+            var modalElement = document.getElementById('updateStatusModal');
+            if (modalElement && typeof bootstrap !== 'undefined') {
+                var modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+            
+            // Submit form
             document.getElementById('statusForm').submit();
         }
 
         function completeTransaction(transactionId) {
-            document.getElementById('completeTransactionId').value = transactionId;
-            const modal = new bootstrap.Modal(document.getElementById('completeTransactionModal'));
-            modal.show();
+            if (!transactionId) {
+                console.error('Thiếu transactionId');
+                return;
+            }
+            
+            // Set giá trị vào hidden input
+            var completeTransactionId = document.getElementById('completeTransactionId');
+            if (!completeTransactionId) {
+                console.error('Không tìm thấy input completeTransactionId');
+                return;
+            }
+            
+            completeTransactionId.value = transactionId;
+            
+            // Kiểm tra Bootstrap đã load chưa
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap chưa được load');
+                alert('Hệ thống đang tải, vui lòng thử lại sau vài giây.');
+                return;
+            }
+            
+            // Lấy modal element
+            var modalElement = document.getElementById('completeTransactionModal');
+            if (!modalElement) {
+                console.error('Không tìm thấy modal completeTransactionModal');
+                return;
+            }
+            
+            // Tạo và hiển thị modal
+            try {
+                // Xóa instance cũ nếu có
+                var existingModal = bootstrap.Modal.getInstance(modalElement);
+                if (existingModal) {
+                    existingModal.dispose();
+                }
+                
+                // Tạo modal mới với cấu hình đúng
+                var modal = new bootstrap.Modal(modalElement, {
+                    backdrop: true,
+                    keyboard: true,
+                    focus: true
+                });
+                
+                // Xử lý sự kiện khi modal được hiển thị
+                modalElement.addEventListener('shown.bs.modal', function() {
+                    // Đảm bảo modal có z-index cao
+                    modalElement.style.zIndex = '1055';
+                    var backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.style.zIndex = '1050';
+                    }
+                }, { once: true });
+                
+                // Hiển thị modal
+                modal.show();
+            } catch (error) {
+                console.error('Lỗi khi hiển thị modal:', error);
+                alert('Không thể hiển thị modal. Vui lòng refresh trang.');
+            }
         }
 
         function confirmCompleteTransaction() {
+            // Đóng modal trước khi submit
+            var modalElement = document.getElementById('completeTransactionModal');
+            if (modalElement && typeof bootstrap !== 'undefined') {
+                var modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+            
+            // Submit form
             document.getElementById('completeForm').submit();
         }
-
-        function viewDetails(transactionId) {
-            // Load transaction details via AJAX
-            fetch('api/get_transaction_details.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    transaction_id: transactionId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showTransactionDetails(data.transaction);
-                } else {
-                    alert('Lỗi: ' + data.error);
+        
+        // Xử lý cleanup khi modal đóng
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cleanup backdrop khi modal đóng
+            var modals = ['updateStatusModal', 'completeTransactionModal'];
+            modals.forEach(function(modalId) {
+                var modalElement = document.getElementById(modalId);
+                if (modalElement) {
+                    modalElement.addEventListener('hidden.bs.modal', function() {
+                        // Xóa backdrop nếu còn sót lại
+                        var backdrops = document.querySelectorAll('.modal-backdrop');
+                        backdrops.forEach(function(backdrop) {
+                            if (!document.querySelector('.modal.show')) {
+                                backdrop.remove();
+                            }
+                        });
+                        
+                        // Đảm bảo body không bị lock
+                        document.body.classList.remove('modal-open');
+                        document.body.style.overflow = '';
+                        document.body.style.paddingRight = '';
+                    });
                 }
-            })
-            .catch(error => {
-                alert('Lỗi kết nối: ' + error.message);
             });
-        }
-
-        function showTransactionDetails(transaction) {
-            const modalBody = document.getElementById('modalBody');
-            modalBody.innerHTML = `
-                <table class="info-table" style="width: 100%; border-collapse: collapse;">
-                    <tr><th style="padding: 8px; border: 1px solid #ddd;">Mã giao dịch</th><td style="padding: 8px; border: 1px solid #ddd;">#${transaction.transaction_id}</td></tr>
-                    <tr><th style="padding: 8px; border: 1px solid #ddd;">Số tiền</th><td style="padding: 8px; border: 1px solid #ddd;">${new Intl.NumberFormat('vi-VN').format(transaction.amount)} VND</td></tr>
-                    <tr><th style="padding: 8px; border: 1px solid #ddd;">Trạng thái</th><td style="padding: 8px; border: 1px solid #ddd;"><span class="status ${transaction.status}">${transaction.status}</span></td></tr>
-                    <tr><th style="padding: 8px; border: 1px solid #ddd;">Tài khoản</th><td style="padding: 8px; border: 1px solid #ddd;">${transaction.account_number}</td></tr>
-                    <tr><th style="padding: 8px; border: 1px solid #ddd;">ID</th><td style="padding: 8px; border: 1px solid #ddd;">${transaction.id || 'N/A'}</td></tr>
-                    <tr><th style="padding: 8px; border: 1px solid #ddd;">Ghi chú</th><td style="padding: 8px; border: 1px solid #ddd;">${transaction.notes || 'Không có'}</td></tr>
-                    ${transaction.qr_code_url ? `<tr><th style="padding: 8px; border: 1px solid #ddd;">QR Code</th><td style="padding: 8px; border: 1px solid #ddd;"><img src="${transaction.qr_code_url}" style="max-width: 200px;"></td></tr>` : ''}
-                </table>
-            `;
-            
-            document.getElementById('detailModal').style.display = 'block';
-        }
-
-        function closeModal() {
-            document.getElementById('detailModal').style.display = 'none';
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('detailModal');
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
-        }
+        });
     </script>
 
 <!-- Update Status Modal -->
-<div class="modal fade" id="updateStatusModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Cập nhật trạng thái giao dịch</h5>
+                <h5 class="modal-title" id="updateStatusModalLabel">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>Cập nhật trạng thái giao dịch
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Bạn có chắc chắn muốn cập nhật trạng thái giao dịch này?</p>
+                <p>Bạn có chắc chắn muốn cập nhật trạng thái giao dịch này thành <strong>"Thất bại"</strong>?</p>
+                <p class="text-muted small mb-0">Hành động này không thể hoàn tác.</p>
                 <input type="hidden" id="updateStatusTransactionId">
                 <input type="hidden" id="updateStatusNewStatus">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" onclick="confirmUpdateStatus()">Xác nhận cập nhật</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmUpdateStatus()">
+                    <i class="bi bi-check-circle me-1"></i>Xác nhận cập nhật
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Complete Transaction Modal -->
-<div class="modal fade" id="completeTransactionModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="completeTransactionModal" tabindex="-1" aria-labelledby="completeTransactionModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Hoàn thành giao dịch</h5>
+                <h5 class="modal-title" id="completeTransactionModalLabel">
+                    <i class="bi bi-check-circle text-success me-2"></i>Hoàn thành giao dịch
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Bạn có chắc chắn muốn hoàn thành giao dịch này?</p>
-                <p>Sau khi hoàn thành, số dư sẽ được cộng vào tài khoản.</p>
+                <p class="text-muted small mb-0">Sau khi hoàn thành, số dư sẽ được cộng vào tài khoản người dùng.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-success" onclick="confirmCompleteTransaction()">Xác nhận hoàn thành</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-success" onclick="confirmCompleteTransaction()">
+                    <i class="bi bi-check-circle me-1"></i>Xác nhận hoàn thành
+                </button>
             </div>
         </div>
     </div>

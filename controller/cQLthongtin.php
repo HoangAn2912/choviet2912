@@ -62,13 +62,36 @@ class cqlthongtin {
 
     // Add new user
     function adduser($username, $email, $password, $phone, $address, $avatar, $role_id) {
-    $p = new qlthongtin();
-    $data = $p->insertUser($username, $email, $password, $phone, $address, $avatar, $role_id);
-        return $data;
+        $p = new qlthongtin();
+        $result = $p->insertUserWithRole($username, $email, $password, $phone, $address, $avatar, $role_id);
+        
+        // Xử lý kết quả trả về (có thể là boolean hoặc array)
+        if (is_array($result)) {
+            return $result;
+        }
+        
+        // Nếu trả về boolean (backward compatibility)
+        if ($result === true) {
+            return ['success' => true, 'message' => 'Thêm người dùng thành công.'];
+        }
+        
+        return ['success' => false, 'error' => 'Không thể thêm người dùng.'];
     }
     public function getinsertuser($hoten, $email, $mk, $sdt, $dc, $anh) {
         $p = new qlthongtin();
-        return $p->insertuser($hoten, $email, $mk, $sdt, $dc, $anh);
+        $result = $p->insertuser($hoten, $email, $mk, $sdt, $dc, $anh);
+        
+        // Xử lý kết quả trả về (có thể là boolean hoặc array)
+        if (is_array($result)) {
+            return $result;
+        }
+        
+        // Nếu trả về boolean (backward compatibility)
+        if ($result === true) {
+            return ['success' => true, 'message' => 'Thêm người dùng thành công.'];
+        }
+        
+        return ['success' => false, 'error' => 'Không thể thêm người dùng.'];
     }
 }
 ?>

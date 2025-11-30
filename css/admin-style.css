@@ -183,15 +183,22 @@
         right: 0;
         bottom: 0;
         background: rgba(0, 0, 0, 0.5);
-        z-index: 998;
+        z-index: 1020;
         opacity: 0;
         transition: opacity 0.3s ease;
         cursor: pointer;
+        pointer-events: none;
     }
 
     .sidebar-overlay.active {
         display: block;
         opacity: 1;
+        pointer-events: auto;
+    }
+    
+    /* Đảm bảo sidebar overlay không che navbar dropdown */
+    .sidebar-overlay.active ~ .page-body-wrapper .navbar {
+        z-index: 1030 !important;
     }
 
     /* Sidebar scrollbar styling on mobile */
@@ -222,7 +229,8 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     height: 60px;
     padding: 0;
-    z-index: 1000;
+    z-index: 1030 !important;
+    pointer-events: auto;
 }
 
 /* Header wrapper - 1 thẻ duy nhất */
@@ -302,14 +310,7 @@
 /* Profile Dropdown */
 .nav-profile {
     position: relative;
-}
-
-.nav-profile .dropdown-menu {
-    position: absolute !important;
-    top: 100% !important;
-    right: 0 !important;
-    left: auto !important;
-    z-index: 1050 !important;
+    z-index: 1031;
 }
 
 .nav-profile .nav-link {
@@ -321,10 +322,18 @@
     text-decoration: none;
     color: #333;
     cursor: pointer;
+    position: relative;
+    z-index: 1031;
+    pointer-events: auto;
 }
 
 .nav-profile .nav-link:hover {
     background: #f8f9fa;
+}
+
+.nav-profile .nav-link:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
 }
 
 .nav-profile-img {
@@ -334,6 +343,7 @@
     object-fit: cover;
     margin-right: 10px;
     border: 2px solid #e0e0e0;
+    flex-shrink: 0;
 }
 
 .nav-profile-name {
@@ -347,6 +357,7 @@
     font-size: 1rem;
     color: #666;
     transition: transform 0.3s ease;
+    margin-left: 8px;
 }
 
 .nav-profile .nav-link[aria-expanded="true"] i.mdi-chevron-down {
@@ -361,22 +372,25 @@
     background: #ffffff;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     position: absolute !important;
     top: 100% !important;
     right: 0 !important;
     left: auto !important;
-    z-index: 1050 !important;
+    z-index: 1060 !important;
     display: none;
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .navbar-dropdown.show,
 .dropdown-menu.show {
     display: block !important;
-}
-
-.nav-profile {
-    position: relative;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
 }
 
 .nav-profile .dropdown-menu {
@@ -384,7 +398,24 @@
     top: 100% !important;
     right: 0 !important;
     left: auto !important;
-    z-index: 1050 !important;
+    z-index: 1060 !important;
+    pointer-events: auto !important;
+}
+
+/* Đảm bảo navbar không bị che bởi các element khác - z-index đã được set ở trên */
+.navbar-header-wrapper {
+    position: relative;
+    z-index: 1030 !important;
+}
+
+.navbar-actions-section {
+    position: relative;
+    z-index: 1031 !important;
+}
+
+.navbar-nav-right {
+    position: relative;
+    z-index: 1031 !important;
 }
 
 .navbar-dropdown .dropdown-item {

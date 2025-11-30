@@ -234,10 +234,10 @@ $chartDataJson = json_encode(array_values($chartData));
             
             <div class="form-group form-actions-group">
               <button type="submit" class="btn btn-primary">
-                <i class="mdi mdi-filter"></i> Lọc
+                <i class="bi bi-funnel-fill"></i> Lọc
               </button>
               <a href="<?= getBasePath() ?>/admin" class="btn btn-secondary btn-reset">
-                <i class="mdi mdi-refresh"></i> Đặt lại
+                <i class="bi bi-arrow-clockwise"></i> Đặt lại
               </a>
             </div>
           </form>
@@ -790,6 +790,15 @@ $chartDataJson = json_encode(array_values($chartData));
   .chart-container {
     position: relative;
     height: 300px;
+    width: 100%;
+    min-height: 300px;
+    display: block;
+  }
+  
+  .chart-container canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
   }
   
   @media (max-width: 768px) {
@@ -812,60 +821,202 @@ $chartDataJson = json_encode(array_values($chartData));
   }
 </style>
 
-<!-- Include Chart.js library -->
-<!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
+<!-- Chart.js đã được load trong admin.php -->
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Select2 if available
-    if (typeof $.fn.select2 !== 'undefined') {
-      $('.select2').select2();
-    }
+  (function() {
+    'use strict';
     
-    // Year select change event
-    document.getElementById('yearSelect').addEventListener('change', function() {
-      document.getElementById('yearForm').submit();
-    });
-    
-    // Revenue Chart
-    var ctx = document.getElementById('revenueChart').getContext('2d');
-    var revenueChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: <?php echo $chartLabelsJson; ?>,
-        datasets: [{
-          label: 'Doanh thu (đ)',
-          data: <?php echo $chartDataJson; ?>,
-          backgroundColor: 'rgba(154, 85, 255, 0.6)',
-          borderColor: 'rgba(154, 85, 255, 1)',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function(value) {
-                return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + ' đ';
+    // Đợi Chart.js load xong trước khi khởi tạo biểu đồ
+    function initRevenueChart() {
+      var maxRetries = 50; // Tối đa 5 giây (50 * 100ms)
+      var retryCount = 0;
+      
+      function tryInit() {
+        retryCount++;
+        
+        // Kiểm tra Chart.js đã load chưa
+        if (typeof Chart === 'undefined') {
+          if (retryCount < maxRetries) {
+            setTimeout(tryInit, 100);
+            return;
+          } else {
+            console.error('Chart.js không thể load sau nhiều lần thử');
+            // Hiển thị thông báo lỗi cho user
+            var chartContainer = document.querySelector('.chart-container');
+            if (chartContainer) {
+              chartContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;"><i class="bi bi-exclamation-triangle"></i> Không thể tải thư viện biểu đồ. Vui lòng refresh trang.</div>';
+            }
+            return;
+          }
+        }
+        
+        // Kiểm tra canvas element có tồn tại không
+        var canvas = document.getElementById('revenueChart');
+        if (!canvas) {
+          console.error('Canvas element không tìm thấy với ID: revenueChart');
+          return;
+        }
+        
+        try {
+          // Initialize Select2 if available
+          if (typeof $ !== 'undefined' && typeof $.fn !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+            $('.select2').select2();
+          }
+          
+          // Year select change event
+          var yearSelect = document.getElementById('yearSelect');
+          if (yearSelect) {
+            // Xóa event listener cũ nếu có
+            var newYearSelect = yearSelect.cloneNode(true);
+            yearSelect.parentNode.replaceChild(newYearSelect, yearSelect);
+            
+            newYearSelect.addEventListener('change', function() {
+              var yearForm = document.getElementById('yearForm');
+              if (yearForm) {
+                yearForm.submit();
               }
+            });
+          }
+          
+          // Revenue Chart
+          var ctx = canvas.getContext('2d');
+          if (!ctx) {
+            console.error('Không thể lấy context từ canvas');
+            return;
+          }
+          
+          // Kiểm tra dữ liệu có hợp lệ không
+          var chartLabels = <?php echo $chartLabelsJson; ?>;
+          var chartData = <?php echo $chartDataJson; ?>;
+          
+          console.log('Chart Labels:', chartLabels);
+          console.log('Chart Data:', chartData);
+          
+          if (!Array.isArray(chartLabels) || !Array.isArray(chartData)) {
+            console.error('Dữ liệu biểu đồ không hợp lệ:', {
+              labels: chartLabels,
+              data: chartData
+            });
+            return;
+          }
+          
+          // Đảm bảo chartData có đủ 12 phần tử
+          if (chartData.length < 12) {
+            while (chartData.length < 12) {
+              chartData.push(0);
             }
           }
-        },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                var value = context.raw;
-                return 'Doanh thu: ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + ' đ';
+          
+          // Xóa chart cũ nếu có
+          if (window.revenueChartInstance) {
+            try {
+              window.revenueChartInstance.destroy();
+            } catch (e) {
+              console.warn('Lỗi khi xóa chart cũ:', e);
+            }
+          }
+          
+          // Đảm bảo container có kích thước
+          var container = canvas.parentElement;
+          if (container) {
+            container.style.display = 'block';
+            container.style.width = '100%';
+            container.style.height = '300px';
+            container.style.position = 'relative';
+          }
+          
+          // Tạo chart mới
+          window.revenueChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: chartLabels,
+              datasets: [{
+                label: 'Doanh thu (đ)',
+                data: chartData,
+                backgroundColor: 'rgba(154, 85, 255, 0.6)',
+                borderColor: 'rgba(154, 85, 255, 1)',
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: {
+                duration: 1000
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: function(value) {
+                      if (typeof value === 'number' && !isNaN(value)) {
+                        return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + ' đ';
+                      }
+                      return value;
+                    }
+                  },
+                  grid: {
+                    display: true
+                  }
+                },
+                x: {
+                  grid: {
+                    display: false
+                  }
+                }
+              },
+              plugins: {
+                tooltip: {
+                  enabled: true,
+                  callbacks: {
+                    label: function(context) {
+                      var value = context.raw;
+                      if (typeof value === 'number' && !isNaN(value)) {
+                        return 'Doanh thu: ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + ' đ';
+                      }
+                      return 'Doanh thu: ' + value;
+                    }
+                  }
+                },
+                legend: {
+                  display: true,
+                  position: 'top'
+                }
               }
             }
+          });
+          
+          console.log('✅ Biểu đồ doanh thu đã được khởi tạo thành công');
+        } catch (error) {
+          console.error('❌ Lỗi khi khởi tạo biểu đồ:', error);
+          console.error('Stack trace:', error.stack);
+          
+          // Hiển thị thông báo lỗi
+          var chartContainer = document.querySelector('.chart-container');
+          if (chartContainer) {
+            chartContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #dc3545;"><i class="bi bi-exclamation-triangle"></i> Lỗi khi vẽ biểu đồ: ' + error.message + '</div>';
           }
         }
       }
+      
+      // Bắt đầu thử khởi tạo
+      tryInit();
+    }
+    
+    // Khởi tạo khi DOM ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        // Đợi thêm một chút để đảm bảo Chart.js đã load
+        setTimeout(initRevenueChart, 300);
+      });
+    } else {
+      // DOM đã ready
+      setTimeout(initRevenueChart, 300);
+    }
+    
+    // Fallback: Chạy sau khi tất cả script load xong
+    window.addEventListener('load', function() {
+      setTimeout(initRevenueChart, 500);
     });
-  });
+  })();
 </script>

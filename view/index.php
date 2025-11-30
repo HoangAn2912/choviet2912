@@ -1,5 +1,11 @@
 
 <?php
+// if(isset($_SESSION['role']) && ($_SESSION['role'] == 1 ||  $_SESSION['role'] == 4 ||  $_SESSION['role'] == 5)){
+//     header("Location: /admin");
+// }
+?>
+
+<?php
 include_once ("controller/cProduct.php");
 $p = new cProduct();
 if (isset($_GET['keyword']) && !empty(trim($_GET['keyword']))) {

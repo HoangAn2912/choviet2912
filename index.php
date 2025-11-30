@@ -1,3 +1,4 @@
+
 <?php
 // Include Security helper
 include_once("helpers/Security.php");

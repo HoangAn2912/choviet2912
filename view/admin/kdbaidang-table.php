@@ -277,7 +277,7 @@ foreach($all_data as $item) {
                             elseif ($messageType == 'hidden') echo 'warning';
                             else echo 'error';
                         ?>" id="statusMessage">
-                            <i class="fa <?php 
+                            <i class="fas <?php 
                                 if ($messageType == 'approved') echo 'fa-check-circle';
                                 elseif ($messageType == 'rejected') echo 'fa-info-circle';
                                 elseif ($messageType == 'hidden') echo 'fa-eye-slash';
@@ -285,7 +285,7 @@ foreach($all_data as $item) {
                             ?>"></i>
                             <span><?php echo htmlspecialchars($message); ?></span>
                             <button type="button" class="close-btn" onclick="closeStatusMessage()" aria-label="Đóng">
-                                <i class="fa fa-times"></i>
+                                <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <?php endif; ?>
@@ -346,10 +346,10 @@ foreach($all_data as $item) {
                                 </div>
                                 <div class="form-group">
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="mdi mdi-filter"></i> Lọc
+                                        <i class="bi bi-funnel-fill"></i> Lọc
                                     </button>
                                     <a href="/admin?qlkdbaiviet" class="btn btn-secondary" style="margin-left: 10px;">
-                                        <i class="mdi mdi-refresh"></i> Đặt lại
+                                        <i class="bi bi-arrow-clockwise"></i> Đặt lại
                                     </a>
                                 </div>
                             </form>
@@ -380,13 +380,13 @@ foreach($all_data as $item) {
                                         
                                         if($trang_thai == "Đã duyệt"){
                                             $badge_class = "success";
-                                            $icon = '<i class="fa fa-check-circle"></i> ';
+                                            $icon = '<i class="fas fa-check-circle"></i> ';
                                         } else if ($trang_thai == "Chờ duyệt") {
                                             $badge_class = "warning";
-                                            $icon = '<i class="fa fa-clock"></i> ';
+                                            $icon = '<i class="fas fa-clock"></i> ';
                                         } else if($trang_thai == "Từ chối duyệt") {
                                             $badge_class = "danger";
-                                            $icon = '<i class="fa fa-times-circle"></i> ';
+                                            $icon = '<i class="fas fa-times-circle"></i> ';
                                         } else {
                                             $badge_class = "info";
                                             $icon = '';
@@ -400,15 +400,15 @@ foreach($all_data as $item) {
                                         // Chỉ hiển thị "Đang bán" khi bài viết đã được duyệt
                                         if ($trang_thai == "Đã duyệt" && $trang_thai_ban == "Đang bán") {
                                             $ban_badge = "primary";
-                                            $ban_icon = '<i class="fa fa-tag"></i> ';
+                                            $ban_icon = '<i class="fas fa-tag"></i> ';
                                             $show_sale_status = true;
                                         } else if ($trang_thai_ban == "Đã bán") {
                                             $ban_badge = "info";
-                                            $ban_icon = '<i class="fa fa-shopping-cart"></i> ';
+                                            $ban_icon = '<i class="fas fa-shopping-cart"></i> ';
                                             $show_sale_status = true;
                                         } else if ($trang_thai_ban == "Đã ẩn") {
                                             $ban_badge = "secondary";
-                                            $ban_icon = '<i class="fa fa-eye-slash"></i> ';
+                                            $ban_icon = '<i class="fas fa-eye-slash"></i> ';
                                             $show_sale_status = true;
                                         }
                                         
@@ -462,7 +462,7 @@ foreach($all_data as $item) {
                                         echo '<tr id="row-'.$r['id'].'">
                                             <td class="text-center">
                                                 <span class="expand-row" data-id="'.$r['id'].'">
-                                                    <i class="fa fa-chevron-down"></i>
+                                                    <i class="fas fa-chevron-down"></i>
                                                 </span>
                                             </td>
                                             <td>#'.$r['id'].'</td>
@@ -723,11 +723,17 @@ foreach($all_data as $item) {
                     detailRow.style.display = 'table-row';
                     icon.classList.remove('fa-chevron-down');
                     icon.classList.add('fa-chevron-up');
+                    if (!icon.classList.contains('fas')) {
+                        icon.classList.add('fas');
+                    }
                     mainRow.classList.add('expanded');
                 } else {
                     detailRow.style.display = 'none';
                     icon.classList.remove('fa-chevron-up');
                     icon.classList.add('fa-chevron-down');
+                    if (!icon.classList.contains('fas')) {
+                        icon.classList.add('fas');
+                    }
                     mainRow.classList.remove('expanded');
                 }
             });

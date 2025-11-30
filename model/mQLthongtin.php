@@ -360,18 +360,150 @@ class qlthongtin{
 	public function insertuser($hoten, $email, $mk, $sdt, $dc, $anh) {
 		$p = new Connect();
 		$con = $p->connect();
+		
+		// Kiểm tra email đã tồn tại chưa
+		if (!empty($email)) {
+			$checkEmailStmt = $con->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+			if ($checkEmailStmt) {
+				$checkEmailStmt->bind_param("s", $email);
+				$checkEmailStmt->execute();
+				$emailResult = $checkEmailStmt->get_result();
+				if ($emailResult->num_rows > 0) {
+					$checkEmailStmt->close();
+					$con->close();
+					return ['success' => false, 'error' => 'Email đã tồn tại trong hệ thống.'];
+				}
+				$checkEmailStmt->close();
+			}
+		}
+		
+		// Kiểm tra số điện thoại đã tồn tại chưa (nếu có)
+		if (!empty($sdt)) {
+			$checkPhoneStmt = $con->prepare("SELECT id FROM users WHERE phone = ? LIMIT 1");
+			if ($checkPhoneStmt) {
+				$checkPhoneStmt->bind_param("s", $sdt);
+				$checkPhoneStmt->execute();
+				$phoneResult = $checkPhoneStmt->get_result();
+				if ($phoneResult->num_rows > 0) {
+					$checkPhoneStmt->close();
+					$con->close();
+					return ['success' => false, 'error' => 'Số điện thoại đã tồn tại trong hệ thống.'];
+				}
+				$checkPhoneStmt->close();
+			}
+		}
+		
+		// Nếu không có conflict, thực hiện insert
 		$sql = "INSERT INTO users 
 				(username, email, password, phone, address, role_id, avatar, created_date, updated_date, is_active) 
-				VALUES (?, ?, ?, ?, ?, 2, ?, NOW(), NULL, 1)"	;
+				VALUES (?, ?, ?, ?, ?, 2, ?, CURDATE(), NOW(), 1)";
 		$stmt = $con->prepare($sql);
 		if (!$stmt) {
-			return false;
+			$con->close();
+			return ['success' => false, 'error' => 'Lỗi chuẩn bị câu lệnh SQL: ' . $con->error];
 		}
+		
 		$stmt->bind_param("ssssss", $hoten, $email, $mk, $sdt, $dc, $anh);
 		$kq = $stmt->execute();
+		
+		if (!$kq) {
+			$error = $stmt->error;
+			$stmt->close();
+			$con->close();
+			
+			// Xử lý các lỗi cụ thể
+			if (strpos($error, 'Duplicate entry') !== false) {
+				if (strpos($error, 'phone') !== false) {
+					return ['success' => false, 'error' => 'Số điện thoại đã tồn tại trong hệ thống.'];
+				} elseif (strpos($error, 'email') !== false) {
+					return ['success' => false, 'error' => 'Email đã tồn tại trong hệ thống.'];
+				} else {
+					return ['success' => false, 'error' => 'Thông tin đã tồn tại trong hệ thống.'];
+				}
+			}
+			
+			return ['success' => false, 'error' => 'Lỗi khi thêm người dùng: ' . $error];
+		}
+		
 		$stmt->close();
 		$con->close();
-		return $kq;
+		return ['success' => true, 'message' => 'Thêm người dùng thành công.'];
+	}
+	
+	// Insert user with full parameters (for adduser function)
+	// Note: PHP is case-insensitive for function names, so this is actually the same as insertuser()
+	// But we keep it for clarity and use it in controller
+	public function insertUserWithRole($username, $email, $password, $phone, $address, $avatar, $role_id) {
+		$p = new Connect();
+		$con = $p->connect();
+		
+		// Kiểm tra email đã tồn tại chưa
+		if (!empty($email)) {
+			$checkEmailStmt = $con->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+			if ($checkEmailStmt) {
+				$checkEmailStmt->bind_param("s", $email);
+				$checkEmailStmt->execute();
+				$emailResult = $checkEmailStmt->get_result();
+				if ($emailResult->num_rows > 0) {
+					$checkEmailStmt->close();
+					$con->close();
+					return ['success' => false, 'error' => 'Email đã tồn tại trong hệ thống.'];
+				}
+				$checkEmailStmt->close();
+			}
+		}
+		
+		// Kiểm tra số điện thoại đã tồn tại chưa (nếu có)
+		if (!empty($phone)) {
+			$checkPhoneStmt = $con->prepare("SELECT id FROM users WHERE phone = ? LIMIT 1");
+			if ($checkPhoneStmt) {
+				$checkPhoneStmt->bind_param("s", $phone);
+				$checkPhoneStmt->execute();
+				$phoneResult = $checkPhoneStmt->get_result();
+				if ($phoneResult->num_rows > 0) {
+					$checkPhoneStmt->close();
+					$con->close();
+					return ['success' => false, 'error' => 'Số điện thoại đã tồn tại trong hệ thống.'];
+				}
+				$checkPhoneStmt->close();
+			}
+		}
+		
+		// Nếu không có conflict, thực hiện insert
+		$sql = "INSERT INTO users 
+				(username, email, password, phone, address, role_id, avatar, created_date, updated_date, is_active, is_verified) 
+				VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE(), NOW(), 1, 0)";
+		$stmt = $con->prepare($sql);
+		if (!$stmt) {
+			$con->close();
+			return ['success' => false, 'error' => 'Lỗi chuẩn bị câu lệnh SQL: ' . $con->error];
+		}
+		
+		$stmt->bind_param("sssssisi", $username, $email, $password, $phone, $address, $role_id, $avatar);
+		$kq = $stmt->execute();
+		
+		if (!$kq) {
+			$error = $stmt->error;
+			$stmt->close();
+			$con->close();
+			
+			// Xử lý các lỗi cụ thể
+			if (strpos($error, 'Duplicate entry') !== false) {
+				if (strpos($error, 'phone') !== false) {
+					return ['success' => false, 'error' => 'Số điện thoại đã tồn tại trong hệ thống.'];
+				} elseif (strpos($error, 'email') !== false) {
+					return ['success' => false, 'error' => 'Email đã tồn tại trong hệ thống.'];
+				} else {
+					return ['success' => false, 'error' => 'Thông tin đã tồn tại trong hệ thống.'];
+				}
+			}
+			
+			return ['success' => false, 'error' => 'Lỗi khi thêm người dùng: ' . $error];
+		}
+		
+		$stmt->close();
+		$con->close();
+		return ['success' => true, 'message' => 'Thêm người dùng thành công.'];
 	}
 }
 ?>

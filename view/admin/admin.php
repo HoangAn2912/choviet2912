@@ -120,7 +120,12 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
 <!-- plugin css for this page -->
 <link rel="stylesheet" href="/admin/src/assets/vendors/datatables.net-bs4/dataTables.bootstrap4.css">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<!-- Icon Libraries -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<!-- Material Design Icons - CDN Fallback -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css">
+<!-- Font Awesome - CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <!-- End plugin css for this page -->
 <!-- Admin CSS -->
 <link rel="stylesheet" href="/css/admin-style.css">
@@ -151,7 +156,7 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
             <!-- Profile Dropdown -->
             <ul class="navbar-nav navbar-nav-right d-flex align-items-center" style="margin-right: 10px;">
             <li class="nav-item nav-profile dropdown">
-                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="true" id="profileDropdown" aria-expanded="false" onclick="event.preventDefault();">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="true" id="profileDropdown" aria-expanded="false">
                     <img src="/img/<?php echo htmlspecialchars($_SESSION['avatar'] ?? 'default-avatar.jpg'); ?>" alt="profile" class="nav-profile-img" onerror="this.src='/img/default-avatar.jpg'" />
                     <span class="nav-profile-name d-none d-lg-inline"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></span>
                 </a>
@@ -163,7 +168,7 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="?action=logout">
                         <i class="mdi mdi-logout text-danger me-2"></i>
-                    Đăng xuất
+                        Đăng xuất
                     </a></li>
                 </ul>
             </li>
@@ -324,7 +329,19 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
 <script src="/admin/src/assets/vendors/js/vendor.bundle.base.js"></script>
 <!-- endinject -->
 <!-- Plugin js for this page-->
-<script src="/admin/src/assets/vendors/chart.js/chart.umd.js"></script>
+<!-- Chart.js - CDN với fallback -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  // Fallback nếu CDN không load được
+  if (typeof Chart === 'undefined') {
+    var script = document.createElement('script');
+    script.src = '/admin/src/assets/vendors/chart.js/chart.umd.js';
+    script.onerror = function() {
+      console.error('Chart.js không thể load từ cả CDN và local file');
+    };
+    document.head.appendChild(script);
+  }
+</script>
 <script src="/admin/src/assets/vendors/datatables.net/jquery.dataTables.js"></script>
 <script src="/admin/src/assets/vendors/datatables.net-bs4/dataTables.bootstrap4.js"></script>
 <!-- End plugin js for this page-->
@@ -344,11 +361,13 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
 <script>
 // Đảm bảo Bootstrap dropdown hoạt động
 (function() {
+    'use strict';
+    
     function initDropdown() {
         // Kiểm tra Bootstrap đã load chưa
         if (typeof bootstrap === 'undefined') {
-            console.error('Bootstrap is not loaded, retrying...');
-            setTimeout(initDropdown, 100); // Retry sau 100ms
+            console.warn('Bootstrap chưa load, đợi thêm...');
+            setTimeout(initDropdown, 100);
             return;
         }
         
@@ -356,67 +375,114 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
         var profileDropdownToggle = document.getElementById('profileDropdown');
         var profileDropdownMenu = document.getElementById('profileDropdownMenu');
         
-        if (profileDropdownToggle && profileDropdownMenu) {
-            // Xóa instance cũ nếu có
-            var existingInstance = bootstrap.Dropdown.getInstance(profileDropdownToggle);
-            if (existingInstance) {
-                existingInstance.dispose();
-            }
-            
-            // Khởi tạo Bootstrap Dropdown
-            try {
-                var profileDropdown = new bootstrap.Dropdown(profileDropdownToggle, {
-                    boundary: 'viewport',
-                    popperConfig: {
-                        placement: 'bottom-end'
-                    }
-                });
-                
-                // Xóa onclick cũ và thêm event listener mới
-                profileDropdownToggle.removeAttribute('onclick');
-                profileDropdownToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    profileDropdown.toggle();
-                    return false;
-                });
-                
-                // Đảm bảo dropdown hiển thị khi click
-                profileDropdownToggle.addEventListener('show.bs.dropdown', function() {
-                    profileDropdownMenu.classList.add('show');
-                });
-                
-                profileDropdownToggle.addEventListener('hide.bs.dropdown', function() {
-                    profileDropdownMenu.classList.remove('show');
-                });
-                
-                console.log('Profile dropdown initialized successfully');
-            } catch (e) {
-                console.error('Error initializing dropdown:', e);
-                // Fallback: Toggle thủ công
-                profileDropdownToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    profileDropdownMenu.classList.toggle('show');
-                    return false;
-                });
-            }
-        } else {
+        if (!profileDropdownToggle || !profileDropdownMenu) {
             console.error('Profile dropdown elements not found');
+            return;
+        }
+        
+        // Xóa instance cũ nếu có
+        var existingInstance = bootstrap.Dropdown.getInstance(profileDropdownToggle);
+        if (existingInstance) {
+            existingInstance.dispose();
+        }
+        
+        // Khởi tạo Bootstrap Dropdown
+        try {
+            var profileDropdown = new bootstrap.Dropdown(profileDropdownToggle, {
+                boundary: 'viewport',
+                popperConfig: {
+                    placement: 'bottom-end',
+                    modifiers: [
+                        {
+                            name: 'offset',
+                            options: {
+                                offset: [0, 8]
+                            }
+                        }
+                    ]
+                }
+            });
+            
+            // Xử lý sự kiện khi dropdown được hiển thị
+            profileDropdownToggle.addEventListener('show.bs.dropdown', function() {
+                // Đảm bảo dropdown menu có z-index cao
+                profileDropdownMenu.style.zIndex = '1060';
+                profileDropdownMenu.style.display = 'block';
+                profileDropdownMenu.classList.add('show');
+                
+                // Đảm bảo không có element nào che mất
+                var navbar = profileDropdownToggle.closest('.navbar');
+                if (navbar) {
+                    navbar.style.zIndex = '1030';
+                }
+            });
+            
+            // Xử lý sự kiện khi dropdown được ẩn
+            profileDropdownToggle.addEventListener('hide.bs.dropdown', function() {
+                profileDropdownMenu.classList.remove('show');
+            });
+            
+            // Xử lý click trên dropdown items - đảm bảo không bị chặn
+            var dropdownItems = profileDropdownMenu.querySelectorAll('.dropdown-item');
+            dropdownItems.forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    // Cho phép click hoạt động bình thường
+                    e.stopPropagation();
+                });
+            });
+            
+            // Đảm bảo dropdown toggle có thể click được
+            profileDropdownToggle.style.pointerEvents = 'auto';
+            profileDropdownToggle.style.cursor = 'pointer';
+            profileDropdownToggle.style.position = 'relative';
+            profileDropdownToggle.style.zIndex = '1031';
+            
+            console.log('✅ Profile dropdown initialized successfully');
+        } catch (e) {
+            console.error('❌ Error initializing dropdown:', e);
+            
+            // Fallback: Toggle thủ công
+            profileDropdownToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                var isShowing = profileDropdownMenu.classList.contains('show');
+                if (isShowing) {
+                    profileDropdownMenu.classList.remove('show');
+                    profileDropdownMenu.style.display = 'none';
+                } else {
+                    profileDropdownMenu.classList.add('show');
+                    profileDropdownMenu.style.display = 'block';
+                    profileDropdownMenu.style.zIndex = '1060';
+                }
+                
+                // Đóng khi click outside
+                setTimeout(function() {
+                    document.addEventListener('click', function closeDropdown(event) {
+                        if (!profileDropdownToggle.contains(event.target) && 
+                            !profileDropdownMenu.contains(event.target)) {
+                            profileDropdownMenu.classList.remove('show');
+                            profileDropdownMenu.style.display = 'none';
+                            document.removeEventListener('click', closeDropdown);
+                        }
+                    });
+                }, 10);
+            });
         }
     }
     
     // Chạy khi DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initDropdown);
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initDropdown, 100);
+        });
     } else {
-        // DOM đã ready
-        initDropdown();
+        setTimeout(initDropdown, 100);
     }
     
     // Fallback: Chạy sau khi tất cả script load xong
     window.addEventListener('load', function() {
-        setTimeout(initDropdown, 200);
+        setTimeout(initDropdown, 300);
     });
 })();
 
