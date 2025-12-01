@@ -58,9 +58,9 @@ class cChat {
         if (strpos($content, 'product-card-message') !== false) {
             // Extract tên sản phẩm từ HTML
             if (preg_match('/<h6[^>]*>([^<]+)<\/h6>/', $content, $matches)) {
-                $content = '📦 ' . trim($matches[1]);
+                $content = 'Sản phẩm: ' . trim($matches[1]);
             } else {
-                $content = '📦 Đã gửi sản phẩm';
+                $content = 'Đã gửi sản phẩm';
             }
         }
     

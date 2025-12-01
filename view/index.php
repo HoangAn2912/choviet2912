@@ -7,12 +7,55 @@
 
 <?php
 include_once ("controller/cProduct.php");
+include_once ("helpers/location_helper.php");
 $p = new cProduct();
+
+$DEFAULT_PROVINCE_CODE = 79;
+$selectedProvinceCode = isset($_GET['province']) ? intval($_GET['province']) : $DEFAULT_PROVINCE_CODE;
+$selectedDistrictCode = isset($_GET['district']) ? intval($_GET['district']) : 0;
+
+if ($selectedProvinceCode <= 0) {
+    $selectedProvinceCode = $DEFAULT_PROVINCE_CODE;
+}
+
+$selectedProvinceName = '';
+$selectedDistrictName = '';
+
+if ($selectedProvinceCode > 0) {
+    [$selectedProvinceName, $selectedDistrictName] = resolveLocationNamesByCode(
+        $selectedProvinceCode,
+        $selectedDistrictCode > 0 ? $selectedDistrictCode : null
+    );
+}
+
+if (empty($selectedProvinceName)) {
+    [$selectedProvinceName] = resolveLocationNamesByCode($DEFAULT_PROVINCE_CODE);
+    $selectedProvinceCode = $DEFAULT_PROVINCE_CODE;
+}
+
+$locationLabel = '';
+if (!empty($selectedProvinceName)) {
+    $locationLabel = $selectedDistrictName
+        ? $selectedDistrictName . ', ' . $selectedProvinceName
+        : $selectedProvinceName;
+}
+
 if (isset($_GET['keyword']) && !empty(trim($_GET['keyword']))) {
     $keyword = trim($_GET['keyword']);
-    $products = $p->searchProducts($keyword);
+    $products = $p->searchProducts($keyword, $selectedProvinceName, $selectedDistrictName);
+} else {
+    if (!empty($selectedProvinceName)) {
+        $products = $p->getSanPhamMoiTheoTinh($selectedProvinceName, $selectedDistrictName);
 } else {
     $products = $p->getSanPhamMoi();
+    }
+}
+
+if (!empty($selectedProvinceName) && !empty($products)) {
+    $products = array_values(array_filter($products, function ($product) use ($selectedProvinceName, $selectedDistrictName) {
+        $address = $product['address'] ?? '';
+        return addressMatchesLocation($address, $selectedProvinceName, $selectedDistrictName);
+    }));
 }
 
 // Lấy sản phẩm hot nhất
@@ -40,6 +83,7 @@ function getBanners() {
         while ($row = $result->fetch_assoc()) {
             $banners[] = $row;
         }
+
         $result->free();
     }
     
@@ -124,6 +168,20 @@ include_once("view/header.php");
         
         .object-fit-cover {
             object-fit: cover;
+        }
+
+        /* Hero / Banner text */
+        .banner-title {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .banner-description {
+            font-size: 1rem;
+        }
+        .btn-banner {
+            padding: 0.55rem 1.4rem;
+            font-weight: 600;
+            border-radius: 999px;
         }
         .product-img-hover {
             position: relative;
@@ -808,12 +866,28 @@ include_once("view/header.php");
             border-radius: 8px !important;
         }
         
-        .input-group .form-control:first-child {
+        /* Không override search bar trong header */
+        .header-search .input-group .form-control:first-child {
+            border-top-left-radius: 18px !important;
+            border-bottom-left-radius: 18px !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
+        
+        .header-search .input-group-append .btn {
+            border-top-right-radius: 18px !important;
+            border-bottom-right-radius: 18px !important;
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+        }
+        
+        /* Input groups khác - 8px */
+        .input-group:not(.header-search .input-group) .form-control:first-child {
             border-top-left-radius: 8px !important;
             border-bottom-left-radius: 8px !important;
         }
         
-        .input-group-append .btn {
+        .input-group-append:not(.header-search .input-group-append) .btn {
             border-top-right-radius: 8px !important;
             border-bottom-right-radius: 8px !important;
         }
@@ -957,7 +1031,7 @@ include_once("view/header.php");
     <div class="content-wrapper">
 
 <!-- Hero Section Start -->
-<div class="container-fluid mb-4">
+<div class="container-fluid" style="padding-bottom: -32px !important;">
     <div class="row px-xl-5">
         <!-- Main Banner -->
         <div class="row px-xl-5">
@@ -1170,7 +1244,7 @@ $featuredCategories = array_slice($parentCategories, 0, 5, true);
 <!-- Quick Categories End -->
 
 <!-- Lives Today Section Start -->
-<div class="container-fluid pt-4">
+<div class="container-fluid">
     <div class="row px-xl-5">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -1224,13 +1298,15 @@ $featuredCategories = array_slice($parentCategories, 0, 5, true);
                                                  alt="<?= $title ?>" 
                                                  class="img-live-stream" 
                                                  loading="lazy">
-                                <div class="position-absolute top-0 left-0 m-2" style="z-index: 20;">
-                                    <span class="badge animate-pulse" style="background-color: #FF69B4; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                                <!-- Status Badge - Top Left -->
+                                <div class="position-absolute" style="top: 8px; left: 8px; z-index: 20;">
+                                    <span class="badge animate-pulse" style="background-color: #FF69B4; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
                                         <i class="fas fa-circle text-white mr-1" style="font-size: 8px;"></i>LIVE
                                     </span>
                                 </div>
-                                            <div class="position-absolute top-0 right-0 m-2" style="z-index: 20;">
-                                    <span class="badge" style="background-color: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px;">
+                                <!-- Viewer Count - Top Right -->
+                                <div class="position-absolute" style="top: 8px; right: 8px; z-index: 20;">
+                                    <span class="badge" style="background-color: rgba(0,0,0,0.7); color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
                                                     <i class="fas fa-user mr-1"></i><?= $viewerText ?>
                                     </span>
                                 </div>
@@ -1295,7 +1371,7 @@ $images = [
 $i = 0;
 ?>
 
-<div class="container-fluid pt-4">
+<div class="container-fluid">
     <div class="row px-xl-5">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -1318,7 +1394,11 @@ $i = 0;
                             <img class="img-fluid" src="img/<?= $img ?>" alt="<?= htmlspecialchars($cat['category_name']) ?>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
                         </div>
                         <div class="flex-fill pl-3">
-                            <h6 class="font-weight-bold mb-1 text-dark"><?= htmlspecialchars($cat['category_name']) ?></h6>
+                            <?php 
+                            $categoryName = htmlspecialchars($cat['category_name']);
+                            $displayName = mb_strlen($categoryName, 'UTF-8') > 9 ? mb_substr($categoryName, 0, 9, 'UTF-8') . '...' : $categoryName;
+                            ?>
+                            <h6 class="font-weight-bold mb-1 text-dark" title="<?= $categoryName ?>"><?= $displayName ?></h6>
                             <small class="text-muted"><?= $cat['quantity'] > 0 ? $cat['quantity'] . ' sản phẩm' : 'Chưa có sản phẩm' ?></small>
                         </div>
                     </div>
@@ -1337,10 +1417,8 @@ $i = 0;
     <?php endif; ?>
 </div>
 
-
-
 <!-- Products Start -->
-<div class="container-fluid pt-4 pb-3">
+<div class="container-fluid pb-3">
     <div class="row px-xl-5">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -1349,7 +1427,14 @@ $i = 0;
                         <i class="fas fa-user-friends text-success mr-2"></i>Tin đăng mới nhất
                     </span>
     </h2>
-                
+                <div id="latest-products-badge-wrapper">
+                    <?php if (!empty($locationLabel)): ?>
+                        <span class="badge badge-pill px-3 py-2" style="background: rgba(40, 167, 69, 0.15); color: #218838; font-weight: 600;">
+                            <i class="fas fa-map-marker-alt mr-1"></i>
+                            <?= htmlspecialchars($locationLabel) ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
@@ -1410,7 +1495,14 @@ $i = 0;
                         <i class="fas fa-box-open fa-2x text-white"></i>
                     </div>
                     <h4 class="text-muted mb-2">Chưa có sản phẩm nào</h4>
+                    <?php if (!empty($locationLabel)): ?>
+                        <p class="text-muted mb-3">Hiện tại chưa có sản phẩm nào được đăng bán tại <?= htmlspecialchars($locationLabel) ?>.</p>
+                        <button class="btn btn-outline-secondary" onclick="clearLocationFilter()">
+                            <i class="fas fa-times mr-1"></i>Xóa bộ lọc vị trí
+                        </button>
+                    <?php else: ?>
                     <p class="text-muted">Hiện tại chưa có sản phẩm nào được đăng bán.</p>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>
@@ -1427,19 +1519,22 @@ $i = 0;
 <!-- Products End -->
 
 <!-- About Section -->
-<div class="container-fluid mt-2 mb-4">
+<div class="container-fluid mt-2" style="padding-bottom: 0px;">
     <div class="row px-xl-5">
         <div class="col-12">
             <div class="bg-white p-4 rounded shadow-sm">
                 <h5 class="font-weight-bold mb-3">
                     <i class="fas fa-video text-primary mr-2"></i>Chợ Việt – Nền Tảng Livestream Bán Hàng C2C Hàng Đầu
                 </h5>
+                <div class="about-content-visible">
                 <p>
                     <strong>Chợ Việt</strong> là nền tảng livestream bán hàng kết nối người bán và người mua đồ cũ trực tuyến theo mô hình <strong>C2C (Consumer to Consumer)</strong>. Với tính năng livestream độc đáo, người bán có thể <strong>trực tiếp giới thiệu sản phẩm</strong> và tương tác với khách hàng trong thời gian thực.
                 </p>
                 <p>
                     Tại Chợ Việt, bạn có thể <strong>livestream bán hàng hoàn toàn miễn phí</strong>, chia sẻ hình ảnh thực tế và mô tả chi tiết sản phẩm trực tiếp với khách hàng. Tất cả live stream sẽ được <strong>kiểm duyệt nội dung</strong> để đảm bảo chất lượng và tuân thủ chính sách cộng đồng.
                 </p>
+                </div>
+                <div class="about-content-hidden" style="display: none;">
                 <p>
                     <strong>Tính năng livestream độc đáo:</strong>
                     <ul class="mb-2">
@@ -1467,6 +1562,11 @@ $i = 0;
                     Đừng để những món đồ cũ phủ bụi – hãy để <strong>Chợ Việt</strong> giúp bạn biến chúng thành giá trị cho người khác thông qua livestream. Rất đơn giản, bạn chỉ cần tạo live stream, chụp hình sản phẩm và bán hàng trực tiếp.
                 </p>
                 <p class="text-muted font-italic">🎥 Livestream bán hàng – Cách mới để bán đồ cũ hiệu quả cùng Chợ Việt.</p>
+                </div>
+                <div class="text-center mt-3">
+                    <button id="about-show-more-btn" class="btn px-4" style="background: linear-gradient(135deg, #FFD333, #FFA500); color: #333; font-weight: 600; border: none; box-shadow: 0 4px 15px rgba(255, 211, 51, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 211, 51, 0.6)'; this.style.background='linear-gradient(135deg, #FFA500, #FFD333)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 211, 51, 0.4)'; this.style.background='linear-gradient(135deg, #FFD333, #FFA500)';">Xem thêm</button>
+                    <button id="about-collapse-btn" class="btn px-4 d-none" style="background: linear-gradient(135deg, #FFD333, #FFA500); color: #333; font-weight: 600; border: none; box-shadow: 0 4px 15px rgba(255, 211, 51, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 211, 51, 0.6)'; this.style.background='linear-gradient(135deg, #FFA500, #FFD333)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 211, 51, 0.4)'; this.style.background='linear-gradient(135deg, #FFD333, #FFA500)';">Thu gọn</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1477,7 +1577,7 @@ $i = 0;
     <!-- Content Wrapper End -->
 </div>
 <!-- Page Background End -->
-
+    </div>
 <?php
     include_once("view/footer.php");
 ?>
@@ -1505,9 +1605,106 @@ if (showMoreBtn && collapseBtn) {
 }
 </script>
 
+<script>
+function initProductShowMore() {
+    const showMoreBtn2 = document.getElementById('show-more-btn2');
+    const collapseBtn2 = document.getElementById('collapse-btn2');
+    const productItems = document.querySelectorAll('.product-item-row');
+
+    if (!showMoreBtn2 || !collapseBtn2 || productItems.length === 0) {
+        if (showMoreBtn2) showMoreBtn2.classList.add('d-none');
+        if (collapseBtn2) collapseBtn2.classList.add('d-none');
+        return;
+    }
+
+    let visibleCount = Math.min(18, productItems.length);
+    const increment = 6;
+
+    const updateVisibility = () => {
+        productItems.forEach((item, index) => {
+            item.classList.toggle('d-none', index >= visibleCount);
+        });
+
+        if (visibleCount >= productItems.length) {
+            showMoreBtn2.classList.add('d-none');
+            collapseBtn2.classList.remove('d-none');
+        } else {
+            showMoreBtn2.classList.remove('d-none');
+            collapseBtn2.classList.add('d-none');
+        }
+    };
+
+    showMoreBtn2.onclick = () => {
+        visibleCount = Math.min(visibleCount + increment, productItems.length);
+        updateVisibility();
+    };
+
+    collapseBtn2.onclick = () => {
+        visibleCount = Math.min(18, productItems.length);
+        updateVisibility();
+        window.scrollTo({ top: document.getElementById('product-list').offsetTop - 100, behavior: 'smooth' });
+    };
+
+    updateVisibility();
+}
+
+document.addEventListener('DOMContentLoaded', initProductShowMore);
+</script>
+
+<script>
+window.updateHomepageProducts = async function(provinceCode, provinceName) {
+    try {
+        const url = new URL(window.location.href);
+        if (provinceCode) {
+            url.searchParams.set('province', provinceCode);
+        } else {
+            url.searchParams.delete('province');
+        }
+
+        const response = await fetch(url.toString(), {
+            headers: { 'X-Requested-With': 'fetch' },
+            credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const htmlText = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+
+        const newProductList = doc.querySelector('#product-list');
+        const currentProductList = document.querySelector('#product-list');
+        if (newProductList && currentProductList) {
+            currentProductList.innerHTML = newProductList.innerHTML;
+        }
+
+        const newBadgeWrapper = doc.getElementById('latest-products-badge-wrapper');
+        const badgeWrapper = document.getElementById('latest-products-badge-wrapper');
+        if (newBadgeWrapper && badgeWrapper) {
+            badgeWrapper.innerHTML = newBadgeWrapper.innerHTML;
+        }
+
+        initProductShowMore();
+        window.history.replaceState({}, '', url.toString());
+    } catch (error) {
+        console.error('Lỗi cập nhật sản phẩm:', error);
+        const fallbackUrl = new URL(window.location.href);
+        if (provinceCode) {
+            fallbackUrl.searchParams.set('province', provinceCode);
+        } else {
+            fallbackUrl.searchParams.delete('province');
+        }
+        window.location.href = fallbackUrl.toString();
+    }
+};
+</script>
+
 <!-- Phần sản phầm -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    return;
     const showMoreBtn2 = document.getElementById('show-more-btn2');
     const collapseBtn2 = document.getElementById('collapse-btn2');
     const productItems = document.querySelectorAll('.product-item-row');
@@ -1579,6 +1776,35 @@ document.getElementById('livesScrollContainer').addEventListener('wheel', functi
         this.scrollBy({
             left: -scrollAmount,
             behavior: 'smooth'
+        });
+    }
+});
+
+// Phần About Section - Xem thêm / Thu gọn
+document.addEventListener('DOMContentLoaded', function () {
+    const aboutShowMoreBtn = document.getElementById('about-show-more-btn');
+    const aboutCollapseBtn = document.getElementById('about-collapse-btn');
+    const aboutContentHidden = document.querySelector('.about-content-hidden');
+
+    if (aboutShowMoreBtn && aboutCollapseBtn && aboutContentHidden) {
+        aboutShowMoreBtn.addEventListener('click', function () {
+            aboutContentHidden.style.display = 'block';
+            aboutShowMoreBtn.classList.add('d-none');
+            aboutCollapseBtn.classList.remove('d-none');
+            // Cuộn mượt đến phần nội dung mới hiển thị
+            setTimeout(() => {
+                aboutContentHidden.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        });
+
+        aboutCollapseBtn.addEventListener('click', function () {
+            aboutContentHidden.style.display = 'none';
+            aboutCollapseBtn.classList.add('d-none');
+            aboutShowMoreBtn.classList.remove('d-none');
+            // Cuộn mượt về phần đầu
+            setTimeout(() => {
+                document.querySelector('.about-content-visible').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
         });
     }
 });

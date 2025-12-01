@@ -120,33 +120,49 @@ class cPost {
     }
 
 public function capNhatTrangThaiBan() {
+    // Set header JSON và tắt output buffering
+    header('Content-Type: application/json; charset=utf-8');
+    
     if (!isset($_SESSION['user_id'])) {
         echo json_encode(['status' => 'error', 'message' => 'Chưa đăng nhập']);
-        return;
+        exit;
     }
 
-    $idTin = intval($_POST['id']);
-    $loai = $_POST['loai'];
+    $idTin = intval($_POST['id'] ?? 0);
+    $loai = trim($_POST['loai'] ?? '');
+    $note = isset($_POST['note']) ? trim($_POST['note']) : null;
 
-    // Debug log
-    file_put_contents('log.txt', "idTin: $idTin, loai: $loai\n", FILE_APPEND);
+    if ($idTin <= 0) {
+        echo json_encode(['status' => 'error', 'message' => 'ID sản phẩm không hợp lệ']);
+        exit;
+    }
 
     if (!in_array($loai, ['Đã bán', 'Đã ẩn'])) {
         echo json_encode(['status' => 'error', 'message' => 'Trạng thái không hợp lệ']);
-        return;
+        exit;
     }
 
-    $m = new mPost();
-    $ok = $m->updateTrangThaiBan($idTin, $loai);
+    // Nếu là "Đã bán" hoặc "Đã ẩn" thì bắt buộc phải có note
+    if (in_array($loai, ['Đã bán', 'Đã ẩn']) && (empty($note) || $note === '')) {
+        $message = $loai === 'Đã bán' ? 'Vui lòng chọn lý do đã bán!' : 'Vui lòng chọn lý do ẩn sản phẩm!';
+        echo json_encode(['status' => 'error', 'message' => $message]);
+        exit;
+    }
 
-    // Debug log
-    file_put_contents('log.txt', "update result: " . ($ok ? 'success' : 'fail') . "\n", FILE_APPEND);
+    try {
+    $m = new mPost();
+        $ok = $m->updateTrangThaiBan($idTin, $loai, $note);
 
     if ($ok) {
-        echo json_encode(['status' => 'success']);
+            echo json_encode(['status' => 'success', 'message' => 'Cập nhật thành công!']);
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Cập nhật thất bại!']);
+            echo json_encode(['status' => 'error', 'message' => 'Cập nhật thất bại! Vui lòng thử lại.']);
     }
+    } catch (Exception $e) {
+        error_log("Error in capNhatTrangThaiBan: " . $e->getMessage());
+        echo json_encode(['status' => 'error', 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()]);
+    }
+    exit;
 }
 
     public function demSoLuongTheoTrangThai($userId) {
@@ -196,20 +212,56 @@ public function capNhatTrangThaiBan() {
                 exit;
             }
             $idLoaiSanPham = $tinCu['category_id'];
-            $anhTenList = explode(',', $tinCu['image']);
-            if (isset($_FILES['image']) && $_FILES['image']['name'][0] != '') {
+            
+            // Lấy danh sách ảnh cũ cần giữ lại
                 $anhTenList = [];
+            if (isset($_POST['images_to_keep']) && is_array($_POST['images_to_keep'])) {
+                foreach ($_POST['images_to_keep'] as $img) {
+                    $img = trim($img);
+                    if (!empty($img)) {
+                        $anhTenList[] = $img;
+                    }
+                }
+            }
+            
+            // Thêm ảnh mới nếu có
+            if (isset($_FILES['image']) && !empty($_FILES['image']['name'][0])) {
                 foreach ($_FILES['image']['tmp_name'] as $i => $tmpName) {
+                    if (empty($_FILES['image']['name'][$i])) continue;
+                    
                     $fileName = $_FILES['image']['name'][$i];
                     $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                     if (!in_array($ext, ['jpg', 'jpeg', 'png'])) continue;
+                    
                     $newName = uniqid() . '.' . $ext;
-                    if (move_uploaded_file($tmpName, "img/$newName")) $anhTenList[] = $newName;
+                    if (move_uploaded_file($tmpName, "img/$newName")) {
+                        $anhTenList[] = $newName;
                 }
-                if (count($anhTenList) < 2) {
-                    header("Location: index.php?toast=" . urlencode("❌ Vui lòng chọn ít nhất 2 ảnh hợp lệ (.jpg, .png)!") . "&type=error");
+                }
+            }
+            
+            // Xóa các ảnh cũ không được giữ lại
+            $anhCuList = explode(',', $tinCu['image']);
+            foreach ($anhCuList as $imgCu) {
+                $imgCu = trim($imgCu);
+                if (!empty($imgCu) && !in_array($imgCu, $anhTenList)) {
+                    // Xóa file ảnh cũ
+                    $filePath = "img/" . $imgCu;
+                    if (file_exists($filePath)) {
+                        @unlink($filePath);
+                    }
+                }
+            }
+            
+            // Kiểm tra số lượng ảnh
+            $anhTenList = array_filter($anhTenList); // Loại bỏ phần tử rỗng
+            if (count($anhTenList) < 2) {
+                header("Location: index.php?quan-ly-tin&toast=" . urlencode("❌ Tổng số ảnh phải từ 2 đến 6 ảnh!") . "&type=error");
+                exit;
+            }
+            if (count($anhTenList) > 6) {
+                header("Location: index.php?quan-ly-tin&toast=" . urlencode("❌ Tổng số ảnh không được vượt quá 6 ảnh!") . "&type=error");
                     exit;
-                }
             }
 
             $hinhAnh = implode(',', $anhTenList);

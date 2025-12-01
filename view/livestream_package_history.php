@@ -1,60 +1,28 @@
 <?php
 // Load Security class
 require_once __DIR__ . '/../helpers/Security.php';
+// Dùng chung header của site
+include_once __DIR__ . '/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lịch Sử Mua Gói Livestream - ChoViet29</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+<style>
+        .livestream-history-page {
+            padding: 20px 0 40px 0;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
-
-        .container {
+        .livestream-history-page .container {
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        .header {
+        .livestream-history-page .header {
             text-align: center;
-            color: white;
             margin-bottom: 40px;
         }
 
-        .header h1 {
+        .livestream-history-page .header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .back-btn {
-            display: inline-block;
-            background: white;
-            color: #667eea;
-            padding: 12px 30px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .back-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         }
 
         .section {
@@ -154,7 +122,7 @@ require_once __DIR__ . '/../helpers/Security.php';
         }
 
         @media (max-width: 768px) {
-            .header h1 {
+            .livestream-history-page .header h1 {
                 font-size: 1.8em;
             }
 
@@ -168,22 +136,25 @@ require_once __DIR__ . '/../helpers/Security.php';
             }
         }
     </style>
-</head>
-<body>
+
+<div class="page-background">
+    <div class="content-wrapper">
+        <div class="container-fluid p-0">
+            <div class="livestream-history-page">
     <div class="container">
-        <a href="index.php?livestream-packages" class="back-btn">← Quay lại trang gói</a>
-        
         <div class="header">
-            <h1>📋 Lịch Sử Mua Gói Livestream</h1>
+            <h1><i class="fas fa-receipt mr-2"></i>Lịch Sử Mua Gói Livestream</h1>
         </div>
 
         <!-- Lịch sử đăng ký gói -->
         <div class="section">
-            <h2>🎫 Lịch Sử Đăng Ký Gói</h2>
+            <h2><i class="fas fa-ticket-alt mr-2"></i>Lịch Sử Đăng Ký Gói</h2>
             
             <?php if (empty($registrations)): ?>
                 <div class="empty-state">
-                    <div style="font-size: 4em; margin-bottom: 20px;">📦</div>
+                    <div style="font-size: 4em; margin-bottom: 20px;">
+                        <i class="fas fa-box-open" style="opacity: 0.3;"></i>
+                    </div>
                     <p style="font-size: 1.2em; color: #999;">Bạn chưa từng đăng ký gói nào</p>
                     <p style="margin-top: 10px;">
                         <a href="index.php?livestream-packages" style="color: #667eea; text-decoration: none; font-weight: bold;">
@@ -216,69 +187,18 @@ require_once __DIR__ . '/../helpers/Security.php';
                                 <?php if ($reg['status'] == 'active'): ?>
                                     <span class="badge badge-active">✓ Đang Hoạt Động</span>
                                 <?php elseif ($reg['status'] == 'expired'): ?>
-                                    <span class="badge badge-expired">⏰ Đã Hết Hạn</span>
+                                    <span class="badge badge-expired"><i class="fas fa-clock mr-1"></i>Đã Hết Hạn</span>
                                 <?php else: ?>
                                     <span class="badge badge-cancelled">✗ Đã Hủy</span>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($reg['payment_method'] == 'wallet'): ?>
-                                    💳 Ví
+                                    <i class="fas fa-wallet mr-1"></i>Ví
                                 <?php else: ?>
-                                    🏦 VNPay
+                                    <i class="fas fa-university mr-1"></i>VNPay
                                 <?php endif; ?>
                             </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php endif; ?>
-        </div>
-
-        <!-- Lịch sử thanh toán -->
-        <div class="section">
-            <h2>💰 Lịch Sử Thanh Toán</h2>
-            
-            <?php if (empty($payments)): ?>
-                <div class="empty-state">
-                    <div style="font-size: 4em; margin-bottom: 20px;">💳</div>
-                    <p style="font-size: 1.2em; color: #999;">Chưa có giao dịch thanh toán nào</p>
-                </div>
-            <?php else: ?>
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>Mã GD</th>
-                            <th>Gói</th>
-                            <th>Số Tiền</th>
-                            <th>Phương Thức</th>
-                            <th>Trạng Thái</th>
-                            <th>Ngày Thanh Toán</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($payments as $payment): ?>
-                        <tr>
-                            <td>#<?= $payment['id'] ?></td>
-                            <td><?= htmlspecialchars($payment['package_name']) ?></td>
-                            <td class="price"><?= number_format($payment['amount']) ?>đ</td>
-                            <td>
-                                <?php if ($payment['payment_method'] == 'wallet'): ?>
-                                    💳 Ví Nội Bộ
-                                <?php else: ?>
-                                    🏦 VNPay
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php if ($payment['payment_status'] == 'success'): ?>
-                                    <span class="badge badge-success">✓ Thành Công</span>
-                                <?php elseif ($payment['payment_status'] == 'pending'): ?>
-                                    <span class="badge badge-pending">⏳ Đang Chờ</span>
-                                <?php else: ?>
-                                    <span class="badge badge-failed">✗ Thất Bại</span>
-                                <?php endif; ?>
-                            </td>
-                            <td><?= date('d/m/Y H:i', strtotime($payment['payment_date'])) ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -289,7 +209,7 @@ require_once __DIR__ . '/../helpers/Security.php';
         <!-- Thống kê tổng quan -->
         <?php if (!empty($registrations) || !empty($payments)): ?>
         <div class="section">
-            <h2>📊 Thống Kê</h2>
+            <h2><i class="fas fa-chart-bar mr-2"></i>Thống Kê</h2>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                 <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
                     <div style="font-size: 2em; color: #667eea; font-weight: bold;">
@@ -329,37 +249,12 @@ require_once __DIR__ . '/../helpers/Security.php';
         </div>
         <?php endif; ?>
     </div>
-</body>
-</html>
+            </div>
+        </div>
+    </div>
+</div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<?php include_once __DIR__ . '/footer.php'; ?>
 
 
 

@@ -7,22 +7,50 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+include_once("model/mLivestreamPackage.php");
 include_once("model/mLivestream.php");
+$packageModel = new mLivestreamPackage();
+$permission = $packageModel->checkLivestreamPermission($_SESSION['user_id']);
+$canLivestream = $permission['has_permission'];
+
 $mLivestream = new mLivestream();
 $livestreams = $mLivestream->getLivestreamsByUserId($_SESSION['user_id']);
 ?>
 
 <style>
-.my-livestreams-container {
-    background: #f8f9fa;
-    min-height: 100vh;
-    padding: 40px 0;
+.page-background {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    min-height: calc(100vh - 180px);
+    padding: 0 2rem 2rem 2rem;
 }
 
-.container {
-    max-width: 1200px;
+.content-wrapper {
+    background: #ffffff;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+}
+
+.content-wrapper .container,
+.content-wrapper .container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+@media (max-width: 768px) {
+    .page-background {
+        padding: 0 1rem 1rem 1rem;
+    }
+    .content-wrapper {
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+}
+
+.my-livestreams-container {
+    padding: 40px 0;
 }
 
 .page-title {
@@ -185,16 +213,34 @@ $livestreams = $mLivestream->getLivestreamsByUserId($_SESSION['user_id']);
     color: white;
     transform: translateY(-2px);
 }
+
+/* Livestream icons đỏ */
+.my-livestreams-container i.fas.fa-video,
+.my-livestreams-container i.fas.fa-play,
+.my-livestreams-container i.fas.fa-play-circle,
+.my-livestreams-container i.fas.fa-broadcast-tower {
+    color: #dc3545 !important;
+}
 </style>
 
+<div class="page-background">
+    <div class="content-wrapper">
+        <div class="container-fluid p-0">
 <div class="my-livestreams-container">
-    <div class="container">
         <div class="page-title">
             <h1><i class="fas fa-video mr-2"></i>Livestream của tôi</h1>
             <p>Quản lý các livestream bạn đã tạo</p>
         </div>
 
-        <?php if (empty($livestreams)): ?>
+            <?php if (!$canLivestream): ?>
+                <div class="alert alert-warning text-center shadow-sm" style="border-radius: 16px;">
+                    <h4 class="mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Không thể truy cập Livestream của tôi</h4>
+                    <p class="mb-3"><?= htmlspecialchars($permission['message'] ?? 'Bạn cần có gói livestream đang hoạt động để sử dụng chức năng này.') ?></p>
+                    <a href="index.php?page=livestream-packages" class="create-livestream-btn">
+                        Gia hạn / mua gói livestream
+                    </a>
+                </div>
+            <?php elseif (empty($livestreams)): ?>
             <div class="empty-state">
                 <i class="fas fa-video"></i>
                 <h3>Chưa có livestream nào</h3>
@@ -256,6 +302,8 @@ $livestreams = $mLivestream->getLivestreamsByUserId($_SESSION['user_id']);
                 </a>
             </div>
         <?php endif; ?>
+            </div>
+        </div>
     </div>
 </div>
 

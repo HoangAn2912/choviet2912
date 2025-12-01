@@ -1,11 +1,42 @@
 <?php
 include_once("controller/cProduct.php");
+include_once("helpers/location_helper.php");
 $p = new cProduct();
 $products = [];
 
+$DEFAULT_PROVINCE_CODE = 79;
+$selectedProvinceCode = isset($_GET['province']) ? intval($_GET['province']) : $DEFAULT_PROVINCE_CODE;
+$selectedDistrictCode = isset($_GET['district']) ? intval($_GET['district']) : 0;
+
+if ($selectedProvinceCode <= 0) {
+    $selectedProvinceCode = $DEFAULT_PROVINCE_CODE;
+}
+
+$selectedProvinceName = '';
+$selectedDistrictName = '';
+
+if ($selectedProvinceCode > 0) {
+    [$selectedProvinceName, $selectedDistrictName] = resolveLocationNamesByCode(
+        $selectedProvinceCode,
+        $selectedDistrictCode > 0 ? $selectedDistrictCode : null
+    );
+}
+
+if (empty($selectedProvinceName)) {
+    [$selectedProvinceName] = resolveLocationNamesByCode($DEFAULT_PROVINCE_CODE);
+    $selectedProvinceCode = $DEFAULT_PROVINCE_CODE;
+}
+
 if (isset($_GET['keyword']) && !empty(trim($_GET['keyword']))) {
     $keyword = trim($_GET['keyword']);
-    $products = $p->searchProducts($keyword);
+    $products = $p->searchProducts($keyword, $selectedProvinceName, $selectedDistrictName);
+}
+
+if (!empty($selectedProvinceName) && !empty($products)) {
+    $products = array_values(array_filter($products, function ($product) use ($selectedProvinceName, $selectedDistrictName) {
+        $address = $product['address'] ?? '';
+        return addressMatchesLocation($address, $selectedProvinceName, $selectedDistrictName);
+    }));
 }
 ?>
 
@@ -59,13 +90,21 @@ if (isset($_GET['keyword']) && !empty(trim($_GET['keyword']))) {
 <?php include_once("view/header.php"); ?>
 
 <div class="container-fluid pt-5 pb-3">
-    <h2 class="section-title position-relative text-uppercase mx-xl-5 mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mx-xl-5 mb-4">
+        <h2 class="section-title position-relative text-uppercase mb-2 mb-md-0">
         <?php if (!empty($products)): ?>
             <span class="bg-secondary pr-3">Kết quả tìm kiếm cho: "<?= htmlspecialchars($keyword) ?>"</span>
         <?php else: ?>
             <span class="bg-secondary pr-3">Không tìm thấy sản phẩm phù hợp</span>
         <?php endif; ?>
     </h2>
+        <?php if (!empty($selectedProvinceName)): ?>
+            <span class="badge badge-pill px-3 py-2" style="background: rgba(40, 167, 69, 0.15); color: #218838; font-weight: 600;">
+                <i class="fas fa-map-marker-alt mr-1"></i>
+                <?= htmlspecialchars($selectedDistrictName ? $selectedDistrictName . ', ' . $selectedProvinceName : $selectedProvinceName) ?>
+            </span>
+        <?php endif; ?>
+    </div>
 
     <div class="row px-xl-5" id="product-list">
         <?php if (!empty($products)): ?>
@@ -85,6 +124,15 @@ if (isset($_GET['keyword']) && !empty(trim($_GET['keyword']))) {
                     </div>
                 </div>
             <?php endforeach; ?>
+        <?php elseif (!empty($selectedProvinceName)): ?>
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <p class="text-muted mb-3">Không tìm thấy sản phẩm nào phù hợp tại <?= htmlspecialchars($selectedDistrictName ? $selectedDistrictName . ', ' . $selectedProvinceName : $selectedProvinceName) ?>.</p>
+                    <button class="btn btn-outline-secondary" onclick="clearLocationFilter()">
+                        <i class="fas fa-times mr-1"></i>Xóa bộ lọc vị trí
+                    </button>
+                </div>
+            </div>
         <?php endif; ?>
     </div>
         <!-- Nút Xem thêm / Thu gọn -->

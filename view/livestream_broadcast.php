@@ -266,12 +266,12 @@ function initWs(){
     }
     else if (msg.type==='order_created'){ 
       // Cập nhật thống kê khi có đơn hàng mới
-      console.log('📦 Streamer received order_created:', msg);
+      console.log('Streamer received order_created:', msg);
       refreshStats();
     }
     else if (msg.type==='livestream_stats_update'){ 
       // Cập nhật thống kê real-time từ WebSocket
-      console.log('📊 Streamer received stats update:', msg.stats);
+      console.log('Streamer received stats update:', msg.stats);
       if (msg.stats) {
         document.getElementById('live-orders').textContent = msg.stats.order_count || 0;
         document.getElementById('live-revenue').textContent = formatRevenue(msg.stats.total_revenue || 0);
@@ -550,7 +550,7 @@ let currentViewersCount = 0; // Lưu số người xem từ WebSocket
 function updateViewersCount(count) {
   currentViewersCount = count;
   document.getElementById('live-viewers').textContent = count;
-  console.log('📊 Streamer: Viewers count updated to', count);
+  console.log('Streamer: Viewers count updated to', count);
 }
 
 // Hàm cập nhật lượt thích

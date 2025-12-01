@@ -188,6 +188,12 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             color: #666;
         }
         
+        /* Livestream icons đỏ cho viewer */
+        .video-placeholder i.fas.fa-video,
+        .streamer-info i.fas.fa-user-circle {
+            color: #dc3545 !important;
+        }
+        
         .chat-section {
             height: 280px;
             display: flex;
@@ -903,7 +909,7 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                     // Cập nhật số người xem real-time từ WebSocket
                     viewerCount = data.viewers_count || 0;
                     updateViewerCount();
-                    console.log('📊 Viewer count updated:', viewerCount);
+                    console.log('Viewer count updated:', viewerCount);
                     break;
                 case 'viewer_joined':
                     // Có người mới join, cập nhật số người xem
@@ -1559,7 +1565,7 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                 .then(data => {
                     if (data.success && data.stats) {
                         const newLikeCount = data.stats.like_count || 0;
-                        console.log('📊 Refreshed like count:', newLikeCount);
+                        console.log('Refreshed like count:', newLikeCount);
                         likeCount = newLikeCount;
                         updateLikeCount();
                     }

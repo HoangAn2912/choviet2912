@@ -6,6 +6,53 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: index.php?login');
     exit;
 }
+
+require_once("model/mLivestreamPackage.php");
+require_once("model/mUser.php");
+$packageModel = new mLivestreamPackage();
+$userModel = new mUser();
+$userInfo = $userModel->getUserById($_SESSION['user_id']);
+$userDisplayName = $userInfo['username'] ?? ($_SESSION['username'] ?? 'Người dùng');
+$userAvatar = 'img/default-avatar.jpg';
+if (!empty($userInfo['avatar'])) {
+    $avatarCandidate = 'img/' . basename($userInfo['avatar']);
+    if (file_exists($avatarCandidate)) {
+        $userAvatar = $avatarCandidate;
+    }
+}
+$livestreamPermission = $packageModel->checkLivestreamPermission($_SESSION['user_id']);
+$canLivestream = $livestreamPermission['has_permission'];
+$activeRegistration = $livestreamPermission['registration'] ?? null;
+
+if (!$canLivestream || !$activeRegistration) {
+    ?>
+    <div class="container py-5 my-5">
+        <div class="alert alert-warning shadow-sm text-center" role="alert" style="max-width: 640px; margin: 0 auto; border-radius: 16px;">
+            <h4 class="alert-heading mb-3"><i class="fas fa-exclamation-triangle mr-2"></i>Không thể tạo livestream</h4>
+            <p class="mb-3">
+                <?= htmlspecialchars($livestreamPermission['message'] ?? 'Gói livestream của bạn đã hết hạn. Vui lòng gia hạn để tiếp tục livestream.') ?>
+            </p>
+            <a href="index.php?page=livestream-packages" class="btn btn-warning font-weight-bold px-4">
+                Gia hạn gói livestream
+            </a>
+        </div>
+    </div>
+    <?php
+    include_once("view/footer.php");
+    exit;
+}
+
+$registrationStart = new DateTime($activeRegistration['registration_date']);
+$registrationEnd = new DateTime($activeRegistration['expiry_date']);
+$now = new DateTime();
+$defaultStart = $now < $registrationStart ? $registrationStart : $now;
+if ($defaultStart > $registrationEnd) {
+    $defaultStart = clone $registrationStart;
+}
+
+$registrationStartIso = $registrationStart->format('Y-m-d\TH:i');
+$registrationEndIso = $registrationEnd->format('Y-m-d\TH:i');
+$defaultStartIso = $defaultStart->format('Y-m-d\TH:i');
 ?>
 
 <style>
@@ -135,6 +182,14 @@ input[type="file"].form-control::file-selector-button:hover {
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
 
+/* Livestream icons đỏ */
+.create-livestream-container i.fas.fa-video,
+.create-livestream-container i.fas.fa-broadcast-tower,
+.create-livestream-container i.fas.fa-play-circle,
+.create-livestream-container i.fas.fa-circle-play {
+    color: #dc3545 !important;
+}
+
 .product-selection {
     border: 2px dashed #dee2e6;
     border-radius: 10px;
@@ -233,7 +288,7 @@ input[type="file"].form-control::file-selector-button:hover {
 }
 </style>
 
-<div class="container-fluid create-livestream-container">
+<div class="container-fluid create-livestream-container" style="padding: 0px;">
     <div class="row">
         <div class="col-12">
             <div class="form-container">
@@ -261,6 +316,16 @@ input[type="file"].form-control::file-selector-button:hover {
                     <p>Chia sẻ sản phẩm của bạn với khách hàng qua livestream</p>
                 </div>
 
+                <div class="alert alert-info" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-clock fa-lg mr-3 text-primary"></i>
+                        <div class="text-left">
+                            <strong>Gói livestream của bạn có hiệu lực:</strong><br>
+                            <span>Từ <strong><?= date('d/m/Y H:i', strtotime($activeRegistration['registration_date'])) ?></strong> đến <strong><?= date('d/m/Y H:i', strtotime($activeRegistration['expiry_date'])) ?></strong></span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Form -->
                 <form id="create-livestream-form">
                     <!-- Step 1: Basic Info -->
@@ -281,13 +346,24 @@ input[type="file"].form-control::file-selector-button:hover {
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="start-time">Thời gian bắt đầu</label>
-                                    <input type="datetime-local" class="form-control" id="start-time">
+                                    <input type="datetime-local"
+                                           class="form-control"
+                                           id="start-time"
+                                           value="<?= $defaultStartIso ?>"
+                                           min="<?= $registrationStartIso ?>"
+                                           max="<?= $registrationEndIso ?>">
+                                    <small class="text-muted">Trong khoảng hiệu lực gói livestream.</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="end-time">Thời gian kết thúc (tùy chọn)</label>
-                                    <input type="datetime-local" class="form-control" id="end-time">
+                                    <input type="datetime-local"
+                                           class="form-control"
+                                           id="end-time"
+                                           min="<?= $registrationStartIso ?>"
+                                           max="<?= $registrationEndIso ?>">
+                                    <small class="text-muted">Nếu bỏ trống, mặc định livestream sẽ diễn ra trong khung giờ đã đăng ký.</small>
                                 </div>
                             </div>
                         </div>
@@ -321,9 +397,9 @@ input[type="file"].form-control::file-selector-button:hover {
                         <h5 class="mb-3">Xem trước livestream</h5>
                         <div class="preview-card" style="border: 1px solid #e9ecef; border-radius: 10px; padding: 20px;">
                             <div class="d-flex align-items-center mb-3">
-                                <img src="img/default-avatar.jpg" class="rounded-circle mr-3" width="50" height="50">
+                                <img src="<?= htmlspecialchars($userAvatar) ?>" class="rounded-circle mr-3" width="50" height="50" style="object-fit: cover; border-radius: 50%;">
                                 <div>
-                                    <h6 class="mb-0"><?= htmlspecialchars($_SESSION['username'] ?? 'User') ?></h6>
+                                    <h6 class="mb-0"><?= htmlspecialchars($userDisplayName) ?></h6>
                                     <small class="text-muted">Sắp live</small>
                                 </div>
                             </div>
@@ -356,13 +432,59 @@ input[type="file"].form-control::file-selector-button:hover {
 </div>
 
 <script>
+const LIVESTREAM_ALLOWED_START = '<?= $registrationStartIso ?>';
+const LIVESTREAM_ALLOWED_END = '<?= $registrationEndIso ?>';
 let currentStep = 1;
 let selectedProducts = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     loadProducts();
     updateStepDisplay();
+    initTimeRangeControls();
 });
+
+function initTimeRangeControls() {
+    const startInput = document.getElementById('start-time');
+    const endInput = document.getElementById('end-time');
+    if (!startInput || !endInput) return;
+
+    startInput.min = LIVESTREAM_ALLOWED_START;
+    startInput.max = LIVESTREAM_ALLOWED_END;
+    endInput.min = startInput.value || LIVESTREAM_ALLOWED_START;
+    endInput.max = LIVESTREAM_ALLOWED_END;
+
+    startInput.addEventListener('change', () => {
+        if (!startInput.value) {
+            startInput.value = LIVESTREAM_ALLOWED_START;
+        }
+        if (!isWithinAllowedRange(startInput.value)) {
+            alert('Thời gian bắt đầu phải nằm trong thời hạn gói livestream.');
+            startInput.value = LIVESTREAM_ALLOWED_START;
+        }
+        endInput.min = startInput.value;
+        if (endInput.value && new Date(endInput.value) <= new Date(startInput.value)) {
+            endInput.value = '';
+        }
+    });
+
+    endInput.addEventListener('change', () => {
+        if (endInput.value && !isWithinAllowedRange(endInput.value)) {
+            alert('Thời gian kết thúc phải nằm trong thời hạn gói livestream.');
+            endInput.value = '';
+        } else if (endInput.value && new Date(endInput.value) <= new Date(startInput.value)) {
+            alert('Thời gian kết thúc phải sau thời gian bắt đầu.');
+            endInput.value = '';
+        }
+    });
+}
+
+function isWithinAllowedRange(value) {
+    if (!value) return false;
+    const startBoundary = new Date(LIVESTREAM_ALLOWED_START);
+    const endBoundary = new Date(LIVESTREAM_ALLOWED_END);
+    const compareDate = new Date(value);
+    return compareDate >= startBoundary && compareDate <= endBoundary;
+}
 
 function nextStep() {
     if (validateCurrentStep()) {
@@ -412,6 +534,28 @@ function validateCurrentStep() {
         if (!title) {
             alert('Vui lòng nhập tiêu đề livestream');
             return false;
+        }
+
+        const startVal = document.getElementById('start-time').value;
+        if (!startVal) {
+            alert('Vui lòng chọn thời gian bắt đầu livestream');
+            return false;
+        }
+        if (!isWithinAllowedRange(startVal)) {
+            alert('Thời gian bắt đầu phải nằm trong thời hạn gói livestream.');
+            return false;
+        }
+
+        const endVal = document.getElementById('end-time').value;
+        if (endVal) {
+            if (!isWithinAllowedRange(endVal)) {
+                alert('Thời gian kết thúc phải nằm trong thời hạn gói livestream.');
+                return false;
+            }
+            if (new Date(endVal) <= new Date(startVal)) {
+                alert('Thời gian kết thúc phải sau thời gian bắt đầu.');
+                return false;
+            }
         }
     }
     return true;
@@ -543,8 +687,8 @@ document.getElementById('create-livestream-form').addEventListener('submit', fun
         try {
             const data = JSON.parse(text);
             if (data.success) {
-                alert('Tạo livestream thành công!');
-                window.location.href = `index.php?streamer&id=${data.livestream_id}`;
+                const targetUrl = data.redirect_url || `index.php?streamer&id=${data.livestream_id}`;
+                window.location.href = `${targetUrl}&toast=${encodeURIComponent('✅ Tạo livestream thành công!')}&type=success`;
             } else {
                 alert('Có lỗi xảy ra: ' + data.message);
             }

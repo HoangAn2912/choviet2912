@@ -8,14 +8,19 @@ class cProduct {
         return $m->getSanPhamMoiNhat(100); // hoặc bỏ LIMIT hoàn toàn
     }
 
+    public function getSanPhamMoiTheoTinh($provinceName, $districtName = '') {
+        $m = new mProduct();
+        return $m->getSanPhamMoiNhatTheoViTri($provinceName, $districtName, 100);
+    }
+
     public function getSanPhamById($id) {
         $m = new mProduct();
         return $m->getSanPhamById($id);
     }
 
-    public function searchProducts($keyword) {
+    public function searchProducts($keyword, $provinceName = '', $districtName = '') {
         $m = new mProduct();
-        return $m->searchProducts($keyword);
+        return $m->searchProducts($keyword, $provinceName, $districtName);
     }
 
     public function getHotProducts($limit = 10) {

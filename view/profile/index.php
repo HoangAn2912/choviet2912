@@ -274,9 +274,25 @@ $half = $review['rating'] - $full >= 0.5;
       </div>
 
       <div class="form-group">
-        <label>Địa chỉ</label>
-        <input type="text" name="address" class="form-control" value="<?= htmlspecialchars($user['address']) ?>">
+        <label>Địa chỉ chi tiết</label>
+        <input type="text" id="profile-address-detail" class="form-control" placeholder="Số nhà, tên đường, phường/xã" value="<?= htmlspecialchars($user['address']) ?>">
       </div>
+
+      <div class="form-group">
+        <label>Tỉnh/Thành phố <span class="text-danger">*</span></label>
+        <select id="profile-province" class="form-control" required>
+          <option value="">Chọn tỉnh/thành phố</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Quận/Huyện <span class="text-danger">*</span></label>
+        <select id="profile-district" class="form-control" required disabled>
+          <option value="">Chọn quận/huyện</option>
+        </select>
+      </div>
+
+      <input type="hidden" name="address" id="profile-full-address" value="<?= htmlspecialchars($user['address']) ?>">
 
       <div class="form-group">
         <label>Ngày sinh</label>
@@ -293,3 +309,143 @@ value="<?= htmlspecialchars($user['birth_date']) ?>">
     </form>
   </div>
 </div>
+
+<script>
+const profileExistingAddress = <?= json_encode($user['address'] ?? '') ?>;
+
+function normalizeVietnamese(str = '') {
+    return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/tinh|thanh pho|tp\.|quan|huyen|thi xa|thixa|quan\./g, '')
+        .replace(/[^a-z0-9]/g, '')
+        .trim();
+}
+
+function parseProfileAddress(address = '') {
+    const result = {
+        detail: address || '',
+        district: '',
+        province: ''
+    };
+    if (!address) return result;
+    const parts = address.split(',').map(part => part.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+        result.province = parts.pop();
+        if (parts.length >= 1) {
+            result.district = parts.pop();
+        }
+        result.detail = parts.join(', ');
+    }
+    return result;
+}
+
+async function loadProfileProvinces(defaultProvinceName = '', defaultDistrictName = '') {
+    const provinceSelect = document.getElementById('profile-province');
+    if (!provinceSelect) return;
+    provinceSelect.innerHTML = '<option value=\"\">Chọn tỉnh/thành phố</option>';
+    const districtSelect = document.getElementById('profile-district');
+    if (districtSelect) {
+        districtSelect.innerHTML = '<option value=\"\">Chọn quận/huyện</option>';
+        districtSelect.disabled = true;
+    }
+    try {
+        const response = await fetch('https://provinces.open-api.vn/api/');
+        const provinces = await response.json();
+        provinces.forEach(province => {
+            const option = document.createElement('option');
+            option.value = province.code;
+            option.textContent = province.name;
+            provinceSelect.appendChild(option);
+        });
+
+        if (defaultProvinceName) {
+            const matchedProvince = provinces.find(p => normalizeVietnamese(p.name) === normalizeVietnamese(defaultProvinceName));
+            if (matchedProvince) {
+                provinceSelect.value = matchedProvince.code;
+                await loadProfileDistricts(matchedProvince.code, defaultDistrictName);
+            } else {
+                await loadProfileDistricts('');
+            }
+        } else {
+            await loadProfileDistricts('');
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải danh sách tỉnh/thành phố:', error);
+    }
+}
+
+async function loadProfileDistricts(provinceCode, defaultDistrictName = '') {
+    const districtSelect = document.getElementById('profile-district');
+    if (!districtSelect) return;
+
+    if (!provinceCode) {
+        districtSelect.innerHTML = '<option value=\"\">Chọn quận/huyện</option>';
+        districtSelect.disabled = true;
+        return;
+    }
+
+    districtSelect.disabled = true;
+    districtSelect.innerHTML = '<option value=\"\">Đang tải...</option>';
+
+    try {
+        const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+        const data = await response.json();
+
+        districtSelect.innerHTML = '<option value=\"\">Chọn quận/huyện</option>';
+        (data.districts || []).forEach(district => {
+            const option = document.createElement('option');
+            option.value = district.code;
+            option.textContent = district.name;
+            districtSelect.appendChild(option);
+        });
+
+        if (defaultDistrictName) {
+            const matchedDistrict = (data.districts || []).find(d => normalizeVietnamese(d.name) === normalizeVietnamese(defaultDistrictName));
+            if (matchedDistrict) {
+                districtSelect.value = matchedDistrict.code;
+            }
+        }
+
+        districtSelect.disabled = false;
+    } catch (error) {
+        console.error('Lỗi khi tải danh sách quận/huyện:', error);
+        districtSelect.disabled = false;
+    }
+}
+
+function setupProfileAddressForm() {
+    const form = document.querySelector('#editProfileModal form');
+    const detailInput = document.getElementById('profile-address-detail');
+    const provinceSelect = document.getElementById('profile-province');
+    const districtSelect = document.getElementById('profile-district');
+    const fullAddressInput = document.getElementById('profile-full-address');
+
+    if (!form || !provinceSelect || !districtSelect || !fullAddressInput) return;
+
+    const parsedAddress = parseProfileAddress(profileExistingAddress);
+    if (parsedAddress.detail && detailInput) {
+        detailInput.value = parsedAddress.detail;
+    }
+
+    loadProfileProvinces(parsedAddress.province, parsedAddress.district);
+
+    provinceSelect.addEventListener('change', function () {
+        loadProfileDistricts(this.value);
+    });
+
+    form.addEventListener('submit', function () {
+        const detail = detailInput?.value.trim() || '';
+        const provinceName = provinceSelect.selectedOptions[0]?.textContent || '';
+        const districtName = districtSelect.selectedOptions[0]?.textContent || '';
+        const parts = [];
+        if (detail) parts.push(detail);
+        if (districtName) parts.push(districtName);
+        if (provinceName) parts.push(provinceName);
+        fullAddressInput.value = parts.join(', ');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', setupProfileAddressForm);
+</script>

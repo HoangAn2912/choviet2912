@@ -2,7 +2,7 @@
 
 
     <!-- Footer Start -->
-    <div class="container-fluid bg-dark text-secondary mt-5 pt-5">
+    <div class="container-fluid bg-dark text-secondary mt-3 pt-5">
         <div class="row px-xl-5 pt-5">
             <div class="col-lg-4 col-md-12 mb-5 pr-3 pr-xl-5">
                 <h5 class="text-secondary text-uppercase mb-4">Thông tin</h5>
@@ -16,18 +16,18 @@
                     <div class="col-md-4 mb-5">
                         <h5 class="text-secondary text-uppercase mb-4">Hỗ trợ khách hàng</h5>
                         <div class="d-flex flex-column justify-content-start">
-                            <a class="text-secondary mb-2" href="#"><i class="fa fa-angle-right mr-2"></i>Trung tâm trợ giúp</a>
-                            <a class="text-secondary mb-2" href="#"><i class="fa fa-angle-right mr-2"></i>An toàn mua bán</a>
-                            <a class="text-secondary mb-2" href="#"><i class="fa fa-angle-right mr-2"></i>Liên hệ hỗ trợ</a>
+                            <a class="text-secondary mb-2" href="index.php?page=help-center"><i class="fa fa-angle-right mr-2"></i>Trung tâm trợ giúp</a>
+                            <a class="text-secondary mb-2" href="index.php?page=safety-guide"><i class="fa fa-angle-right mr-2"></i>An toàn mua bán</a>
+                            <a class="text-secondary mb-2" href="index.php?page=contact-support"><i class="fa fa-angle-right mr-2"></i>Liên hệ hỗ trợ</a>
                         </div>
                     </div>
                     <div class="col-md-4 mb-5">
                         <h5 class="text-secondary text-uppercase mb-4">Về chợ Việt</h5>
                         <div class="d-flex flex-column justify-content-start">
-                            <a class="text-secondary mb-2" href="#"><i class="fa fa-angle-right mr-2"></i>Giới thiệu</a>
-                            <a class="text-secondary mb-2" href="#"><i class="fa fa-angle-right mr-2"></i>Chính sách bảo mật</a>
-                            <a class="text-secondary mb-2" href="#"><i class="fa fa-angle-right mr-2"></i>Giải quyết tranh chấp</a>
-                            <a class="text-secondary mb-2" href="#"><i class="fa fa-angle-right mr-2"></i>Blog</a>
+                            <a class="text-secondary mb-2" href="index.php?page=about"><i class="fa fa-angle-right mr-2"></i>Giới thiệu</a>
+                            <a class="text-secondary mb-2" href="index.php?page=privacy-policy"><i class="fa fa-angle-right mr-2"></i>Chính sách bảo mật</a>
+                            <a class="text-secondary mb-2" href="index.php?page=dispute-resolution"><i class="fa fa-angle-right mr-2"></i>Giải quyết tranh chấp</a>
+                            <a class="text-secondary mb-2" href="index.php?page=blog"><i class="fa fa-angle-right mr-2"></i>Blog</a>
                         </div>
                     </div>
                     <div class="col-md-4 mb-5">

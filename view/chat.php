@@ -479,14 +479,14 @@ function bootstrapConversationListRealtime() {
       tempDiv.innerHTML = displayText;
       const titleElement = tempDiv.querySelector('h6');
       if (titleElement) {
-        displayText = '📦 ' + titleElement.textContent.trim();
+        displayText = 'Sản phẩm: ' + titleElement.textContent.trim();
       } else {
         // Fallback: tìm trong HTML
         const match = displayText.match(/<h6[^>]*>([^<]+)<\/h6>/);
         if (match) {
-          displayText = '📦 ' + match[1].trim();
+          displayText = 'Sản phẩm: ' + match[1].trim();
         } else {
-          displayText = '📦 Đã gửi sản phẩm';
+          displayText = 'Đã gửi sản phẩm';
         }
       }
     }
@@ -555,14 +555,14 @@ function compactConversationItems() {
         tempDiv.innerHTML = text;
         const titleElement = tempDiv.querySelector('h6');
         if (titleElement) {
-          text = '📦 ' + titleElement.textContent.trim();
+          text = 'Sản phẩm: ' + titleElement.textContent.trim();
         } else {
           // Fallback: regex extract
           const match = text.match(/<h6[^>]*>([^<]+)<\/h6>/);
           if (match) {
-            text = '📦 ' + match[1].trim();
+            text = 'Sản phẩm: ' + match[1].trim();
           } else {
-            text = '📦 Đã gửi sản phẩm';
+            text = 'Đã gửi sản phẩm';
           }
         }
       }

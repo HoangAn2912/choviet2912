@@ -82,7 +82,7 @@ class mPost {
     }
     
     public function layTatCaTinDangTheoNguoiDung($userId) {
-        $sql = "SELECT sp.*, tk.balance 
+        $sql = "SELECT sp.*, tk.balance, nd.username, nd.avatar
                 FROM products sp
                 INNER JOIN users nd ON sp.user_id = nd.id 
                 INNER JOIN transfer_accounts tk ON nd.id = tk.user_id 
@@ -97,6 +97,8 @@ class mPost {
     
         while ($row = $result->fetch_assoc()) {
             $row['thoi_gian_cu_the'] = $this->tinhThoiGian($row['updated_date']);
+            // Xử lý thời gian cập nhật - sửa typo
+            $row['thoi_pricen_cu_the'] = $row['thoi_gian_cu_the'];
             $posts[] = $row;
         }
     
@@ -135,13 +137,23 @@ class mPost {
     public function layThongTinNguoiDung($userId) {
         $sql = "SELECT nd.avatar, nd.username, tk.balance, nd.address
                 FROM users nd
-                INNER JOIN transfer_accounts tk ON nd.id = tk.user_id
+                LEFT JOIN transfer_accounts tk ON nd.id = tk.user_id
                 WHERE nd.id = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $userId);
         $stmt->execute();
         $result = $stmt->get_result();
-        return $result->fetch_assoc();
+        $user = $result->fetch_assoc();
+        
+        // Đảm bảo các giá trị mặc định nếu NULL
+        if ($user) {
+            $user['avatar'] = $user['avatar'] ?? 'default-avatar.png';
+            $user['username'] = $user['username'] ?? 'Người dùng';
+            $user['balance'] = $user['balance'] ?? 0;
+            $user['address'] = $user['address'] ?? 'Chưa cập nhật';
+        }
+        
+        return $user;
     }
 
     public function demSoLuongTin($userId) {
@@ -153,13 +165,47 @@ class mPost {
         return intval($res['count']);
     }
     
-    public function updateTrangThaiBan($idTin, $trangThaiBanMoi) {
+    public function updateTrangThaiBan($idTin, $trangThaiBanMoi, $note = null) {
+        try {
+            // Nếu có note, cập nhật cả note và sale_status
+            if ($note !== null && !empty(trim($note))) {
+                // Giới hạn độ dài note để tránh vượt quá varchar(255)
+                $note = substr(trim($note), 0, 255);
+                $sql = "UPDATE products SET sale_status = ?, note = ?, updated_date = NOW() WHERE id = ?";
+                $stmt = $this->conn->prepare($sql);
+                if (!$stmt) {
+                    error_log("Prepare failed: " . $this->conn->error);
+                    return false;
+                }
+                $stmt->bind_param("ssi", $trangThaiBanMoi, $note, $idTin);
+            } else {
+                // Nếu không có note, chỉ cập nhật sale_status (giữ nguyên note cũ)
         $sql = "UPDATE products SET sale_status = ?, updated_date = NOW() WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
+                if (!$stmt) {
+                    error_log("Prepare failed: " . $this->conn->error);
+                    return false;
+                }
         $stmt->bind_param("si", $trangThaiBanMoi, $idTin);
+            }
+            
         $result = $stmt->execute();
+            if (!$result) {
+                error_log("Execute failed: " . $stmt->error);
+                $stmt->close();
+                return false;
+            }
+            
+            // Kiểm tra affected_rows để đảm bảo có dòng nào được update
+            $affectedRows = $stmt->affected_rows;
         $stmt->close();
+            
+            // Trả về true nếu execute thành công (kể cả khi affected_rows = 0, có thể do giá trị không thay đổi)
         return $result;
+        } catch (Exception $e) {
+            error_log("Error in updateTrangThaiBan: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function laySanPhamTheoId($id) {

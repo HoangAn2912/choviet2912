@@ -114,6 +114,41 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Không tìm thấy livestream']);
         }
         break;
+
+    case 'update_livestream_info':
+        // Cập nhật tiêu đề và mô tả livestream từ streamer panel
+        $livestream_id = $_POST['livestream_id'] ?? null;
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+
+        if (!$livestream_id || $title === '') {
+            echo json_encode(['success' => false, 'message' => 'Tiêu đề không được để trống']);
+            break;
+        }
+
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Vui lòng đăng nhập']);
+            break;
+        }
+
+        // Chỉ cho phép chủ livestream sửa
+        $livestream = $model->getLivestreamById($livestream_id);
+        if (!$livestream || (int)$livestream['user_id'] !== (int)$_SESSION['user_id']) {
+            echo json_encode(['success' => false, 'message' => 'Bạn không có quyền sửa livestream này']);
+            break;
+        }
+
+        $sql = "UPDATE livestream SET title = ?, description = ? WHERE id = ?";
+        $conn = (new Connect())->connect();
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssi", $title, $description, $livestream_id);
+
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true, 'message' => 'Cập nhật livestream thành công']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Không thể cập nhật livestream']);
+        }
+        break;
         
     case 'add_viewer':
         $livestream_id = $_POST['livestream_id'] ?? null;

@@ -418,9 +418,38 @@ if (isset($_SESSION['user_id'])) {
             display: flex;
         }
         
-        .search-form-full .input-group .form-control {
+        .search-form-full .input-group-append {
+            display: flex;
+        }
+        
+        .search-form-full .form-control {
             flex: 1;
             min-width: 0;
+            height: 40px;
+            border-radius: 20px 0 0 20px;
+            border: 0;
+        }
+        
+        .search-submit-btn {
+            background: linear-gradient(135deg, #FFD333, #FFA500);
+            border: none;
+            height: 40px;
+            padding: 0 18px;
+            border-radius: 0 20px 20px 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        
+        .search-submit-btn i {
+            margin: 0;
+            font-size: 0.95rem;
         }
         
         .header-user {
@@ -441,7 +470,7 @@ if (isset($_SESSION['user_id'])) {
             .header-user {
                 grid-column: 1 / -1;
             }
-                        .search-form-full {
+            .search-form-full {
                 max-width: 100%;
                 width: 100%;
             }
@@ -478,17 +507,37 @@ if (isset($_SESSION['user_id'])) {
                 padding: 0.5rem 1rem !important;
             }
             
+            /* Hàng 1: Danh mục sản phẩm + Đăng bài trên cùng một hàng */
+            .header-line-2 .col-auto {
+                width: 100%;
+                max-width: 100%;
+                margin-bottom: 0;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                justify-content: center;
+            }
+            
+            .header-line-2 .col-auto button,
+            .header-line-2 .col-auto .btn-dang-tin {
+                flex: 1 1 48%;
+                min-width: 180px;
+                max-width: 260px;
+            }
+            
+            /* Hàng 2: Các menu còn lại */
+            .header-line-2 .col {
+                width: 100%;
+                max-width: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 6px;
+            }
+            
             .navbar-sticky .row:last-child .nav-link {
                 font-size: 0.8rem !important;
                 padding: 0.4rem 0.8rem !important;
-            }
-            
-            .navbar-sticky .row:last-child .col-auto {
-                width: 100%;
-            }
-            
-            .navbar-sticky .row:last-child .col {
-                width: 100%;
             }
         }
         
@@ -500,6 +549,38 @@ if (isset($_SESSION['user_id'])) {
             
             .navbar-sticky .row:last-child .nav-link i {
                 margin-right: 0.3rem !important;
+            }
+            
+            .search-form-full .form-control {
+                height: 36px;
+            }
+            
+            .search-submit-btn {
+                height: 36px;
+                padding: 0 14px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 575.98px) {
+            .header-search {
+                width: 100%;
+            }
+            .search-form-full .input-group {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .search-form-full .form-control {
+                border-radius: 999px;
+                width: 100%;
+            }
+            
+            .search-submit-btn {
+                width: 100%;
+                border-radius: 999px;
+                height: 38px;
+                justify-content: center;
             }
         }
 
@@ -1137,13 +1218,11 @@ if (isset($_SESSION['user_id'])) {
             <div class="header-search d-flex align-items-center justify-content-center" style="width: 100%; min-width: 0;">
                 <form action="index.php" method="get" class="search-form-full" style="width: 100%;">
                     <input type="hidden" name="search" value="1">
-                    <div class="input-group" style="
-            max-width: 100%;">
-                        <input type="text" name="keyword" class="form-control" placeholder="Tìm kiếm sản phẩm..." required style="height: 36px; font-size: 0.9rem; border-radius: 18px 0 0 18px;">
+                    <div class="input-group" style="max-width: 100%;">
+                        <input type="text" name="keyword" class="form-control" placeholder="Tìm kiếm sản phẩm..." required>
                         <div class="input-group-append">
-                            <button class="btn d-flex align-items-center justify-content-center" type="submit" style="background: linear-gradient(135deg, #FFD333, #FFA500); height: 36px; padding: 0 15px; border-radius: 0 18px 18px 0; border: none; white-space: nowrap;">
-                                <i class="fa fa-search text-white mr-2"></i>
-                                <span class="text-white" style="font-size: 0.9rem; font-weight: 500;">Tìm kiếm</span>
+                            <button class="btn search-submit-btn" type="submit">
+                                <i class="fa fa-search"></i>
                             </button>
                         </div>
                     </div>
@@ -1278,12 +1357,6 @@ if (isset($_SESSION['user_id'])) {
                         </a>
                         <a class="dropdown-item" href="index.php?livestream-package-history"><i class="fas fa-history mr-2"></i>Lịch Sử Mua Gói</a>
                         <?php if ($is_business_account): ?>
-                        <div class="dropdown-divider"></div>
-                        <h6 class="dropdown-header"><i class="fas fa-store mr-2"></i>Quản Lý Bán Hàng</h6>
-                        <a class="dropdown-item" href="index.php?seller-dashboard"><i class="fas fa-chart-line mr-2"></i>Dashboard & Thống Kê</a>
-                        <a class="dropdown-item" href="index.php?inventory-management"><i class="fas fa-boxes mr-2"></i>Quản Lý Tồn Kho</a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="index.php?advanced-search"><i class="fas fa-search-plus mr-2"></i>Tìm Kiếm Nâng Cao</a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1295,18 +1368,15 @@ if (isset($_SESSION['user_id'])) {
                 <div class="dropdown">
                     <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" type="button" id="locationFilter" data-bs-toggle="dropdown" aria-expanded="false" style="height: 40px; font-size: 0.9rem; border-radius: 20px; padding: 0.5rem 1rem;">
                         <i class="fas fa-map-marker-alt mr-2"></i>
-                        <span id="location-text">Vị trí</span>
+                        <span id="location-text">Hồ Chí Minh</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="locationFilter" style="min-width: 300px; max-height: 400px; overflow-y: auto;">
                         <li class="dropdown-header"><i class="fas fa-filter mr-2"></i>Lọc theo vị trí</li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <div class="px-3 py-2">
-                                <select id="filter-province" class="form-control form-control-sm mb-2" onchange="loadFilterDistricts()">
-                                    <option value="">Chọn Tỉnh/Thành phố</option>
-                                </select>
-                                <select id="filter-district" class="form-control form-control-sm" onchange="applyLocationFilter()">
-                                    <option value="">Chọn Quận/Huyện</option>
+                                <select id="filter-province" class="form-control form-control-sm" onchange="applyLocationFilter()">
+                                    <option value="">Chọn tỉnh/thành phố</option>
                                 </select>
                             </div>
                         </li>
@@ -1431,6 +1501,58 @@ if (isset($_SESSION['user_id'])) {
 
 <!-- File toast dùng chung -->
 <script src="js/toast.js"></script>
+<?php if (isset($_SESSION['user_id'])): ?>
+<script>
+(function () {
+    const userId = <?= (int)$_SESSION['user_id'] ?>;
+    if (!userId) return;
+
+    let lastSignature = '';
+
+    async function checkUnreadMessages() {
+        try {
+            const response = await fetch(`chat/unread_${userId}.json?ts=${Date.now()}`, {
+                cache: 'no-store'
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    lastSignature = '';
+                }
+                return;
+            }
+
+            const unread = await response.json();
+            const signature = JSON.stringify(unread || {});
+            const totalUnread = Object.values(unread || {}).reduce((sum, count) => {
+                const num = parseInt(count, 10);
+                return sum + (isNaN(num) ? 0 : num);
+            }, 0);
+
+            if (totalUnread > 0 && signature !== lastSignature) {
+                lastSignature = signature;
+                if (typeof showToast === 'function') {
+                    showToast('Bạn có tin nhắn mới', 'warning');
+                }
+            } else if (totalUnread === 0) {
+                lastSignature = '';
+            }
+        } catch (error) {
+            console.warn('Không thể kiểm tra tin nhắn mới:', error);
+        }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            checkUnreadMessages();
+        }
+    });
+
+    checkUnreadMessages();
+    setInterval(checkUnreadMessages, 15000);
+})();
+</script>
+<?php endif; ?>
 
 <!-- Gọi nếu có -->
 <?php include_once("toastify.php"); ?>
@@ -1536,8 +1658,16 @@ if (isset($_SESSION['user_id'])) {
     }
     
     // Xử lý lọc vị trí
+    const DEFAULT_PROVINCE_CODE = '79';
+    const DEFAULT_PROVINCE_NAME = 'Hồ Chí Minh';
     let filterProvinces = [];
-    let filterDistricts = [];
+    
+    function updateLocationText(text) {
+        const locationText = document.getElementById('location-text');
+        if (locationText) {
+            locationText.textContent = text || DEFAULT_PROVINCE_NAME;
+        }
+    }
     
     async function loadFilterProvinces() {
         try {
@@ -1545,112 +1675,91 @@ if (isset($_SESSION['user_id'])) {
             filterProvinces = await response.json();
             
             const provinceSelect = document.getElementById('filter-province');
-            const locationText = document.getElementById('location-text');
+            if (!provinceSelect) return;
             
-            if (provinceSelect) {
-                provinceSelect.innerHTML = '<option value="">Chọn Tỉnh/Thành phố</option>';
-                let hcmFound = false;
-                
+            provinceSelect.innerHTML = '';
                 filterProvinces.forEach(province => {
                     const option = document.createElement('option');
                     option.value = province.code;
                     option.textContent = province.name;
-                    // Set Hồ Chí Minh (code 79) as default
-                    if (province.code === 79) {
-                        option.selected = true;
-                        hcmFound = true;
-                    }
                     provinceSelect.appendChild(option);
                 });
                 
-                // Auto load districts for Hồ Chí Minh if selected
-                if (hcmFound) {
-                    provinceSelect.value = '79';
-                    await loadFilterDistricts();
-                    // Update location text
-                    if (locationText) {
-                        locationText.textContent = 'Hồ Chí Minh';
-                    }
-                }
-            }
+            const urlParams = new URL(window.location.href).searchParams;
+            const storedLocation = sessionStorage.getItem('filter_location');
+            let storedProvinceCode = '';
+            let storedProvinceName = '';
+            
+            if (storedLocation) {
+                try {
+                    const parsed = JSON.parse(storedLocation);
+                    storedProvinceCode = parsed.province || '';
+                    storedProvinceName = parsed.province_name || '';
+        } catch (error) {
+                    console.warn('Không thể parse filter_location:', error);
+        }
+    }
+    
+            let initialProvinceCode = urlParams.get('province') || storedProvinceCode || DEFAULT_PROVINCE_CODE;
+            if (!Array.from(provinceSelect.options).some(opt => String(opt.value) === String(initialProvinceCode))) {
+                initialProvinceCode = DEFAULT_PROVINCE_CODE;
+        }
+        
+            provinceSelect.value = initialProvinceCode;
+            const initialName = provinceSelect.selectedOptions[0]?.textContent || storedProvinceName || DEFAULT_PROVINCE_NAME;
+            updateLocationText(initialName);
+            
+            sessionStorage.setItem('filter_location', JSON.stringify({
+                province: initialProvinceCode,
+                province_name: initialName
+            }));
+            
+            provinceSelect.addEventListener('change', applyLocationFilter);
         } catch (error) {
             console.error('Lỗi khi tải danh sách tỉnh/thành phố:', error);
         }
     }
     
-    async function loadFilterDistricts() {
-        const provinceSelect = document.getElementById('filter-province');
-        const districtSelect = document.getElementById('filter-district');
-        
-        if (!provinceSelect || !districtSelect || !provinceSelect.value) {
-            if (districtSelect) {
-                districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
-            }
-            return;
-        }
-        
-        districtSelect.disabled = true;
-        try {
-            const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceSelect.value}?depth=2`);
-            const data = await response.json();
-            
-            districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
-            data.districts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district.code;
-                option.textContent = district.name;
-                districtSelect.appendChild(option);
-            });
-            
-            districtSelect.disabled = false;
-        } catch (error) {
-            console.error('Lỗi khi tải danh sách quận/huyện:', error);
-            districtSelect.disabled = false;
-        }
-    }
-    
     function applyLocationFilter() {
         const provinceSelect = document.getElementById('filter-province');
-        const districtSelect = document.getElementById('filter-district');
-        const locationText = document.getElementById('location-text');
+        if (!provinceSelect) return;
         
-        if (provinceSelect && districtSelect) {
-            const provinceName = provinceSelect.selectedOptions[0]?.textContent || '';
-            const districtName = districtSelect.selectedOptions[0]?.textContent || '';
-            
-            // Update location text
-            if (locationText) {
-                if (districtName) {
-                    locationText.textContent = districtName + ', ' + provinceName;
-                } else if (provinceName) {
-                    locationText.textContent = provinceName;
-                }
-            }
-            
-            if (districtSelect.value) {
-                // Lưu vào sessionStorage hoặc cookie để filter sản phẩm
+        let provinceCode = provinceSelect.value || DEFAULT_PROVINCE_CODE;
+        const option = provinceSelect.querySelector(`option[value=\"${provinceCode}\"]`);
+        const provinceName = option ? option.textContent : DEFAULT_PROVINCE_NAME;
+        
+        updateLocationText(provinceName);
                 sessionStorage.setItem('filter_location', JSON.stringify({
-                    province: provinceSelect.value,
-                    province_name: provinceName,
-                    district: districtSelect.value,
-                    district_name: districtName
-                }));
-                
-                // Reload trang với filter
+            province: provinceCode,
+            province_name: provinceName
+        }));
+        
+        if (typeof window.updateHomepageProducts === 'function') {
+            window.updateHomepageProducts(provinceCode, provinceName);
+        } else {
                 const url = new URL(window.location.href);
-                url.searchParams.set('province', provinceSelect.value);
-                url.searchParams.set('district', districtSelect.value);
+            url.searchParams.set('province', provinceCode);
                 window.location.href = url.toString();
-            }
         }
     }
     
     function clearLocationFilter() {
         sessionStorage.removeItem('filter_location');
+        const provinceSelect = document.getElementById('filter-province');
+        if (provinceSelect) {
+            provinceSelect.value = DEFAULT_PROVINCE_CODE;
+        }
+        const option = provinceSelect?.querySelector(`option[value=\"${DEFAULT_PROVINCE_CODE}\"]`);
+        const provinceName = option ? option.textContent : DEFAULT_PROVINCE_NAME;
+        updateLocationText(provinceName);
+        
+        if (typeof window.updateHomepageProducts === 'function') {
+            window.updateHomepageProducts(DEFAULT_PROVINCE_CODE, provinceName);
+        } else {
         const url = new URL(window.location.href);
-        url.searchParams.delete('province');
-        url.searchParams.delete('district');
+            url.searchParams.set('province', DEFAULT_PROVINCE_CODE);
         window.location.href = url.toString();
+        }
     }
     
     // Vô hiệu hóa Bootstrap dropdown click - CHỈ DÙNG HOVER
@@ -1671,49 +1780,66 @@ if (isset($_SESSION['user_id'])) {
         });
     }
     
-    // Xử lý ẩn/hiện header line 2 khi cuộn
+    // Xử lý ẩn/hiện header line 2 khi cuộn - Tối ưu để tránh ẩn/hiện liên tục
     function initHeaderScroll() {
         const headerLine1 = document.querySelector('.header-line-1');
         const headerLine2 = document.getElementById('header-line-2');
         if (!headerLine2) return;
         
         let lastScrollTop = 0;
-        let scrollThreshold = 50; // Ngưỡng cuộn tối thiểu để trigger
+        let scrollThreshold = 150; // Tăng ngưỡng cuộn để tránh ẩn/hiện liên tục
         let isScrolling = false;
+        let scrollTimeout = null;
+        let isHeaderVisible = true; // Track trạng thái hiện tại của header
         
         window.addEventListener('scroll', function() {
+            // Clear timeout trước đó
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+            
+            // Debounce: chỉ xử lý sau khi người dùng ngừng cuộn 100ms
+            scrollTimeout = setTimeout(function() {
             if (isScrolling) return;
             
             isScrolling = true;
             requestAnimationFrame(function() {
                 const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+                    const scrollDifference = Math.abs(currentScroll - lastScrollTop);
                 
-                // Nếu ở đầu trang (scrollTop < 100), luôn hiện header line 2
-                if (currentScroll < 100) {
+                    // Nếu ở đầu trang (scrollTop < 150), luôn hiện header line 2
+                    if (currentScroll < 150) {
+                        if (!isHeaderVisible) {
                     headerLine2.classList.remove('hidden');
                     if (headerLine1) headerLine1.classList.remove('no-border');
+                            isHeaderVisible = true;
+                        }
                     lastScrollTop = currentScroll;
                     isScrolling = false;
                     return;
                 }
                 
-                // Kiểm tra hướng cuộn
-                if (Math.abs(currentScroll - lastScrollTop) > scrollThreshold) {
-                    if (currentScroll > lastScrollTop) {
-                        // Cuộn xuống - Ẩn header line 2
+                    // Chỉ xử lý nếu cuộn đủ xa (tăng threshold) và có sự thay đổi rõ ràng
+                    if (scrollDifference > scrollThreshold) {
+                        if (currentScroll > lastScrollTop && isHeaderVisible) {
+                            // Cuộn xuống - Ẩn header line 2 (chỉ khi đang hiện)
                         headerLine2.classList.add('hidden');
                         if (headerLine1) headerLine1.classList.add('no-border');
-                    } else {
-                        // Cuộn lên - Hiện header line 2
+                            isHeaderVisible = false;
+                            lastScrollTop = currentScroll;
+                        } else if (currentScroll < lastScrollTop && !isHeaderVisible) {
+                            // Cuộn lên - Hiện header line 2 (chỉ khi đang ẩn)
                         headerLine2.classList.remove('hidden');
                         if (headerLine1) headerLine1.classList.remove('no-border');
-                    }
+                            isHeaderVisible = true;
                     lastScrollTop = currentScroll;
+                        }
                 }
                 
                 isScrolling = false;
             });
-        });
+            }, 100); // Debounce 100ms
+        }, { passive: true });
     }
     
     // Khởi tạo
@@ -1732,7 +1858,6 @@ if (isset($_SESSION['user_id'])) {
     }
     
     // Export functions
-    window.loadFilterDistricts = loadFilterDistricts;
     window.applyLocationFilter = applyLocationFilter;
     window.clearLocationFilter = clearLocationFilter;
 })();

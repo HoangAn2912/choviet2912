@@ -15,8 +15,23 @@ if (!isset($_SESSION['user_id'])) {
 try {
     include_once __DIR__ . "/../model/mLivestream.php";
     include_once __DIR__ . "/../model/mConnect.php";
+    include_once __DIR__ . "/../model/mLivestreamPackage.php";
     
     $model = new mLivestream();
+    $packageModel = new mLivestreamPackage();
+    
+    $permission = $packageModel->checkLivestreamPermission($_SESSION['user_id']);
+    if (!$permission['has_permission'] || empty($permission['registration'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => $permission['message'] ?? 'Gói livestream đã hết hạn. Vui lòng gia hạn gói live để tiếp tục.'
+        ]);
+        exit;
+    }
+    
+    $registration = $permission['registration'];
+    $registrationStart = new DateTime($registration['registration_date']);
+    $registrationEnd = new DateTime($registration['expiry_date']);
     
     // Xử lý upload ảnh
     $imageName = 'default-live.jpg';
@@ -51,12 +66,47 @@ try {
         }
     }
 
+    $startInput = trim($_POST['start_time'] ?? '');
+    if ($startInput === '') {
+        $startDate = new DateTime();
+    } else {
+        $startDate = new DateTime($startInput);
+    }
+    
+    if ($startDate < $registrationStart || $startDate > $registrationEnd) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Thời gian bắt đầu phải nằm trong hiệu lực gói livestream. Vui lòng gia hạn gói live.'
+        ]);
+        exit;
+    }
+    
+    $endInput = trim($_POST['end_time'] ?? '');
+    $endDate = null;
+    if ($endInput !== '') {
+        $endDate = new DateTime($endInput);
+        if ($endDate <= $startDate) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Thời gian kết thúc phải sau thời gian bắt đầu.'
+            ]);
+            exit;
+        }
+        if ($endDate > $registrationEnd) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Thời gian kết thúc vượt quá thời hạn gói livestream. Vui lòng gia hạn gói live.'
+            ]);
+            exit;
+        }
+    }
+
     $data = [
         'user_id' => $_SESSION['user_id'],
         'title' => $_POST['title'] ?? '',
         'description' => $_POST['description'] ?? '',
-        'start_time' => $_POST['start_time'] ?? date('Y-m-d H:i:s'),
-        'end_time' => $_POST['end_time'] ?? null,
+        'start_time' => $startDate->format('Y-m-d H:i:s'),
+        'end_time' => $endDate ? $endDate->format('Y-m-d H:i:s') : null,
         'status' => 'chua_bat_dau',
         'image' => $imageName
     ];
@@ -77,7 +127,8 @@ try {
         echo json_encode([
             'success' => true, 
             'message' => 'Tạo livestream thành công',
-            'livestream_id' => $livestream_id
+            'livestream_id' => $livestream_id,
+            'redirect_url' => 'index.php?streamer&id=' . $livestream_id
         ]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi tạo livestream']);

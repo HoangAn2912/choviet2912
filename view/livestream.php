@@ -11,6 +11,62 @@ $mLivestream = new mLivestream();
 $allLivestreams = $mLivestream->getLivestreams(null, 50); // Lấy tối đa 50 livestream
 ?>
 
+<style>
+        /* Page Background - Gradient nhẹ */
+        .page-background {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: calc(100vh - 180px);
+            padding: 0 2rem 2rem 2rem;
+        }
+
+        /* Livestream icons đỏ */
+        .content-wrapper i.fas.fa-video,
+        .content-wrapper i.fas.fa-broadcast-tower,
+        .content-wrapper i.fas.fa-play,
+        .content-wrapper i.fas.fa-circle {
+            color: #dc3545 !important;
+        }
+
+        /* Content wrapper - Khối trắng bên trong */
+        .content-wrapper {
+            background: #ffffff;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        /* Bỏ padding của container bên trong content-wrapper */
+        .content-wrapper .container,
+        .content-wrapper .container-fluid {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        
+        /* Override px-xl-5 trong content-wrapper */
+        .content-wrapper .px-xl-5 {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        
+        @media (max-width: 768px) {
+            .page-background {
+                padding: 0 1rem 1rem 1rem;
+            }
+            
+            .content-wrapper {
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+        }
+</style>
+
+<!-- Page Background Start -->
+<div class="page-background">
+    <!-- Content Wrapper Start -->
+    <div class="content-wrapper">
+
 <div class="container-fluid pt-4">
     <div class="row px-xl-5">
         <div class="col-12">
@@ -128,17 +184,17 @@ $allLivestreams = $mLivestream->getLivestreams(null, 50); // Lấy tối đa 50 
                                          class="img-fluid w-100 h-100" 
                                          style="object-fit: cover;">
                                     
-                                    <!-- Status Badge -->
-                                    <div class="position-absolute top-0 left-0 m-2">
+                                    <!-- Status Badge - Top Left -->
+                                    <div class="position-absolute" style="top: 8px; left: 8px; z-index: 10;">
                                         <span class="badge <?= $statusClass === 'live' ? 'animate-pulse' : '' ?>" 
-                                              style="background-color: <?= $badgeColor ?>; color: white; padding: 4px 8px; border-radius: 4px;">
+                                              style="background-color: <?= $badgeColor ?>; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
                                             <i class="<?= $statusIcon ?> text-white mr-1" style="font-size: 8px;"></i><?= $statusText ?>
                                         </span>
                                     </div>
                                     
-                                    <!-- Viewer Count -->
-                                    <div class="position-absolute top-0 right-0 m-2">
-                                        <span class="badge" style="background-color: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px;">
+                                    <!-- Viewer Count - Top Right -->
+                                    <div class="position-absolute" style="top: 8px; right: 8px; z-index: 10;">
+                                        <span class="badge" style="background-color: rgba(0,0,0,0.7); color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
                                             <i class="fas fa-user mr-1"></i><?= $viewerText ?>
                                         </span>
                                     </div>
@@ -202,6 +258,11 @@ $allLivestreams = $mLivestream->getLivestreams(null, 50); // Lấy tối đa 50 
         <?php endif; ?>
     </div>
 </div>
+
+    </div>
+    <!-- Content Wrapper End -->
+</div>
+<!-- Page Background End -->
 
 <script>
 // Function để đặt nhắc nhở

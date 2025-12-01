@@ -24,17 +24,43 @@ include_once("header.php");
 ?>
 
 <style>
+        /* Page Background - Gradient nhẹ */
+        .page-background {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: calc(100vh - 180px);
+            padding: 0 2rem 2rem 2rem;
+        }
+
+        /* Content wrapper - Khối trắng bên trong */
+        .content-wrapper {
+            background: #ffffff;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        /* Bỏ padding của container bên trong content-wrapper */
+        .content-wrapper .container,
+        .content-wrapper .container-fluid {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
 .orders-container {
-    background: #f8f9fa;
-    min-height: 100vh;
-    padding: 10px 0;
+    background: transparent;
+    min-height: auto;
+    padding: 0;
 }
 
 .orders-header {
     background: linear-gradient(135deg, #ffc107, #ff8f00);
     color: #333;
-    padding: 15px 0;
-    margin-bottom: 15px;
+    padding: 20px 0;
+    margin-bottom: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
 }
 
 .orders-header h1 {
@@ -470,6 +496,15 @@ include_once("header.php");
 }
 
 @media (max-width: 768px) {
+    .page-background {
+        padding: 0 1rem 1rem 1rem;
+    }
+    
+    .content-wrapper {
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+    
     .order-details {
         grid-template-columns: 1fr;
     }
@@ -496,9 +531,14 @@ include_once("header.php");
 }
 </style>
 
+<!-- Page Background Start -->
+<div class="page-background">
+    <!-- Content Wrapper Start -->
+    <div class="content-wrapper">
+
 <div class="orders-container">
     <div class="orders-header">
-        <div class="container">
+        <div class="container" style="padding-left: 0; padding-right: 0;">
             <h1><i class="fas fa-shopping-bag mr-3"></i>Đơn hàng của tôi</h1>
             <p>Quản lý và theo dõi tất cả đơn hàng của bạn</p>
             <?php if ($status_filter): ?>
@@ -525,7 +565,7 @@ include_once("header.php");
         </div>
     </div>
 
-    <div class="container">
+    <div class="container" style="padding-left: 0; padding-right: 0;">
         <?php if (empty($orders)): ?>
             <div class="empty-orders">
                 <i class="fas fa-shopping-cart"></i>
@@ -735,6 +775,11 @@ include_once("header.php");
         <?php endif; ?>
     </div>
 </div>
+
+    </div>
+    <!-- Content Wrapper End -->
+</div>
+<!-- Page Background End -->
 
 <script>
 function cancelOrder(orderId) {

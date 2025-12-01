@@ -74,7 +74,7 @@ class mLivestreamPackage {
             }
 
             // 2. Kiểm tra và tự động nâng cấp tài khoản lên doanh nghiệp (nếu cần)
-            $user_sql = "SELECT account_type FROM users WHERE id = ?";
+            $user_sql = "SELECT account_type, role_id FROM users WHERE id = ?";
             $user_stmt = $this->conn->prepare($user_sql);
             $user_stmt->bind_param("i", $user_id);
             $user_stmt->execute();
@@ -85,10 +85,15 @@ class mLivestreamPackage {
             }
 
             // Nếu là tài khoản cá nhân, tự động nâng cấp lên doanh nghiệp
-            if ($user['account_type'] !== 'doanh_nghiep') {
-                $upgrade_sql = "UPDATE users SET account_type = 'doanh_nghiep', updated_date = NOW() WHERE id = ?";
+            $accountType = strtolower($user['account_type'] ?? '');
+            $roleId = intval($user['role_id'] ?? 0);
+            if ($accountType !== 'doanh_nghiep' || $roleId === 2) {
+                // role_id=2: người dùng thường -> chuyển sang role_id=5: doanh nghiệp
+                $newRoleId = ($roleId === 2) ? 5 : $roleId;
+                
+                $upgrade_sql = "UPDATE users SET account_type = 'doanh_nghiep', role_id = ?, updated_date = NOW() WHERE id = ?";
                 $upgrade_stmt = $this->conn->prepare($upgrade_sql);
-                $upgrade_stmt->bind_param("i", $user_id);
+                $upgrade_stmt->bind_param("ii", $newRoleId, $user_id);
                 
                 if (!$upgrade_stmt->execute()) {
                     throw new Exception("Không thể nâng cấp tài khoản lên doanh nghiệp");
@@ -167,7 +172,7 @@ class mLivestreamPackage {
         $user_stmt->execute();
         $user = $user_stmt->get_result()->fetch_assoc();
 
-        if (!$user || $user['account_type'] !== 'doanh_nghiep') {
+        if (!$user || strtolower($user['account_type'] ?? '') !== 'doanh_nghiep') {
             return [
                 'has_permission' => false,
                 'registration' => null,

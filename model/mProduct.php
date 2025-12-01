@@ -35,6 +35,39 @@ class mProduct {
         return $data;
     }
 
+    public function getSanPhamMoiNhatTheoViTri($provinceName, $districtName = '', $limit = 100) {
+        $sql = "SELECT sp.*, nd.username, nd.avatar, nd.phone, nd.address
+                FROM products sp 
+                JOIN users nd ON sp.user_id = nd.id 
+                WHERE sp.sale_status = 'Đang bán' AND sp.status = 'Đã duyệt'";
+
+        $params = [];
+        $types = "";
+        $sql .= $this->buildLocationWhereClause($provinceName, $districtName, $types, $params);
+
+        $sql .= " ORDER BY sp.updated_date DESC, sp.created_date DESC
+                LIMIT ?";
+        $params[] = $limit;
+        $types .= "i";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $data = [];
+        while ($row = $result->fetch_assoc()) {
+            if (!empty($row['image'])) {
+                $dsAnh = array_map('trim', explode(',', $row['image']));
+                $row['anh_dau'] = $dsAnh[0] ?? '';
+            } else {
+                $row['anh_dau'] = '';
+            }
+            $data[] = $row;
+        }
+        return $data;
+    }
+
     public function tinhThoiGian($created_date) {
         $now = new DateTime();
         $created = new DateTime($created_date);
@@ -65,14 +98,21 @@ class mProduct {
         return $data;
     }
     
-    public function searchProducts($keyword) {
+    public function searchProducts($keyword, $provinceName = '', $districtName = '') {
         $sql = "SELECT sp.*, nd.username, nd.avatar, nd.phone, nd.address
                 FROM products sp 
                 JOIN users nd ON sp.user_id = nd.id 
-                WHERE sp.sale_status = 'Đang bán' AND sp.title LIKE ?";
-        $stmt = $this->conn->prepare($sql);
+                WHERE sp.sale_status = 'Đang bán' AND sp.status = 'Đã duyệt' AND sp.title LIKE ?";
+        $params = [];
+        $types = "";
         $likeKeyword = '%' . $keyword . '%';
-        $stmt->bind_param("s", $likeKeyword);
+        $params[] = $likeKeyword;
+        $types .= "s";
+
+        $sql .= $this->buildLocationWhereClause($provinceName, $districtName, $types, $params);
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
     
@@ -296,6 +336,75 @@ class mProduct {
         }
         
         return $data;
+    }
+
+    private function buildLocationWhereClause($provinceName, $districtName, &$types, &$params) {
+        $clauses = [];
+
+        if (!empty($provinceName)) {
+            $provinceVariants = $this->buildAddressPatterns($provinceName, true);
+            if (!empty($provinceVariants)) {
+                $provinceClauses = [];
+                foreach ($provinceVariants as $variant) {
+                    $provinceClauses[] = "nd.address LIKE ?";
+                    $params[] = '%' . $variant . '%';
+                    $types .= "s";
+                }
+                $clauses[] = '(' . implode(' OR ', $provinceClauses) . ')';
+            }
+        }
+
+        if (!empty($districtName)) {
+            $districtVariants = $this->buildAddressPatterns($districtName, false);
+            if (!empty($districtVariants)) {
+                $districtClauses = [];
+                foreach ($districtVariants as $variant) {
+                    $districtClauses[] = "nd.address LIKE ?";
+                    $params[] = '%' . $variant . '%';
+                    $types .= "s";
+                }
+                $clauses[] = '(' . implode(' OR ', $districtClauses) . ')';
+            }
+        }
+
+        return $clauses ? ' AND ' . implode(' AND ', $clauses) : '';
+    }
+
+    private function buildAddressPatterns($name, $isProvince = true) {
+        $name = trim($name);
+        if ($name === '') {
+            return [];
+        }
+
+        $variants = [];
+        $normalized = preg_replace('/\s+/u', ' ', $name);
+        $variants[] = $normalized;
+
+        $core = preg_replace('/^(Tỉnh|Thành phố|TP\\.?)/iu', '', $normalized);
+        $core = trim($core);
+        if (!empty($core) && $core !== $normalized) {
+            $variants[] = $core;
+        }
+
+        if ($isProvince && stripos($normalized, 'Thành phố') === 0 && !empty($core)) {
+            $variants[] = 'TP ' . $core;
+            $variants[] = 'TP. ' . $core;
+        }
+
+        if (!$isProvince && !empty($core)) {
+            $districtCore = preg_replace('/^(Quận|Huyện|Thị xã|Thành phố|TP\\.?)/iu', '', $normalized);
+            $districtCore = trim($districtCore);
+            if (!empty($districtCore) && $districtCore !== $normalized) {
+                $variants[] = $districtCore;
+            }
+            if (stripos($normalized, 'Quận') === 0) {
+                $variants[] = 'Q. ' . $districtCore;
+                $variants[] = 'Q ' . $districtCore;
+            }
+        }
+
+        $variants = array_values(array_unique(array_filter($variants)));
+        return $variants;
     }
     
     

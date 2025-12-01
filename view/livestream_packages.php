@@ -48,9 +48,7 @@ include_once __DIR__ . '/header.php';
 <style>
         /* Custom styles for Livestream Packages Page */
         .livestream-packages-page {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 40px 20px;
+            padding: 20px 0 40px 0;
         }
 
         .livestream-packages-page .container {
@@ -360,14 +358,16 @@ include_once __DIR__ . '/header.php';
         }
     </style>
 
-<div class="livestream-packages-page">
-    <div class="container">
-        <a href="index.php" class="back-btn">← Quay lại trang chủ</a>
+<div class="page-background">
+    <div class="content-wrapper">
+        <div class="container-fluid p-0">
+            <div class="livestream-packages-page">
+                <div class="container">
         
         <div class="header">
             <?php if ($is_business): ?>
                 <h1>🎥 Gia Hạn Gói Livestream</h1>
-                <p>Chọn gói để gia hạn hoặc nâng cấp gói livestream của bạn</p>
+                <p style="color: #000">Chọn gói để gia hạn hoặc nâng cấp gói livestream của bạn</p>
             <?php else: ?>
                 <h1>🎥 Đăng Ký Gói Livestream Doanh Nghiệp</h1>
                 <p>Nâng cấp lên tài khoản doanh nghiệp để bắt đầu livestream bán hàng</p>
@@ -391,7 +391,7 @@ include_once __DIR__ . '/header.php';
         <?php if ($activeRegistration): ?>
         <div class="active-package-alert">
             <h3>✅ Bạn đang sử dụng gói: <?= htmlspecialchars($activeRegistration['package_name']) ?></h3>
-            <p>⏰ Hiệu lực đến: <strong><?= date('d/m/Y H:i', strtotime($activeRegistration['expiry_date'])) ?></strong></p>
+            <p><i class="fas fa-clock mr-1"></i>Hiệu lực đến: <strong><?= date('d/m/Y H:i', strtotime($activeRegistration['expiry_date'])) ?></strong></p>
             <p>Bạn có thể mua gói mới để gia hạn hoặc nâng cấp.</p>
         </div>
         <?php endif; ?>
@@ -419,8 +419,8 @@ include_once __DIR__ . '/header.php';
                     <li>Giỏ hàng & đặt hàng ngay trong live</li>
                     <li>Thống kê doanh thu chi tiết</li>
                     <?php if ($package['id'] == 3): ?>
-                        <li><strong>🎁 Không giới hạn số lần livestream</strong></li>
-                        <li><strong>🎁 Không giới hạn thời lượng</strong></li>
+                        <li><strong><i class="fas fa-gift mr-1"></i>Không giới hạn số lần livestream</strong></li>
+                        <li><strong><i class="fas fa-gift mr-1"></i>Không giới hạn thời lượng</strong></li>
                     <?php endif; ?>
                 </ul>
                 
@@ -432,7 +432,7 @@ include_once __DIR__ . '/header.php';
                                 <?= Security::csrfField() ?>
                                 <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
                                 <button type="submit" class="btn-purchase btn-wallet">
-                                    💳 Gia Hạn bằng Ví
+                                    <i class="fas fa-wallet mr-2"></i>Gia Hạn bằng Ví
                                 </button>
                             </form>
                             
@@ -440,7 +440,7 @@ include_once __DIR__ . '/header.php';
                                 <?= Security::csrfField() ?>
                                 <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
                                 <button type="submit" class="btn-purchase btn-vnpay">
-                                    🏦 Gia Hạn qua VNPay
+                                    <i class="fas fa-university mr-2"></i>Gia Hạn qua VNPay
                                 </button>
                             </form>
                         <?php else: ?>
@@ -449,7 +449,7 @@ include_once __DIR__ . '/header.php';
                                 <?= Security::csrfField() ?>
                                 <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
                                 <button type="submit" class="btn-purchase btn-wallet">
-                                    💳 Đăng Ký bằng Ví
+                                    <i class="fas fa-wallet mr-2"></i>Đăng Ký bằng Ví
                                 </button>
                             </form>
                             
@@ -457,7 +457,7 @@ include_once __DIR__ . '/header.php';
                                 <?= Security::csrfField() ?>
                                 <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
                                 <button type="submit" class="btn-purchase btn-vnpay">
-                                    🏦 Đăng Ký qua VNPay
+                                    <i class="fas fa-university mr-2"></i>Đăng Ký qua VNPay
                                 </button>
                             </form>
                         <?php endif; ?>
@@ -472,7 +472,7 @@ include_once __DIR__ . '/header.php';
         </div>
 
         <div class="info-section">
-            <h2>📋 Thông tin quan trọng</h2>
+            <h2><i class="fas fa-info-circle mr-2"></i>Thông tin quan trọng</h2>
             <p><strong>✅ Ai được sử dụng tính năng livestream?</strong></p>
             <p>Chỉ tài khoản <strong>Doanh Nghiệp</strong> mới được phép mua gói và livestream bán hàng.</p>
             
@@ -491,6 +491,9 @@ include_once __DIR__ . '/header.php';
             
             <p><strong>📞 Hỗ trợ:</strong></p>
             <p>Nếu gặp vấn đề, vui lòng liên hệ <strong>support@choviet29.com</strong> hoặc hotline <strong>1900 xxxx</strong></p>
+        </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

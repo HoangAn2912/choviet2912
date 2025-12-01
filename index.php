@@ -1,5 +1,19 @@
 
 <?php
+// Xử lý action trước khi include các file khác để tránh output
+if (isset($_GET['action']) && $_GET['action'] == 'capNhatTrangThai') {
+    // Đảm bảo không có output trước
+    ob_start();
+    header('Content-Type: application/json; charset=utf-8');
+    include_once("helpers/Security.php");
+    Security::initSecureSession();
+    Security::validateSession();
+    include_once("controller/cPost.php");
+    $ctrl = new cPost();
+    $ctrl->capNhatTrangThaiBan();
+    exit;
+}
+
 // Include Security helper
 include_once("helpers/Security.php");
 
@@ -65,12 +79,7 @@ $controller = new cDetailProduct();
 
 <body>
     <?php
-        if (isset($_GET['action']) && $_GET['action'] == 'capNhatTrangThai') {
-            include_once("controller/cPost.php");
-            $ctrl = new cPost();
-            $ctrl->capNhatTrangThaiBan();
-            exit;
-        }else if (isset($_GET['action']) && $_GET['action'] == 'dangTin') {
+        if (isset($_GET['action']) && $_GET['action'] == 'dangTin') {
             include_once "controller/cPost.php";
             $post = new cPost();
             $post->dangTin();
@@ -102,38 +111,34 @@ $controller = new cDetailProduct();
             include_once("view/naptien.php");
         }else if (isset($_GET['quan-ly-tin'])) {
             include_once("view/managePost.php");
-        }else if (isset($_GET['advanced-search'])) {
-            // Tìm kiếm nâng cao với filter
-            include_once("view/advanced_search.php");
+        }else if (isset($_GET['page']) && $_GET['page'] == 'help-center') {
+            // Trang Trung tâm trợ giúp
+            include_once("view/help_center.php");
             exit;
-        }else if (isset($_GET['inventory-management'])) {
-            // Quản lý tồn kho
-            include_once("view/inventory_management.php");
+        }else if (isset($_GET['page']) && $_GET['page'] == 'safety-guide') {
+            // Trang An toàn mua bán
+            include_once("view/safety_guide.php");
             exit;
-        }else if (isset($_GET['seller-dashboard'])) {
-            // Dashboard người bán
-            include_once("view/seller_dashboard.php");
+        }else if (isset($_GET['page']) && $_GET['page'] == 'contact-support') {
+            // Trang Liên hệ hỗ trợ
+            include_once("view/contact_support.php");
             exit;
-        }else if (isset($_GET['seller-update-order-status'])) {
-            // API: Cập nhật trạng thái đơn hàng
-            include_once("controller/cSellerDashboard.php");
-            $dashboard = new cSellerDashboard();
-            $dashboard->updateOrderStatus();
-        }else if (isset($_GET['seller-order-details'])) {
-            // API: Chi tiết đơn hàng
-            include_once("controller/cSellerDashboard.php");
-            $dashboard = new cSellerDashboard();
-            $dashboard->getOrderDetails();
-        }else if (isset($_GET['inventory-update-settings'])) {
-            // API: Cập nhật cài đặt tồn kho
-            include_once("controller/cInventory.php");
-            $inv = new cInventory();
-            $inv->updateSettings();
-        }else if (isset($_GET['inventory-adjust-stock'])) {
-            // API: Điều chỉnh tồn kho
-            include_once("controller/cInventory.php");
-            $inv = new cInventory();
-            $inv->adjustStock();
+        }else if (isset($_GET['page']) && $_GET['page'] == 'about') {
+            // Trang Giới thiệu
+            include_once("view/about.php");
+            exit;
+        }else if (isset($_GET['page']) && $_GET['page'] == 'privacy-policy') {
+            // Trang Chính sách bảo mật
+            include_once("view/privacy_policy.php");
+            exit;
+        }else if (isset($_GET['page']) && $_GET['page'] == 'dispute-resolution') {
+            // Trang Giải quyết tranh chấp
+            include_once("view/dispute_resolution.php");
+            exit;
+        }else if (isset($_GET['page']) && $_GET['page'] == 'blog') {
+            // Trang Blog
+            include_once("view/blog.php");
+            exit;
         }else if (isset($_GET['inventory-history'])) {
             // API: Lịch sử tồn kho
             include_once("controller/cInventory.php");
@@ -169,17 +174,14 @@ $controller = new cDetailProduct();
                 $_GET['thongtin'] = $userId;
                 include_once("view/profile/index.php");
             } else {
-                // Nếu không tìm thấy người dùng, chuyển hướng về trang chủ
                 include_once("view/index.php");
             }
         } else if(isset($_GET['livestream'])){
             if(isset($_GET['id'])){
-                // Hiển thị livestream chi tiết
                 include_once("controller/cLivestream.php");
                 $cLivestream = new cLivestream();
                 $cLivestream->showLivestream();
             } else {
-                // Hiển thị danh sách livestream
                 include_once("view/livestream.php");
             }
         } else if(isset($_GET['create-livestream'])){
@@ -202,7 +204,8 @@ $controller = new cDetailProduct();
             $check_stmt->close();
             $db->close();
             
-            if (!$check_user || $check_user['account_type'] !== 'doanh_nghiep') {
+            $accountType = strtolower(trim($check_user['account_type'] ?? ''));
+            if ($accountType !== 'doanh_nghiep') {
                 // Chuyển hướng đến trang đăng ký gói
                 echo "<script>
                     alert('Chỉ tài khoản doanh nghiệp mới được tạo livestream. Vui lòng đăng ký gói livestream để nâng cấp tài khoản!');
@@ -232,7 +235,8 @@ $controller = new cDetailProduct();
             $check_stmt->close();
             $db->close();
             
-            if (!$check_user || $check_user['account_type'] !== 'doanh_nghiệp') {
+            $accountType = strtolower(trim($check_user['account_type'] ?? ''));
+            if ($accountType !== 'doanh_nghiep') {
                 echo "<script>
                     alert('Chỉ tài khoản doanh nghiệp mới có quyền quản lý livestream. Vui lòng đăng ký gói livestream để nâng cấp!');
                     window.location.href = 'index.php?livestream-packages';
@@ -277,7 +281,8 @@ $controller = new cDetailProduct();
             $check_stmt->close();
             $db->close();
             
-            if (!$check_user || $check_user['account_type'] !== 'doanh_nghiep') {
+            $accountType = strtolower(trim($check_user['account_type'] ?? ''));
+            if ($accountType !== 'doanh_nghiep') {
                 echo "<script>
                     alert('Chỉ tài khoản doanh nghiệp mới có lịch sử mua gói livestream.');
                     window.location.href = 'index.php?livestream-packages';
@@ -312,7 +317,8 @@ $controller = new cDetailProduct();
             $check_stmt->close();
             $db->close();
             
-            if (!$check_user || $check_user['account_type'] !== 'doanh_nghiep') {
+            $accountType = strtolower(trim($check_user['account_type'] ?? ''));
+            if ($accountType !== 'doanh_nghiep') {
                 echo "<script>
                     alert('Chỉ tài khoản doanh nghiệp mới được phát sóng livestream. Vui lòng đăng ký gói livestream để nâng cấp!');
                     window.location.href = 'index.php?livestream-packages';

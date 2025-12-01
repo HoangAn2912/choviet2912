@@ -49,9 +49,39 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
 ?>
 
 <style>
+.page-background {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    min-height: calc(100vh - 180px);
+    padding: 0 2rem 2rem 2rem;
+}
+
+.content-wrapper {
+    background: #ffffff;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+}
+
+.content-wrapper .container,
+.content-wrapper .container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+@media (max-width: 768px) {
+    .page-background {
+        padding: 0 1rem 1rem 1rem;
+    }
+    .content-wrapper {
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+}
+
 .streamer-panel {
-    background: #f8f9fa;
-    min-height: 100vh;
+    min-height: 100%;
     padding: 20px 0;
 }
 
@@ -137,6 +167,7 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
     overflow: hidden;
     transition: all 0.3s;
     cursor: pointer;
+    position: relative; /* Để số thứ tự sản phẩm (product-number) bám đúng vào từng card, không trôi lên trên */
 }
 
 .product-card:hover {
@@ -403,6 +434,14 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
     font-size: 18px;
 }
 
+/* Livestream icons đỏ trong panel quản lý */
+.panel-header i.fas.fa-video,
+.live-controls i.fas.fa-play,
+.live-controls i.fas.fa-stop,
+.live-controls i.fas.fa-broadcast-tower {
+    color: #dc3545 !important;
+}
+
 @media (max-width: 768px) {
     .product-grid {
         grid-template-columns: 1fr;
@@ -419,7 +458,9 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
 }
 </style>
 
-<div class="container-fluid streamer-panel">
+<div class="page-background">
+    <div class="content-wrapper">
+        <div class="container-fluid streamer-panel">
     <div class="row">
         <div class="col-12">
             <!-- Panel Header -->
@@ -487,7 +528,8 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
                     <h5><i class="fas fa-thumbtack text-warning mr-2"></i>Sản phẩm đang ghim</h5>
                     <div class="pinned-product">
                         <?php 
-                        $pinnedImage = $pinned_product['image'] ?? 'default-product.jpg';
+                        // Sử dụng ảnh đầu tiên đã xử lý từ mLivestream (anh_dau)
+                        $pinnedImage = $pinned_product['anh_dau'] ?? 'default-product.jpg';
                         if (!file_exists('img/' . $pinnedImage)) {
                             $pinnedImage = 'default-product.jpg';
                         }
@@ -513,9 +555,6 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
                     <button class="tab-btn" onclick="showTab('analytics')">
                         <i class="fas fa-chart-bar mr-2"></i>Thống kê
                     </button>
-                    <button class="tab-btn" onclick="showTab('chat')">
-                        <i class="fas fa-comments mr-2"></i>Chat
-                    </button>
                     <button class="tab-btn" onclick="showTab('settings')">
                         <i class="fas fa-cog mr-2"></i>Cài đặt
                     </button>
@@ -537,7 +576,8 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
                              data-product-id="<?= $product['product_id'] ?>">
                             <div class="product-number"><?= $index++ ?></div>
                             <?php 
-                            $productImage = $product['image'] ?? 'default-product.jpg';
+                            // Sử dụng ảnh đầu tiên đã xử lý từ mLivestream (anh_dau)
+                            $productImage = $product['anh_dau'] ?? 'default-product.jpg';
                             if (!file_exists('img/' . $productImage)) {
                                 $productImage = 'default-product.jpg';
                             }
@@ -587,13 +627,6 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
                             <div class="stat-number" id="likes-count"><?= $stats['total_likes'] ?? 0 ?></div>
                             <div class="stat-label">Lượt thích</div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="tab-content" id="chat-tab">
-                    <h5 class="mb-3">Tin nhắn chat</h5>
-                    <div class="chat-messages" id="chat-messages">
-                        <!-- Chat messages will be loaded here -->
                     </div>
                 </div>
 
@@ -670,6 +703,9 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
         </div>
     </div>
 </div>
+        </div>
+    </div>
+</div>
 
 <script>
 const livestreamId = <?= $livestream['id'] ?>;
@@ -685,6 +721,63 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Cập nhật thống kê mỗi 10 giây
     setInterval(updateStats, 10000);
+
+    // Cập nhật tiêu đề & mô tả livestream trong tab Cài đặt
+    const settingsForm = document.getElementById('livestream-settings');
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const titleInput = document.getElementById('livestream-title');
+            const descInput = document.getElementById('livestream-description');
+
+            const title = (titleInput?.value || '').trim();
+            const description = (descInput?.value || '').trim();
+
+            if (!title) {
+                if (typeof showToast === 'function') {
+                    showToast('Tiêu đề không được để trống', 'error');
+                } else {
+                    alert('Tiêu đề không được để trống');
+                }
+                return;
+            }
+
+            fetch('api/livestream-api.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=update_livestream_info&livestream_id=${encodeURIComponent(livestreamId)}&title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (typeof showToast === 'function') {
+                        showToast(data.message || 'Cập nhật cài đặt livestream thành công', 'success');
+                    }
+                    // Cập nhật lại tiêu đề & mô tả hiển thị ở phần thông tin chính
+                    const headerTitle = document.querySelector('.stream-info h2');
+                    const headerDesc = document.querySelector('.stream-info p.text-muted');
+                    if (headerTitle) headerTitle.textContent = title;
+                    if (headerDesc) headerDesc.textContent = description;
+                } else {
+                    if (typeof showToast === 'function') {
+                        showToast(data.message || 'Cập nhật thất bại', 'error');
+                    } else {
+                        alert(data.message || 'Cập nhật thất bại');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (typeof showToast === 'function') {
+                    showToast('Lỗi kết nối: ' + error.message, 'error');
+                } else {
+                    alert('Lỗi kết nối: ' + error.message);
+                }
+            });
+        });
+    }
 });
 
 function connectWebSocket() {

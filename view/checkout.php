@@ -850,7 +850,7 @@ function sendOrderCreatedNotification(livestreamId, orderData) {
         let messageSent = false;
         
         ws.onopen = function() {
-            console.log('📦 WebSocket connected, joining livestream room');
+        console.log('WebSocket connected, joining livestream room');
             // Join livestream room trước
             ws.send(JSON.stringify({
                 type: 'join_livestream',
@@ -862,7 +862,7 @@ function sendOrderCreatedNotification(livestreamId, orderData) {
             // Gửi message order_created sau khi join (delay nhỏ)
             setTimeout(() => {
                 if (!messageSent && ws.readyState === WebSocket.OPEN) {
-                    console.log('📦 Sending order_created message');
+                    console.log('Sending order_created message');
                     ws.send(JSON.stringify({
                         type: 'order_created',
                         livestream_id: livestreamId,
