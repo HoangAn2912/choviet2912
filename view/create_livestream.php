@@ -32,7 +32,7 @@ if (!$canLivestream || !$activeRegistration) {
             <p class="mb-3">
                 <?= htmlspecialchars($livestreamPermission['message'] ?? 'Gói livestream của bạn đã hết hạn. Vui lòng gia hạn để tiếp tục livestream.') ?>
             </p>
-            <a href="index.php?page=livestream-packages" class="btn btn-warning font-weight-bold px-4">
+            <a href="index.php?livestream-packages" class="btn btn-warning font-weight-bold px-4">
                 Gia hạn gói livestream
             </a>
         </div>

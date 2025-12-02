@@ -6,7 +6,7 @@
  * 
  * HƯỚNG DẪN SỬ DỤNG:
  * 1. Copy file này thành "env_config.php"
- * 2. Điền thông tin database và URL của bạn
+ * 2. Điền thông tin database, email, VietQR, URL của bạn
  * 3. Đổi APP_ENV thành 'production' khi deploy
  * 
  * LƯU Ý: File env_config.php chứa thông tin nhạy cảm
@@ -28,7 +28,7 @@ if (APP_ENV === 'local') {
 
 return [
     // ========================================
-    // CẤU HÌNH LOCAL
+    // CẤU HÌNH LOCAL (XAMPP)
     // ========================================
     'local' => [
         // URL & Path
@@ -57,6 +57,25 @@ return [
         'ws_port' => 3000,
         'ws_secret' => '',
         
+        // Email SMTP - ĐIỀN THÔNG TIN CỦA BẠN
+        'email_host' => 'smtp.gmail.com',
+        'email_username' => 'YOUR_EMAIL@gmail.com',  // ĐỔI
+        'email_password' => 'YOUR_APP_PASSWORD',  // ĐỔI (App Password từ Google)
+        'email_port' => 587,
+        'email_encryption' => 'tls',
+        'email_from' => 'YOUR_EMAIL@gmail.com',  // ĐỔI
+        'email_from_name' => 'Chợ Việt',
+        
+        // VietQR Payment - ĐIỀN THÔNG TIN CỦA BẠN
+        'vietqr_api_url' => 'https://img.vietqr.io/image/',
+        'vietqr_bank_code' => 'VCB',
+        'vietqr_account_number' => 'YOUR_ACCOUNT_NUMBER',  // ĐỔI
+        'vietqr_account_name' => 'YOUR_ACCOUNT_NAME',  // ĐỔI
+        'sieuthicode_api_url' => 'https://api.sieuthicode.net/historyapivcb/',
+        'sieuthicode_token' => 'YOUR_SIEUTHICODE_TOKEN',  // ĐỔI
+        'payment_amounts' => [20000, 50000, 100000, 200000, 500000, 1000000, 2000000, 5000000, 10000000],
+        'development_mode' => true,
+        
         // Debug
         'debug' => true,
         'cache_enabled' => false,
@@ -64,7 +83,7 @@ return [
     ],
     
     // ========================================
-    // CẤU HÌNH PRODUCTION
+    // CẤU HÌNH PRODUCTION (HOSTING)
     // ========================================
     'production' => [
         // URL & Path - ĐIỀN DOMAIN CỦA BẠN
@@ -91,21 +110,73 @@ return [
         'node_port' => 8080,
         'ws_host' => 'yourdomain.com',    // ĐỔI
         'ws_port' => 3000,
-        'ws_secret' => '',  // Nên thêm secret
+        'ws_secret' => 'YOUR_WEBSOCKET_SECRET',  // ĐỔI (nên có)
+        
+        // Email SMTP - ĐIỀN THÔNG TIN CỦA BẠN
+        'email_host' => 'smtp.gmail.com',
+        'email_username' => 'YOUR_EMAIL@gmail.com',  // ĐỔI
+        'email_password' => 'YOUR_APP_PASSWORD',  // ĐỔI
+        'email_port' => 587,
+        'email_encryption' => 'tls',
+        'email_from' => 'YOUR_EMAIL@gmail.com',  // ĐỔI
+        'email_from_name' => 'Chợ Việt',
+        
+        // VietQR Payment - ĐIỀN THÔNG TIN CỦA BẠN
+        'vietqr_api_url' => 'https://img.vietqr.io/image/',
+        'vietqr_bank_code' => 'VCB',
+        'vietqr_account_number' => 'YOUR_ACCOUNT_NUMBER',  // ĐỔI
+        'vietqr_account_name' => 'YOUR_ACCOUNT_NAME',  // ĐỔI
+        'sieuthicode_api_url' => 'https://api.sieuthicode.net/historyapivcb/',
+        'sieuthicode_token' => 'YOUR_SIEUTHICODE_TOKEN',  // ĐỔI
+        'payment_amounts' => [20000, 50000, 100000, 200000, 500000, 1000000, 2000000, 5000000, 10000000],
+        'development_mode' => false,
         
         // Debug (TẮT trên production)
         'debug' => false,
         'cache_enabled' => true,
         'log_queries' => false,
     ],
+    
+    // ========================================
+    // 🧪 CẤU HÌNH STAGING (Tùy chọn - cho test)
+    // ========================================
+    'staging' => [
+        'base_url' => 'https://test.yourdomain.com',
+        'base_path' => '',
+        'force_https' => true,
+        'db_host' => 'localhost',
+        'db_user' => 'test_user',
+        'db_pass' => 'test_pass',
+        'db_name' => 'test_database',
+        'db_charset' => 'utf8',
+        'db_timezone' => '+07:00',
+        'project_root' => '/home/username/staging',
+        'chat_path' => '/home/username/staging/chat',
+        'upload_path' => '/home/username/staging/img',
+        'log_path' => '/home/username/staging/logs',
+        'node_host' => 'test.yourdomain.com',
+        'node_port' => 8080,
+        'ws_host' => 'test.yourdomain.com',
+        'ws_port' => 3000,
+        'ws_secret' => '',
+        'email_host' => 'smtp.gmail.com',
+        'email_username' => 'test_email@gmail.com',
+        'email_password' => 'test_password',
+        'email_port' => 587,
+        'email_encryption' => 'tls',
+        'email_from' => 'test_email@gmail.com',
+        'email_from_name' => 'Chợ Việt',
+        'vietqr_api_url' => 'https://img.vietqr.io/image/',
+        'vietqr_bank_code' => 'VCB',
+        'vietqr_account_number' => '1026479899',
+        'vietqr_account_name' => 'TRAN THAI BAO',
+        'sieuthicode_api_url' => 'https://api.sieuthicode.net/historyapivcb/',
+        'sieuthicode_token' => 'test_token',
+        'payment_amounts' => [20000, 50000, 100000, 200000, 500000, 1000000, 2000000, 5000000, 10000000],
+        'development_mode' => true,
+        'debug' => true,
+        'cache_enabled' => false,
+        'log_queries' => true,
+    ],
 ];
 ?>
-
-
-
-
-
-
-
-
-

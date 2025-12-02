@@ -75,5 +75,3 @@ class Logger {
         file_put_contents($this->logFile, $logMessage, FILE_APPEND);
     }
 }
-?>
-

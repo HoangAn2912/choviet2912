@@ -1,4 +1,12 @@
 <?php
+// Bắt đầu output buffering NGAY LẬP TỨC để bắt mọi output
+ob_start();
+
+// Tắt error display để tránh output không mong muốn
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../model/mLoginLogout.php';
 require_once __DIR__ . '/../helpers/logger.php';
@@ -29,54 +37,93 @@ class OtpController {
             return;
         }
         
-        header('Content-Type: application/json');
+        // Xóa mọi output trước đó
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // Bắt đầu buffer mới
+        ob_start();
+        
+        // Set header JSON
+        header('Content-Type: application/json; charset=utf-8');
         
         $action = $_POST['action'] ?? '';
+        $result = null;
         
-        switch ($action) {
-            case 'send_otp':
-                $this->handleSendOTP();
-                break;
-            case 'send_reset_otp':
-                $this->handleSendResetOTP();
-                break;
-            case 'verify_otp':
-                $this->handleVerifyOTP();
-                break;
-            default:
-                echo json_encode(['success' => false, 'message' => 'Hành động không hợp lệ']);
-                break;
+        try {
+            switch ($action) {
+                case 'send_otp':
+                    $result = $this->handleSendOTP();
+                    break;
+                case 'send_reset_otp':
+                    $result = $this->handleSendResetOTP();
+                    break;
+                case 'verify_otp':
+                    $result = $this->handleVerifyOTP();
+                    break;
+                default:
+                    $result = ['success' => false, 'message' => 'Hành động không hợp lệ'];
+                    break;
+            }
+        } catch (Exception $e) {
+            $this->logger->error("Lỗi trong handleRequest", ['action' => $action, 'error' => $e->getMessage()]);
+            $result = ['success' => false, 'message' => 'Lỗi server: ' . $e->getMessage()];
         }
+        
+        // Đảm bảo result là array
+        if (!is_array($result)) {
+            $result = ['success' => false, 'message' => 'Lỗi server: Response không hợp lệ'];
+        }
+        
+        // Xóa mọi output không mong muốn
+        ob_clean();
+        
+        // Output JSON
+        $json = json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        
+        // Kiểm tra JSON có hợp lệ không
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $json = json_encode([
+                'success' => false, 
+                'message' => 'Lỗi server: Không thể encode JSON',
+                'error' => json_last_error_msg()
+            ], JSON_UNESCAPED_UNICODE);
+        }
+        
+        echo $json;
+        
+        // Kết thúc và flush
+        ob_end_flush();
+        exit;
     }
     
     /**
      * Xử lý gửi OTP
      */
     private function handleSendOTP() {
-        $email = $_POST['contact'];
+        $email = $_POST['contact'] ?? '';
         
         try {
             // Kiểm tra email đã tồn tại
             if ($this->model->checkEmailExists($email)) {
-                echo json_encode(['success' => false, 'message' => 'Email đã được sử dụng']);
-                return;
+                return ['success' => false, 'message' => 'Email đã được sử dụng'];
             }
             
             // Tạo mã OTP
             $otp = $this->model->createOTP($email, 'email');
             
             if (!$otp) {
-                echo json_encode(['success' => false, 'message' => 'Không thể tạo mã OTP']);
-                return;
+                return ['success' => false, 'message' => 'Không thể tạo mã OTP'];
             }
             
             // Gửi OTP
             $result = $this->sendOTPByEmail($email, $otp);
-            echo json_encode($result);
+            return $result;
             
         } catch (Exception $e) {
             $this->logger->error("Lỗi gửi OTP", ['email' => $email, 'error' => $e->getMessage()]);
-            echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi gửi OTP']);
+            return ['success' => false, 'message' => 'Có lỗi xảy ra khi gửi OTP'];
         }
     }
     
@@ -84,30 +131,28 @@ class OtpController {
      * Xử lý gửi OTP để đặt lại mật khẩu
      */
     private function handleSendResetOTP() {
-        $email = $_POST['contact'];
+        $email = $_POST['contact'] ?? '';
         
         try {
             // Kiểm tra email có tồn tại không (phải có để đặt lại mật khẩu)
             if (!$this->model->checkEmailExists($email)) {
-                echo json_encode(['success' => false, 'message' => 'Email không tồn tại trong hệ thống']);
-                return;
+                return ['success' => false, 'message' => 'Email không tồn tại trong hệ thống'];
             }
             
             // Tạo mã OTP
             $otp = $this->model->createOTP($email, 'email');
             
             if (!$otp) {
-                echo json_encode(['success' => false, 'message' => 'Không thể tạo mã OTP']);
-                return;
+                return ['success' => false, 'message' => 'Không thể tạo mã OTP'];
             }
             
             // Gửi OTP
             $result = $this->sendOTPByEmail($email, $otp, 'reset_password');
-            echo json_encode($result);
+            return $result;
             
         } catch (Exception $e) {
             $this->logger->error("Lỗi gửi OTP đặt lại mật khẩu", ['email' => $email, 'error' => $e->getMessage()]);
-            echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi gửi OTP']);
+            return ['success' => false, 'message' => 'Có lỗi xảy ra khi gửi OTP'];
         }
     }
     
@@ -115,15 +160,15 @@ class OtpController {
      * Xử lý xác thực OTP
      */
     private function handleVerifyOTP() {
-        $email = $_POST['contact'];
-        $otp = $_POST['otp'];
+        $email = $_POST['contact'] ?? '';
+        $otp = $_POST['otp'] ?? '';
         
         try {
             $result = $this->model->verifyOTP($email, 'email', $otp);
-            echo json_encode($result);
+            return $result;
         } catch (Exception $e) {
             $this->logger->error("Lỗi xác thực OTP", ['email' => $email, 'error' => $e->getMessage()]);
-            echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi xác thực OTP']);
+            return ['success' => false, 'message' => 'Có lỗi xảy ra khi xác thực OTP'];
         }
     }
     
@@ -233,4 +278,3 @@ class OtpController {
 // Khởi tạo controller và xử lý yêu cầu
 $controller = new OtpController();
 $controller->handleRequest();
-?>
