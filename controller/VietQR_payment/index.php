@@ -318,11 +318,6 @@ if (!$account) {
                 <div class="balance"><?php echo number_format($account['balance'], 0, ',', '.'); ?> VND</div>
                 <small>Tài khoản: <?php echo $account['account_number']; ?></small>
             </div>
-            
-            <div class="nav-links">
-                <a href="user/history.php?user_id=<?php echo $userId; ?>" class="nav-link">📋 Lịch sử giao dịch</a>
-                <a href="admin/transactions.php?admin=true" class="nav-link">⚙️ Quản lý (Admin)</a>
-            </div>
         </div>
         
         <div class="content">
