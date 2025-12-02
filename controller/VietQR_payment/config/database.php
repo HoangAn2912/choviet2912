@@ -5,10 +5,10 @@
  */
 
 class Database {
-    private $host = '103.90.226.19';
-    private $username = 'root';
-    private $password = 'enaGzxJ6KJmLRBh5DN1J';
-    private $database = '22';
+    private $host = 'localhost';
+    private $username = 'admin';
+    private $password = '123456';
+    private $database = 'choviet29';
     private $connection;
     
     public function __construct() {
