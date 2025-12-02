@@ -9,19 +9,6 @@ $userId = $_SESSION['user_id'];
 $paymentManager = new PaymentManager();
 $account = $paymentManager->getAccountByUserId($userId);
 
-// Nếu chưa có account thì tạo mới
-if (!$account) {
-    // Tạo account mới (trong thực tế sẽ có form đăng ký)
-    $accountNumber = 'ACC' . str_pad($userId, 6, '0', STR_PAD_LEFT);
-    $stmt = DatabaseManager::getInstance()->getDatabase()->prepare("
-        INSERT INTO transfer_accounts (account_number, user_id, balance) VALUES (?, ?, 0.00)
-    ");
-    $stmt->bind_param("si", $accountNumber, $userId);
-    $stmt->execute();
-    $stmt->close();
-    
-    $account = $paymentManager->getAccountByUserId($userId);
-}
 ?>
 
 <!DOCTYPE html>
