@@ -173,7 +173,7 @@ const ID_SAN_PHAM = 0;
            class="d-flex align-items-center"
            style="text-decoration:none; color: inherit;">
           <img src="img/<?= htmlspecialchars($receiver['avatar'] ?? 'default-avatar.jpg') ?>" class="mr-2 avatar-square" alt="Avatar">
-          <strong><?= htmlspecialchars($receiver['username']) ?></strong>
+      <strong><?= htmlspecialchars($receiver['username']) ?></strong>
         </a>
         <!-- Nút viết đánh giá: ẩn nếu vừa đánh giá xong cho đúng người bán + sản phẩm -->
         <button type="button"
@@ -188,7 +188,7 @@ const ID_SAN_PHAM = 0;
       <div id="chatMessages" class="flex-grow-1 overflow-auto mb-3" style="max-height: 60vh;"></div>
 
       <form class="d-flex align-items-center" id="formChat" onsubmit="event.preventDefault(); sendMessage(this.content.value); this.content.value='';">
-        <input name="content" type="text" class="form-control" placeholder="Nhập tin nhắn..." required>
+<input name="content" type="text" class="form-control" placeholder="Nhập tin nhắn..." required>
         <button class="btn btn-warning text-white ml-2"><i class="fa fa-paper-plane"></i></button>
       </form>
       <?php else: ?>
@@ -211,12 +211,12 @@ const ID_SAN_PHAM = 0;
         <input type="hidden" name="order_type" value="">
         <input type="hidden" name="order_id" value="">
 
-        <div class="modal-header">
-          <h5 class="modal-title">Đánh giá người bán</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
+      <div class="modal-header">
+        <h5 class="modal-title">Đánh giá người bán</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
 
-        <div class="modal-body">
+      <div class="modal-body">
           <p class="mb-2">
             <strong>Sản phẩm:</strong>
             <span id="review-product-title">Chưa xác định</span>
@@ -228,21 +228,21 @@ const ID_SAN_PHAM = 0;
             <div id="review-star-container">
               <?php for ($i = 1; $i <= 5; $i++): ?>
                 <i class="fas fa-star review-star-icon" data-value="<?= $i ?>" style="font-size: 1.4rem; color: #ffc107; cursor: pointer; margin-right: 4px;"></i>
-              <?php endfor; ?>
+          <?php endfor; ?>
             </div>
             <span id="review-rating-text" class="ml-2 small text-muted">5 sao</span>
           </div>
 
-          <label class="mt-2">Bình luận</label>
+        <label class="mt-2">Bình luận</label>
           <textarea name="comment" class="form-control" rows="3" required></textarea>
-        </div>
+      </div>
 
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
-        </div>
-      </form>
-    </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+      </div>
+    </form>
   </div>
+</div>
 </div>
 
 <script src="js/chat.js"></script>
@@ -339,12 +339,12 @@ function openReviewModal() {
             productId,
             productTitle
           };
-        }
+    }
       } catch (e) {
         console.warn('Không thể lấy sản phẩm từ DOM để đánh giá:', e);
       }
-    }
   }
+}
 
   // Fallback: nếu không lấy được từ DOM, dùng global (trong trường hợp realtime)
   if (!latest && window.latestProductForReview && window.latestProductForReview.productId) {
@@ -358,10 +358,10 @@ function openReviewModal() {
 
   const modalEl = document.getElementById('modalDanhGia');
   if (!modalEl) return;
-  if (typeof bootstrap === "undefined") {
-    console.error("Bootstrap chưa được load!");
-    return;
-  }
+    if (typeof bootstrap === "undefined") {
+      console.error("Bootstrap chưa được load!");
+      return;
+    }
 
   // Gán product_id và tiêu đề sản phẩm vào modal
   const inputProductId = document.getElementById('review-product-id');
@@ -373,8 +373,8 @@ function openReviewModal() {
     titleEl.textContent = latest.productTitle || ('Sản phẩm #' + latest.productId);
   }
 
-  const modal = new bootstrap.Modal(modalEl);
-  modal.show();
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
 }
 
 // Khởi tạo chọn sao trong modal đánh giá
@@ -516,10 +516,10 @@ document.addEventListener("DOMContentLoaded", () => {
                   sendProductMessage();
                 }
               })
-              .catch(err => console.error("❌ Lỗi lấy thông tin sản phẩm:", err));
+              .catch(err => console.error("Lỗi lấy thông tin sản phẩm:", err));
           }
         })
-        .catch(err => console.error("❌ Lỗi kiểm tra tin nhắn:", err));
+        .catch(err => console.error("Lỗi kiểm tra tin nhắn:", err));
     }, 500); // Đợi 500ms để WebSocket kết nối
   }
   

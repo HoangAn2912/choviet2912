@@ -9,12 +9,12 @@
  * 2. Điền thông tin database và URL của bạn
  * 3. Đổi APP_ENV thành 'production' khi deploy
  * 
- * ⚠️ LƯU Ý: File env_config.php chứa thông tin nhạy cảm
+ * LƯU Ý: File env_config.php chứa thông tin nhạy cảm
  * Không commit file đó lên Git!
  * ========================================
  */
 
-// 🔴 THAY ĐỔI DÒNG NÀY: 'local' hoặc 'production' hoặc 'staging'
+// THAY ĐỔI DÒNG NÀY: 'local' hoặc 'production' hoặc 'staging'
 define('APP_ENV', 'local');
 
 // Tự động bật/tắt error reporting
@@ -28,24 +28,24 @@ if (APP_ENV === 'local') {
 
 return [
     // ========================================
-    // 🏠 CẤU HÌNH LOCAL
+    // CẤU HÌNH LOCAL
     // ========================================
     'local' => [
         // URL & Path
-        'base_url' => 'http://localhost:8080',  // ⚠️ Thay đổi nếu cần
+        'base_url' => 'http://localhost:8080',  // Thay đổi nếu cần
         'base_path' => '',
         'force_https' => false,
         
-        // Database - ⚠️ ĐIỀN THÔNG TIN CỦA BẠN
+        // Database - ĐIỀN THÔNG TIN CỦA BẠN
         'db_host' => 'localhost',
-        'db_user' => 'YOUR_DB_USERNAME',  // ⚠️ ĐỔI
-        'db_pass' => 'YOUR_DB_PASSWORD',  // ⚠️ ĐỔI
-        'db_name' => 'YOUR_DB_NAME',      // ⚠️ ĐỔI
+        'db_user' => 'YOUR_DB_USERNAME',  // ĐỔI
+        'db_pass' => 'YOUR_DB_PASSWORD',  // ĐỔI
+        'db_name' => 'YOUR_DB_NAME',      // ĐỔI
         'db_charset' => 'utf8',
         'db_timezone' => '+07:00',
         
         // Paths (Windows - XAMPP)
-        'project_root' => 'D:\\xampp\\htdocs',  // ⚠️ ĐỔI nếu cần
+        'project_root' => 'D:\\xampp\\htdocs',  // ĐỔI nếu cần
         'chat_path' => 'D:\\xampp\\htdocs\\chat',
         'upload_path' => 'D:\\xampp\\htdocs\\img',
         'log_path' => 'D:\\xampp\\htdocs\\logs',
@@ -64,32 +64,32 @@ return [
     ],
     
     // ========================================
-    // 🚀 CẤU HÌNH PRODUCTION
+    // CẤU HÌNH PRODUCTION
     // ========================================
     'production' => [
-        // URL & Path - ⚠️ ĐIỀN DOMAIN CỦA BẠN
-        'base_url' => 'https://yourdomain.com',  // ⚠️ ĐỔI
+        // URL & Path - ĐIỀN DOMAIN CỦA BẠN
+        'base_url' => 'https://yourdomain.com',  // ĐỔI
         'base_path' => '',  // Nếu trong subfolder: '/subfolder'
         'force_https' => true,
         
-        // Database - ⚠️ LẤY TỪ CPANEL/HOSTING
+        // Database - LẤY TỪ CPANEL/HOSTING
         'db_host' => 'localhost',
-        'db_user' => 'HOSTING_DB_USER',     // ⚠️ ĐỔI
-        'db_pass' => 'HOSTING_DB_PASSWORD', // ⚠️ ĐỔI
-        'db_name' => 'HOSTING_DB_NAME',     // ⚠️ ĐỔI
+        'db_user' => 'HOSTING_DB_USER',     // ĐỔI
+        'db_pass' => 'HOSTING_DB_PASSWORD', // ĐỔI
+        'db_name' => 'HOSTING_DB_NAME',     // ĐỔI
         'db_charset' => 'utf8',
         'db_timezone' => '+07:00',
         
-        // Paths (Linux) - ⚠️ LẤY TỪ HOSTING
-        'project_root' => '/home/username/public_html',  // ⚠️ ĐỔI
+        // Paths (Linux) - LẤY TỪ HOSTING
+        'project_root' => '/home/username/public_html',  // ĐỔI
         'chat_path' => '/home/username/public_html/chat',
         'upload_path' => '/home/username/public_html/img',
         'log_path' => '/home/username/public_html/logs',
         
         // Node.js
-        'node_host' => 'yourdomain.com',  // ⚠️ ĐỔI
+        'node_host' => 'yourdomain.com',  // ĐỔI
         'node_port' => 8080,
-        'ws_host' => 'yourdomain.com',    // ⚠️ ĐỔI
+        'ws_host' => 'yourdomain.com',    // ĐỔI
         'ws_port' => 3000,
         'ws_secret' => '',  // Nên thêm secret
         

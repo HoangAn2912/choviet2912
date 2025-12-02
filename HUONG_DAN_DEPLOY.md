@@ -1,8 +1,8 @@
-# 🚀 HƯỚNG DẪN DEPLOY LÊN HOSTING
+# HƯỚNG DẪN DEPLOY LÊN HOSTING
 
-## 📋 CHECKLIST TRƯỚC KHI DEPLOY
+## CHECKLIST TRƯỚC KHI DEPLOY
 
-### ✅ Bước 1: Chuẩn bị file config
+### Bước 1: Chuẩn bị file config
 
 1. Mở file `config/env_config.php`
 2. **ĐỔI 1 DÒNG DUY NHẤT:**
@@ -24,18 +24,18 @@
    - `project_root` → Đường dẫn thực tế trên hosting (vd: /home/username/public_html)
    - `chat_path`, `upload_path`, `log_path` → Cập nhật tương ứng
 
-### ✅ Bước 2: Chuẩn bị database
+### Bước 2: Chuẩn bị database
 
 1. Export database từ phpMyAdmin local (file `choviet29.sql`)
 2. Login vào cPanel hosting
 3. Tạo database mới và user trong MySQL Databases
 4. Import file SQL vào database hosting
 
-### ✅ Bước 3: Upload files
+### Bước 3: Upload files
 
 Upload các file/folder sau lên hosting:
 - `api/`
-- `config/` (⚠️ KHÔNG upload `env_config.example.php`)
+- `config/` (KHÔNG upload `env_config.example.php`)
 - `controller/`
 - `css/`
 - `helpers/`
@@ -56,14 +56,14 @@ Upload các file/folder sau lên hosting:
 - `my_orders.php`
 - `show_packages.php`
 
-### ✅ Bước 4: Thiết lập quyền folder
+### Bước 4: Thiết lập quyền folder
 
 Đảm bảo các folder có quyền ghi (CHMOD 755 hoặc 777):
 - `img/`
 - `chat/`
 - `logs/`
 
-### ✅ Bước 5: Kiểm tra .htaccess
+### Bước 5: Kiểm tra .htaccess
 
 Đảm bảo file `.htaccess` có nội dung:
 
@@ -87,26 +87,26 @@ RewriteRule . - [L]
 RewriteRule ^([A-Za-z0-9_-]+)/?$ index.php?username=$1 [QSA,L]
 ```
 
-### ✅ Bước 6: Cài đặt Composer (nếu hosting hỗ trợ)
+### Bước 6: Cài đặt Composer (nếu hosting hỗ trợ)
 
 ```bash
 composer install --no-dev --optimize-autoloader
 ```
 
-### ✅ Bước 7: Test website
+### Bước 7: Test website
 
 1. Truy cập domain của bạn
 2. Kiểm tra:
-   - ✅ Trang chủ load được
-   - ✅ CSS/JS/Images hiển thị đúng
-   - ✅ Đăng nhập/đăng ký hoạt động
-   - ✅ Upload ảnh hoạt động
-   - ✅ Chat (nếu có)
-   - ✅ VNPay return URL đúng
+   - Trang chủ load được
+   - CSS/JS/Images hiển thị đúng
+   - Đăng nhập/đăng ký hoạt động
+   - Upload ảnh hoạt động
+   - Chat (nếu có)
+   - VNPay return URL đúng
 
 ---
 
-## 🔄 ROLLBACK (Nếu lỗi)
+## ROLLBACK (Nếu lỗi)
 
 Nếu website bị lỗi sau khi deploy:
 
@@ -119,7 +119,7 @@ Nếu website bị lỗi sau khi deploy:
 
 ---
 
-## 🐞 KHẮC PHỤC LỖI THƯỜNG GẶP
+## KHẮC PHỤC LỖI THƯỜNG GẶP
 
 ### Lỗi: "Không kết nối được database"
 **Nguyên nhân:** Thông tin database sai  
@@ -148,7 +148,7 @@ Nếu website bị lỗi sau khi deploy:
 
 ---
 
-## 📞 HỖ TRỢ
+## HỖ TRỢ
 
 Nếu gặp lỗi khác, hãy:
 1. Bật debug mode tạm thời: `define('APP_ENV', 'local');`
@@ -158,17 +158,17 @@ Nếu gặp lỗi khác, hãy:
 
 ---
 
-## ✨ LỢI ÍCH CỦA HỆ THỐNG NÀY
+## LỢI ÍCH CỦA HỆ THỐNG NÀY
 
-✅ **CHỈ 1 DÒNG** để chuyển đổi môi trường  
-✅ **Tự động** lấy config đúng cho mỗi môi trường  
-✅ **An toàn** - không hardcode thông tin nhạy cảm  
-✅ **Dễ debug** - hiển thị lỗi chi tiết ở local  
-✅ **Dễ mở rộng** - thêm môi trường staging/testing dễ dàng  
+- **CHỈ 1 DÒNG** để chuyển đổi môi trường  
+- **Tự động** lấy config đúng cho mỗi môi trường  
+- **An toàn** - không hardcode thông tin nhạy cảm  
+- **Dễ debug** - hiển thị lỗi chi tiết ở local  
+- **Dễ mở rộng** - thêm môi trường staging/testing dễ dàng  
 
 ---
 
-**Chúc bạn deploy thành công! 🎉**
+**Chúc bạn deploy thành công!**
 
 
 

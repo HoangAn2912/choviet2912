@@ -21,17 +21,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="icon">✅</div>
+            <div class="icon">Chợ Việt</div>
             <h1>Tin Đăng Đã Được Duyệt!</h1>
             <p>Chúc mừng bạn!</p>
         </div>
         <div class="content">
             <p>Xin chào <strong><?php echo htmlspecialchars($user_name); ?></strong>,</p>
             
-            <p>Tin đăng của bạn đã được phê duyệt và hiện đang hiển thị trên Chợ Việt! 🎉</p>
+            <p>Tin đăng của bạn đã được phê duyệt và hiện đang hiển thị trên Chợ Việt!</p>
             
             <div class="success-box">
-                <div class="post-title">📌 <?php echo htmlspecialchars($post_title); ?></div>
+                <div class="post-title"><?php echo htmlspecialchars($post_title); ?></div>
                 <p style="margin: 0; color: #155724;">
                     Tin đăng của bạn đã đáp ứng các tiêu chuẩn và đang được hiển thị công khai cho người mua.
                 </p>
@@ -44,7 +44,7 @@
             </center>
             
             <div class="tips">
-                <h3 style="margin-top: 0; color: #856404;">💡 Mẹo để bán hàng hiệu quả:</h3>
+                <h3 style="margin-top: 0; color: #856404;">Mẹo để bán hàng hiệu quả:</h3>
                 <ul style="margin: 10px 0; padding-left: 20px; color: #856404;">
                     <li>Trả lời tin nhắn của khách hàng nhanh chóng</li>
                     <li>Cung cấp thông tin sản phẩm chi tiết và chính xác</li>
@@ -55,7 +55,7 @@
             </div>
             
             <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #666; font-size: 14px;">
-                Cảm ơn bạn đã tin tưởng và sử dụng Chợ Việt. Chúc bạn bán hàng thành công! 🚀
+                Cảm ơn bạn đã tin tưởng và sử dụng Chợ Việt. Chúc bạn bán hàng thành công!
             </p>
         </div>
         <div class="footer">

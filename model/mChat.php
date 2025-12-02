@@ -20,7 +20,7 @@ class mChat extends Connect {
             ORDER BY created_time ASC
         ");
         
-        // 🛠 Gắn đúng giá trị
+        // Gắn đúng giá trị
         $stmt->bind_param("iiii", $user1, $user2, $user2, $user1);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

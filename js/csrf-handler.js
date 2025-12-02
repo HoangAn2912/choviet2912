@@ -139,5 +139,5 @@
     
 })();
 
-console.log('✅ CSRF Handler initialized');
+console.log('[OK] CSRF Handler initialized');
 

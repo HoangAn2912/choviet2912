@@ -37,21 +37,21 @@ class cLivestreamPackage {
         // Validate CSRF token
         $csrfToken = $_POST['csrf_token'] ?? '';
         if (!Security::validateCSRFToken($csrfToken)) {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ CSRF token không hợp lệ!") . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] CSRF token không hợp lệ!") . "&type=error");
             exit;
         }
         
         $user_id = $_SESSION['user_id'] ?? 0;
         
         if ($user_id == 0) {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ Vui lòng đăng nhập!") . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] Vui lòng đăng nhập!") . "&type=error");
             exit;
         }
         
         $package_id = intval($_POST['package_id'] ?? 0);
         
         if ($package_id == 0) {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ Gói không hợp lệ!") . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] Gói không hợp lệ!") . "&type=error");
             exit;
         }
         
@@ -59,9 +59,9 @@ class cLivestreamPackage {
         $result = $model->payByWallet($user_id, $package_id);
         
         if ($result['success']) {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("✅ " . $result['message']) . "&type=success");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Thành công] " . $result['message']) . "&type=success");
         } else {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ " . $result['message']) . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] " . $result['message']) . "&type=error");
         }
         exit;
     }
@@ -73,21 +73,21 @@ class cLivestreamPackage {
         // Validate CSRF token
         $csrfToken = $_POST['csrf_token'] ?? '';
         if (!Security::validateCSRFToken($csrfToken)) {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ CSRF token không hợp lệ!") . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] CSRF token không hợp lệ!") . "&type=error");
             exit;
         }
         
         $user_id = $_SESSION['user_id'] ?? 0;
         
         if ($user_id == 0) {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ Vui lòng đăng nhập!") . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] Vui lòng đăng nhập!") . "&type=error");
             exit;
         }
         
         $package_id = intval($_POST['package_id'] ?? 0);
         
         if ($package_id == 0) {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ Gói không hợp lệ!") . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] Gói không hợp lệ!") . "&type=error");
             exit;
         }
         
@@ -96,7 +96,7 @@ class cLivestreamPackage {
         $package = $model->getPackageById($package_id);
         
         if (!$package) {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ Gói không tồn tại!") . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] Gói không tồn tại!") . "&type=error");
             exit;
         }
         
@@ -125,7 +125,7 @@ class cLivestreamPackage {
         $pendingPackage = $_SESSION['pending_livestream_package'] ?? null;
         
         if (!$pendingPackage) {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ Phiên thanh toán không hợp lệ!") . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] Phiên thanh toán không hợp lệ!") . "&type=error");
             exit;
         }
         
@@ -146,14 +146,14 @@ class cLivestreamPackage {
             unset($_SESSION['pending_livestream_package']);
             
             if ($result['success']) {
-                header("Location: index.php?livestream-packages&toast=" . urlencode("✅ " . $result['message']) . "&type=success");
+                header("Location: index.php?livestream-packages&toast=" . urlencode("[Thành công] " . $result['message']) . "&type=success");
             } else {
-                header("Location: index.php?livestream-packages&toast=" . urlencode("❌ " . $result['message']) . "&type=error");
+                header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] " . $result['message']) . "&type=error");
             }
         } else {
             // Thanh toán thất bại
             unset($_SESSION['pending_livestream_package']);
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ Thanh toán thất bại!") . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] Thanh toán thất bại!") . "&type=error");
         }
         exit;
     }
@@ -183,7 +183,7 @@ class cLivestreamPackage {
         $user_id = $_SESSION['user_id'] ?? 0;
         
         if ($user_id == 0) {
-            header("Location: index.php?livestream-packages&toast=" . urlencode("❌ Vui lòng đăng nhập!") . "&type=error");
+            header("Location: index.php?livestream-packages&toast=" . urlencode("[Lỗi] Vui lòng đăng nhập!") . "&type=error");
             exit;
         }
         
@@ -193,9 +193,9 @@ class cLivestreamPackage {
         $success = $model->cancelRegistration($registration_id, $user_id);
         
         if ($success) {
-            header("Location: index.php?livestream-package-history&toast=" . urlencode("✅ Đã hủy gói thành công!") . "&type=success");
+            header("Location: index.php?livestream-package-history&toast=" . urlencode("[Thành công] Đã hủy gói thành công!") . "&type=success");
         } else {
-            header("Location: index.php?livestream-package-history&toast=" . urlencode("❌ Hủy gói thất bại!") . "&type=error");
+            header("Location: index.php?livestream-package-history&toast=" . urlencode("[Lỗi] Hủy gói thất bại!") . "&type=error");
         }
         exit;
     }

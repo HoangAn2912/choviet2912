@@ -21,9 +21,9 @@ class cTopUp {
         $ok = $mTopUp->insertChuyenKhoan($userId, $transfer_content, $transfer_image, $transfer_status);
 
         if ($ok !== false) {
-            header("Location: index.php?nap-tien&toast=" . urlencode("✅ Gửi yêu cầu nạp tiền thành công! Đang chờ duyệt.") . "&type=success");
+            header("Location: index.php?nap-tien&toast=" . urlencode("Gửi yêu cầu nạp tiền thành công! Đang chờ duyệt.") . "&type=success");
         } else {
-            header("Location: index.php?nap-tien&toast=" . urlencode("❌ Gửi yêu cầu thất bại!") . "&type=error");
+            header("Location: index.php?nap-tien&toast=" . urlencode("Gửi yêu cầu thất bại!") . "&type=error");
         }
         exit;
     }

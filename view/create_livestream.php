@@ -688,7 +688,7 @@ document.getElementById('create-livestream-form').addEventListener('submit', fun
             const data = JSON.parse(text);
             if (data.success) {
                 const targetUrl = data.redirect_url || `index.php?streamer&id=${data.livestream_id}`;
-                window.location.href = `${targetUrl}&toast=${encodeURIComponent('✅ Tạo livestream thành công!')}&type=success`;
+                window.location.href = `${targetUrl}&toast=${encodeURIComponent('Tạo livestream thành công!')}&type=success`;
             } else {
                 alert('Có lỗi xảy ra: ' + data.message);
             }

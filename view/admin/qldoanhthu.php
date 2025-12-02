@@ -986,9 +986,9 @@ $chartDataJson = json_encode(array_values($chartData));
             }
           });
           
-          console.log('✅ Biểu đồ doanh thu đã được khởi tạo thành công');
+          console.log('Biểu đồ doanh thu đã được khởi tạo thành công');
         } catch (error) {
-          console.error('❌ Lỗi khi khởi tạo biểu đồ:', error);
+          console.error('Lỗi khi khởi tạo biểu đồ:', error);
           console.error('Stack trace:', error.stack);
           
           // Hiển thị thông báo lỗi

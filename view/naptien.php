@@ -34,7 +34,7 @@ if (isset($_GET['success']) && isset($_SESSION['payment_success'])) {
         $account = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($account && $account['balance'] >= $amount) {
-            $message = "✅ Nạp tiền thành công! Số tiền " . number_format($amount) . " VND đã được cộng vào tài khoản. Mã GD: " . $txn_ref;
+            $message = "Nạp tiền thành công! Số tiền " . number_format($amount) . " VND đã được cộng vào tài khoản. Mã GD: " . $txn_ref;
         } else {
             $error = "Có lỗi xảy ra trong quá trình cộng tiền. Vui lòng liên hệ hỗ trợ.";
         }
@@ -233,7 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         <!-- Thêm thông báo chờ thanh toán -->
         <div id="waitingMessage" style="display: none; margin-top: 20px; padding: 15px; background-color: #fff3cd; border-radius: 5px; border: 1px solid #ffeaa7;">
-            <p><strong>🔄 Đang chờ xác nhận thanh toán...</strong></p>
+            <p><strong>Đang chờ xác nhận thanh toán...</strong></p>
             <p>Vui lòng hoàn thành thanh toán trên VNPay. Hệ thống sẽ tự động cập nhật khi priceo dịch thành công.</p>
             <div style="text-align: center; margin-top: 10px;">
                 <div class="spinner"></div>
@@ -308,7 +308,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             // Hiển thị thông báo thành công
                             document.getElementById('waitingMessage').innerHTML = `
                                 <div style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 5px;">
-                                    <h4>✅ Nạp tiền thành công!</h4>
+                                    <h4>Nạp tiền thành công!</h4>
                                     <p>Số tiền: ${new Intl.NumberFormat('vi-VN').format(data.amount)} VND</p>
                                     <p>Số dư mới: ${new Intl.NumberFormat('vi-VN').format(data.balance)} VND</p>
                                     <p>Mã GD: ${data.txn_ref}</p>

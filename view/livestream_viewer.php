@@ -832,7 +832,7 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             ws = new WebSocket('ws://localhost:3000');
             
             ws.onopen = function() {
-                console.log('WebSocket connected');
+                console.log('Viewer: Đã kết nối WebSocket');
                 isConnected = true;
                 
                 // Join livestream room as viewer
@@ -845,27 +845,27 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                     user_type: 'viewer'
                 }));
                 
-                // Record viewer join in database (cả guest và user đã đăng nhập)
+                // Ghi nhận viewer vào database (cả guest và user đã đăng nhập)
                 recordViewerJoin();
                 
-                // Request current livestream status & ask streamer to send offer
-                console.log('📡 Requesting livestream status...');
+                // Yêu cầu trạng thái livestream hiện tại & streamer gửi offer
+                console.log('Viewer: Yêu cầu trạng thái livestream...');
                 ws.send(JSON.stringify({
                     type: 'get_livestream_status',
                     livestream_id: <?= $livestream_id ?>
                 }));
                 
-                // Luôn request offer từ streamer khi kết nối
-                console.log('📡 Requesting offer from streamer...');
+                // Luôn yêu cầu offer từ streamer khi kết nối
+                console.log('Viewer: Yêu cầu offer từ streamer...');
                 ws.send(JSON.stringify({
                     type: 'request_offer',
                     livestream_id: <?= $livestream_id ?>
                 }));
                 
-                // Thêm delay để đảm bảo streamer đã sẵn sàng
+                // Thêm độ trễ để đảm bảo streamer đã sẵn sàng
                 setTimeout(() => {
                     if (ws && ws.readyState === WebSocket.OPEN) {
-                        console.log('📡 Re-requesting offer from streamer (delayed)...');
+                        console.log('Viewer: Yêu cầu lại offer từ streamer (sau delay)...');
                         ws.send(JSON.stringify({
                             type: 'request_offer',
                             livestream_id: <?= $livestream_id ?>
@@ -887,7 +887,7 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             };
             
             ws.onclose = function() {
-                console.log('WebSocket disconnected');
+                console.log('Viewer: WebSocket đã ngắt kết nối, sẽ thử kết nối lại');
                 isConnected = false;
                 setTimeout(initWebSocket, 3000);
             };
@@ -899,7 +899,7 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
 
         // Handle WebSocket messages
         function handleWebSocketMessage(data) {
-            console.log('Viewer received:', data);
+            console.log('Viewer: Nhận message WebSocket:', data);
             switch(data.type) {
                 case 'livestream_viewer_count':
                     viewerCount = data.count;
@@ -909,7 +909,7 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                     // Cập nhật số người xem real-time từ WebSocket
                     viewerCount = data.viewers_count || 0;
                     updateViewerCount();
-                    console.log('Viewer count updated:', viewerCount);
+                    console.log('Viewer: Đã cập nhật số người xem =', viewerCount);
                     break;
                 case 'viewer_joined':
                     // Có người mới join, cập nhật số người xem
@@ -922,7 +922,7 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                     updateViewerCount();
                     break;
                 case 'livestream_joined':
-                    console.log('✅ Successfully joined livestream room');
+                    console.log('Viewer: Tham gia phòng livestream thành công');
                     // Cập nhật số người xem khi join thành công
                     if (data.viewers_count !== undefined) {
                         viewerCount = data.viewers_count;
@@ -931,11 +931,11 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                     break;
                 case 'livestream_like_count':
                     // Cập nhật lượt thích real-time
-                    console.log('❤️ Viewer received livestream_like_count:', data);
+                    console.log('Viewer: Nhận livestream_like_count:', data);
                     likeCount = data.count || 0;
-                    console.log('❤️ Viewer: Updating like count to', likeCount);
+                    console.log('Viewer: Đang cập nhật số lượt thích =', likeCount);
                     updateLikeCount();
-                    console.log('❤️ Viewer: Like count updated successfully to', likeCount);
+                    console.log('Viewer: Đã cập nhật số lượt thích thành công =', likeCount);
                     break;
                 case 'livestream_chat':
                     const displayName = data.username || 'Khách';
@@ -957,41 +957,41 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                     stopLivestreamVideo();
                     break;
                 case 'webrtc_offer':
-                    console.log('🎯 Received offer from streamer → creating answer...');
+                    console.log('Received offer from streamer → creating answer...');
                     (async()=>{
                         try {
                             await ensurePeer();
                             
                             // Kiểm tra trạng thái signaling trước khi xử lý
                             if (viewerPeer.signalingState === 'stable') {
-                                console.log('📡 Setting remote description...');
+                                console.log('Setting remote description...');
                                 await viewerPeer.setRemoteDescription(new RTCSessionDescription(data.sdp));
-                                console.log('📡 Creating answer...');
+                                console.log('Creating answer...');
                                 const answer = await viewerPeer.createAnswer();
-                                console.log('📡 Setting local description...');
+                                console.log('Setting local description...');
                                 await viewerPeer.setLocalDescription(answer);
-                                console.log('📡 Sending answer to WebSocket...');
+                                console.log('Sending answer to WebSocket...');
                                 ws.send(JSON.stringify({type:'webrtc_answer', livestream_id: <?= $livestream_id ?>, sdp: answer}));
-                                console.log('✅ Answer sent ✔');
+                                console.log('Answer sent');
                             } else {
-                                console.log('⚠️ Signaling state not stable:', viewerPeer.signalingState, '- skipping offer');
+                                console.log('Signaling state not stable:', viewerPeer.signalingState, '- skipping offer');
                             }
                         } catch (error) {
-                            console.error('❌ Error in webrtc_offer handling:', error);
+                            console.error('Error in webrtc_offer handling:', error);
                         }
                     })();
                     break;
                 case 'webrtc_ice':
-                    console.log('🧊 Received ICE candidate from streamer');
+                    console.log('Received ICE candidate from streamer');
                     (async()=>{
                         try {
                             await ensurePeer();
                             if (data.candidate) {
                                 await viewerPeer.addIceCandidate(new RTCIceCandidate(data.candidate)); 
-                                console.log('✅ ICE candidate added');
+                                console.log('ICE candidate added');
                             }
                         } catch (e) {
-                            console.log('❌ ICE candidate error:', e);
+                            console.log('ICE candidate error:', e);
                         }
                     })();
                     break;
@@ -1014,24 +1014,24 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                 ]
             });
             viewerPeer.ontrack = ev => {
-                console.log('🎥 Remote track received ✔', ev.streams[0]);
+                console.log('Remote track received', ev.streams[0]);
                 const video = document.getElementById('livestream-video');
                 const spinner = document.querySelector('.loading-spinner');
                 if (spinner) spinner.style.display = 'none';
                 video.srcObject = ev.streams[0];
                 video.style.display = 'block';
                 document.getElementById('video-placeholder').style.display = 'none';
-                console.log('✅ Video element updated with remote stream');
+                console.log('Video element updated with remote stream');
                 
                 // Debug audio tracks
                 const stream = ev.streams[0];
                 const audioTracks = stream.getAudioTracks();
                 const videoTracks = stream.getVideoTracks();
-                console.log('🎵 Audio tracks:', audioTracks.length);
-                console.log('🎥 Video tracks:', videoTracks.length);
+                console.log('Audio tracks:', audioTracks.length);
+                console.log('Video tracks:', videoTracks.length);
                 
                 if (audioTracks.length > 0) {
-                    console.log('🔊 Audio track details:', {
+                    console.log('Audio track details:', {
                         id: audioTracks[0].id,
                         kind: audioTracks[0].kind,
                         enabled: audioTracks[0].enabled,
@@ -1044,40 +1044,40 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                         const audioBtn = document.getElementById('audio-toggle-btn');
                         if (audioBtn && video.muted) {
                             audioBtn.style.animation = 'pulse 2s infinite';
-                            console.log('💡 Video loaded with audio - click button to unmute');
+                            console.log('Video loaded with audio - click button to unmute');
                         }
                     }, 1000);
                 } else {
-                    console.log('⚠️ No audio tracks found in stream');
+                    console.log('No audio tracks found in stream');
                 }
             };
             viewerPeer.onicecandidate = ev => {
                 if (ev.candidate) {
-                    console.log('🧊 Sending ICE candidate to streamer');
+                    console.log('Sending ICE candidate to streamer');
                     ws && ws.readyState === 1 && ws.send(JSON.stringify({
                         type:'webrtc_ice', livestream_id: <?= $livestream_id ?>, candidate: ev.candidate
                     }));
                 }
             };
             viewerPeer.onconnectionstatechange = () => {
-                console.log('🔗 Connection state:', viewerPeer.connectionState);
+                console.log('Connection state:', viewerPeer.connectionState);
                 if (viewerPeer.connectionState === 'disconnected' || viewerPeer.connectionState === 'failed') {
-                    console.log('🔄 Connection lost, attempting to reconnect...');
+                    console.log('Connection lost, attempting to reconnect...');
                     // Reset peer connection
                     viewerPeer = null;
                     // Request new offer
                     setTimeout(() => {
                         if (ws && ws.readyState === WebSocket.OPEN) {
-                            console.log('🔄 Requesting new offer...');
+                            console.log('Requesting new offer...');
                             ws.send(JSON.stringify({type:'request_offer', livestream_id: <?= $livestream_id ?>}));
                         }
                     }, 1000);
                 }
             };
             viewerPeer.oniceconnectionstatechange = () => {
-                console.log('🧊 ICE connection state:', viewerPeer.iceConnectionState);
+                console.log('ICE connection state:', viewerPeer.iceConnectionState);
                 if (viewerPeer.iceConnectionState === 'disconnected' || viewerPeer.iceConnectionState === 'failed') {
-                    console.log('🧊 ICE connection lost');
+                    console.log('ICE connection lost');
                 }
             };
             return viewerPeer;
@@ -1133,12 +1133,12 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
         function togglePlay() {
             const video = document.getElementById('livestream-video');
             const audioBtn = document.getElementById('audio-toggle-btn');
-            console.log('🎵 Audio button clicked - toggling audio');
+                console.log('Audio button clicked - toggling audio');
             
             if (video.muted) {
                 video.muted = false;
                 video.volume = 1.0;
-                console.log('🔊 Audio unmuted, volume set to 1.0');
+                console.log('Audio unmuted, volume set to 1.0');
                 
                 // Cập nhật nút
                 audioBtn.innerHTML = '<i class="fas fa-volume-up"></i> Tắt âm thanh';
@@ -1196,12 +1196,12 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
         // Update like count
         function updateLikeCount() {
             const likeCountEl = document.getElementById('like-count-stat');
-            console.log('❤️ updateLikeCount called, likeCount:', likeCount, 'Element:', likeCountEl);
+            console.log('updateLikeCount called, likeCount:', likeCount, 'Element:', likeCountEl);
             if (likeCountEl) {
                 likeCountEl.textContent = likeCount;
-                console.log('✅ Like count element updated to:', likeCount);
+                console.log('Like count element updated to:', likeCount);
             } else {
-                console.warn('⚠️ Like count element not found!');
+                console.warn('Like count element not found!');
             }
         }
 
@@ -1217,9 +1217,9 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    console.log('✅ Viewer join recorded in database');
+                    console.log('Viewer join recorded in database');
                 } else {
-                    console.warn('⚠️ Failed to record viewer join:', data.message);
+                    console.warn('Failed to record viewer join:', data.message);
                 }
             })
             .catch(error => {
@@ -1503,7 +1503,7 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                 return;
             }
             
-            console.log('❤️ User clicking like button, userId:', userId, 'livestreamId:', livestreamId);
+            console.log('User clicking like button, userId:', userId, 'livestreamId:', livestreamId);
             
             // Visual feedback ngay lập tức
             const likeBtn = event.target.closest('button');
@@ -1523,7 +1523,7 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             formData.append('user_id', userId);
             formData.append('action_type', 'like');
             
-            console.log('❤️ Calling API directly to record like');
+            console.log('Calling API directly to record like');
             fetch('api/livestream-api.php', {
                 method: 'POST',
                 body: formData
@@ -1535,10 +1535,10 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             .then(data => {
                 console.log('📥 API response data:', data);
                 if (data.success) {
-                    console.log('✅ Like recorded successfully via API');
+                    console.log('Like recorded successfully via API');
                     // Sau khi ghi thành công, gửi qua WebSocket để broadcast
                     if (ws && ws.readyState === WebSocket.OPEN) {
-                        console.log('📡 Broadcasting like via WebSocket');
+                        console.log('Broadcasting like via WebSocket');
                         ws.send(JSON.stringify({
                             type: 'livestream_like_broadcast',
                             livestream_id: livestreamId
@@ -1547,12 +1547,12 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                     // Refresh like count
                     refreshLikeCount();
                 } else {
-                    console.error('❌ Failed to record like:', data.message);
+                    console.error('Failed to record like:', data.message);
                     alert('Không thể thích: ' + (data.message || 'Lỗi không xác định'));
                 }
             })
             .catch(error => {
-                console.error('❌ Error calling like API:', error);
+                console.error('Error calling like API:', error);
                 alert('Có lỗi xảy ra khi thích. Vui lòng thử lại!');
             });
         }
@@ -1571,7 +1571,7 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                     }
                 })
                 .catch(error => {
-                    console.error('❌ Error refreshing like count:', error);
+                    console.error('Error refreshing like count:', error);
                 });
         }
 

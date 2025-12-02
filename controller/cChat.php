@@ -33,14 +33,14 @@ class cChat {
         return $users;
     }
     
-    // ✅ Tạo tên file chat
+    // Tạo tên file chat
     private function getChatFileName($id1, $id2) {
         $min = min($id1, $id2);
         $max = max($id1, $id2);
         return "chat_{$min}_{$max}.json";
     }
     
-    // ✅ Đọc dòng cuối từ file JSON
+    // Đọc dòng cuối từ file JSON
     private function getLastMessageFromFile($filePath) {
         if (!file_exists($filePath)) return ['content' => '', 'created_time' => ''];
     
@@ -70,7 +70,7 @@ class cChat {
         ];
     }
     
-    // ✅ Format thời gian: <1 ngày => HH:MM; >=1 ngày => tương đối ngày/tháng/năm
+    // Format thời gian: <1 ngày => HH:MM; >=1 ngày => tương đối ngày/tháng/năm
     private function formatThoiGian($timestamp) {
         return TimeHelper::formatRelativeTime($timestamp);
     }

@@ -52,7 +52,7 @@ class LoginLogoutController {
         } else {
             // Trả về JSON thay vì chuyển hướng
             header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => '❌ Email/Tên đăng nhập hoặc mật khẩu không đúng']);
+            echo json_encode(['success' => false, 'message' => 'Email/Tên đăng nhập hoặc mật khẩu không đúng']);
             exit;
         }
     }
@@ -82,7 +82,7 @@ class LoginLogoutController {
                 header('Content-Type: application/json');
                 echo json_encode([
                     'success' => false, 
-                    'message' => '❌ ' . $otpVerification['message']
+                    'message' => 'Lỗi: ' . $otpVerification['message']
                 ]);
                 exit;
             }
@@ -96,7 +96,7 @@ class LoginLogoutController {
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => false, 
-                'message' => '❌ Lỗi đăng ký: ' . $e->getMessage()
+                'message' => 'Lỗi đăng ký: ' . $e->getMessage()
             ]);
             exit;
         }
@@ -122,33 +122,33 @@ class LoginLogoutController {
         // Kiểm tra tên đăng nhập
         $usernameValidation = $this->model->validateUsername($data['username']);
         if (!$usernameValidation['valid']) {
-            return ['valid' => false, 'message' => '❌ ' . $usernameValidation['message']];
+            return ['valid' => false, 'message' => 'Lỗi: ' . $usernameValidation['message']];
         }
         
         // Kiểm tra mật khẩu
         $passwordValidation = $this->model->validatePassword($data['password']);
         if (!$passwordValidation['valid']) {
-            return ['valid' => false, 'message' => '❌ ' . $passwordValidation['message']];
+            return ['valid' => false, 'message' => 'Lỗi: ' . $passwordValidation['message']];
         }
         
         // Kiểm tra mật khẩu khớp
         if ($data['password'] !== $data['repassword']) {
-            return ['valid' => false, 'message' => '❌ Mật khẩu không khớp'];
+            return ['valid' => false, 'message' => 'Lỗi: Mật khẩu không khớp'];
         }
         
         // Kiểm tra OTP
         if (empty($data['otp'])) {
-            return ['valid' => false, 'message' => '❌ Vui lòng nhập mã OTP'];
+            return ['valid' => false, 'message' => 'Lỗi: Vui lòng nhập mã OTP'];
         }
         
         // Kiểm tra email
         if (empty($data['email'])) {
-            return ['valid' => false, 'message' => '❌ Vui lòng nhập email'];
+            return ['valid' => false, 'message' => 'Lỗi: Vui lòng nhập email'];
         }
         
         // Kiểm tra định dạng email
         if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            return ['valid' => false, 'message' => '❌ Email không hợp lệ'];
+            return ['valid' => false, 'message' => 'Lỗi: Email không hợp lệ'];
         }
         
         return ['valid' => true];
@@ -183,7 +183,7 @@ class LoginLogoutController {
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => false,
-                'message' => '❌ Email đã tồn tại'
+                'message' => 'Lỗi: Email đã tồn tại'
             ]);
             exit;
         }
@@ -200,7 +200,7 @@ class LoginLogoutController {
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => true, 
-                'message' => '✅ Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...'
+                'message' => 'Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...'
             ]);
             exit;
         } else {
@@ -208,7 +208,7 @@ class LoginLogoutController {
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => false, 
-                'message' => '❌ Đăng ký thất bại!'
+                'message' => 'Đăng ký thất bại!'
             ]);
             exit;
         }
@@ -250,7 +250,7 @@ class LoginLogoutController {
                 header("Location: " . $this->baseUrl . "admin");
                 break;
             default:
-                $this->redirectWithError('login', '❌ Quyền không hợp lệ!');
+                $this->redirectWithError('login', 'Lỗi: Quyền không hợp lệ!');
         }
         exit;
     }
@@ -289,7 +289,7 @@ class LoginLogoutController {
             $otpVerification = $this->model->verifyOTP($email, 'email', $otp);
             
             if (!$otpVerification['success']) {
-                echo json_encode(['success' => false, 'message' => '❌ ' . $otpVerification['message']]);
+                echo json_encode(['success' => false, 'message' => 'Lỗi: ' . $otpVerification['message']]);
                 return;
             }
             
@@ -298,14 +298,14 @@ class LoginLogoutController {
             $ok = $this->model->updatePassword($email, $password_md5);
             
             if ($ok) {
-                echo json_encode(['success' => true, 'message' => '✅ Đặt lại mật khẩu thành công!']);
+                echo json_encode(['success' => true, 'message' => 'Đặt lại mật khẩu thành công!']);
             } else {
-                echo json_encode(['success' => false, 'message' => '❌ Không thể cập nhật mật khẩu!']);
+                echo json_encode(['success' => false, 'message' => 'Không thể cập nhật mật khẩu!']);
             }
             
         } catch (Exception $e) {
             error_log("Lỗi đặt lại mật khẩu: " . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => '❌ Lỗi đặt lại mật khẩu: ' . $e->getMessage()]);
+            echo json_encode(['success' => false, 'message' => 'Lỗi đặt lại mật khẩu: ' . $e->getMessage()]);
         }
     }
     
@@ -335,7 +335,7 @@ class LoginLogoutController {
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => false, 
-                'message' => '❌ Lỗi kiểm tra tên đăng nhập: ' . $e->getMessage()
+                'message' => 'Lỗi kiểm tra tên đăng nhập: ' . $e->getMessage()
             ]);
         }
     }
@@ -366,7 +366,7 @@ class LoginLogoutController {
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => false, 
-                'message' => '❌ Lỗi kiểm tra mật khẩu: ' . $e->getMessage()
+                'message' => 'Lỗi kiểm tra mật khẩu: ' . $e->getMessage()
             ]);
         }
     }

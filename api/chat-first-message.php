@@ -30,13 +30,13 @@ if (!is_array($messages) || count($messages) === 0) {
 
 $first = $messages[0];
 
-// ✅ Lấy product_id từ DB dòng đầu tiên
+// Lấy product_id từ DB dòng đầu tiên
 require_once("../controller/cChat.php");
 $cChat = new cChat();
 $row = $cChat->getFirstMessage($first['from'], $first['to']);
 $idSanPham = $row['product_id'] ?? 0;
 
-// ✅ Trả kết quả đầy đủ
+// Trả kết quả đầy đủ
 echo json_encode([
     "id_nguoi_gui" => $first['from'],
     "id_nguoi_nhan" => $first['to'],

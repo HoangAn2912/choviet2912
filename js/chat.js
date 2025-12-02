@@ -278,7 +278,7 @@ window.addEventListener("DOMContentLoaded", () => {
           sendQueue.push(markReadPayload);
         }
       })
-      .catch(err => console.error("❌ Lỗi khi đọc file JSON:", err));
+      .catch(err => console.error("Lỗi khi đọc file JSON:", err));
   }
 
   // Không cần fetch unread API nữa - chỉ dùng realtime qua WebSocket

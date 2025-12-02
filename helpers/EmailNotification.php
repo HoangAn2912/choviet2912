@@ -240,7 +240,7 @@ class EmailNotification {
      * Send order notification to seller
      */
     public function sendOrderNotification($sellerEmail, $sellerName, $orderData) {
-        $subject = "🛍️ Bạn có đơn hàng mới #" . $orderData['order_code'];
+        $subject = "Bạn có đơn hàng mới #" . $orderData['order_code'];
         
         $body = $this->getTemplate('order_notification', [
             'seller_name' => $sellerName,
@@ -259,7 +259,7 @@ class EmailNotification {
      * Send post approved notification
      */
     public function sendPostApprovedNotification($userEmail, $userName, $postData) {
-        $subject = "✅ Tin đăng của bạn đã được duyệt";
+        $subject = "Tin đăng của bạn đã được duyệt";
         
         $body = $this->getTemplate('post_approved', [
             'user_name' => $userName,
@@ -274,7 +274,7 @@ class EmailNotification {
      * Send post rejected notification
      */
     public function sendPostRejectedNotification($userEmail, $userName, $postData, $reason = '') {
-        $subject = "❌ Tin đăng của bạn bị từ chối";
+        $subject = "Tin đăng của bạn bị từ chối";
         
         $body = $this->getTemplate('post_rejected', [
             'user_name' => $userName,
@@ -290,7 +290,7 @@ class EmailNotification {
      * Send welcome email
      */
     public function sendWelcomeEmail($userEmail, $userName) {
-        $subject = "🎉 Chào mừng bạn đến với Chợ Việt!";
+        $subject = "Chào mừng bạn đến với Chợ Việt!";
         
         $body = $this->getTemplate('welcome', [
             'user_name' => $userName,
@@ -305,7 +305,7 @@ class EmailNotification {
      * Send password reset email
      */
     public function sendPasswordResetEmail($userEmail, $userName, $resetToken) {
-        $subject = "🔑 Đặt lại mật khẩu - Chợ Việt";
+        $subject = "Đặt lại mật khẩu - Chợ Việt";
         
         $resetUrl = $this->joinUrl($this->getBaseUrl(), 'index.php?action=reset_password&token=' . $resetToken);
         
@@ -322,7 +322,7 @@ class EmailNotification {
      * Send livestream start notification
      */
     public function sendLivestreamStartNotification($userEmail, $userName, $livestreamData) {
-        $subject = "🎥 Livestream đã bắt đầu: " . $livestreamData['title'];
+        $subject = "Livestream đã bắt đầu: " . $livestreamData['title'];
         
         $body = $this->getTemplate('livestream_start', [
             'user_name' => $userName,
@@ -345,7 +345,7 @@ class EmailNotification {
             'cancelled' => 'đã bị hủy'
         ];
         
-        $subject = "📦 Đơn hàng #" . $orderData['order_code'] . " " . ($statusText[$newStatus] ?? 'đã cập nhật');
+        $subject = "Đơn hàng #" . $orderData['order_code'] . " " . ($statusText[$newStatus] ?? 'đã cập nhật');
         
         $body = $this->getTemplate('order_status', [
             'user_name' => $userName,
@@ -479,7 +479,7 @@ class EmailNotification {
 <body>
     <div class="container">
         <div class="header">
-            <h1>🛒 Chợ Việt</h1>
+            <h1>Chợ Việt</h1>
         </div>
         <div class="content">
             {{CONTENT}}

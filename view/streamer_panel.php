@@ -24,7 +24,7 @@ $livestream = $mLivestream->getLivestreamById($livestream_id);
 // Debug: Hiển thị thông tin debug
 if (!$livestream) {
     echo "<div style='background: #f8d7da; color: #721c24; padding: 20px; margin: 20px; border-radius: 5px;'>";
-    echo "<h3>❌ Lỗi: Không tìm thấy livestream ID=$livestream_id</h3>";
+    echo "<h3>Lỗi: Không tìm thấy livestream ID=$livestream_id</h3>";
     echo "<p>Vui lòng kiểm tra lại ID livestream.</p>";
     echo "<a href='index.php?my-livestreams' class='btn btn-primary'>Quay lại danh sách livestream</a>";
     echo "</div>";
@@ -34,7 +34,7 @@ if (!$livestream) {
 
 if ($livestream['user_id'] != $_SESSION['user_id']) {
     echo "<div style='background: #f8d7da; color: #721c24; padding: 20px; margin: 20px; border-radius: 5px;'>";
-    echo "<h3>❌ Lỗi: Không có quyền truy cập</h3>";
+    echo "<h3>Lỗi: Không có quyền truy cập</h3>";
     echo "<p>Bạn không có quyền truy cập livestream này.</p>";
     echo "<a href='index.php?my-livestreams' class='btn btn-primary'>Quay lại danh sách livestream</a>";
     echo "</div>";

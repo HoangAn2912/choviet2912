@@ -1561,7 +1561,7 @@ $i = 0;
                 <p>
                     Đừng để những món đồ cũ phủ bụi – hãy để <strong>Chợ Việt</strong> giúp bạn biến chúng thành giá trị cho người khác thông qua livestream. Rất đơn giản, bạn chỉ cần tạo live stream, chụp hình sản phẩm và bán hàng trực tiếp.
                 </p>
-                <p class="text-muted font-italic">🎥 Livestream bán hàng – Cách mới để bán đồ cũ hiệu quả cùng Chợ Việt.</p>
+                <p class="text-muted font-italic"><i class="fas fa-video mr-2 text-danger"></i>Livestream bán hàng – Cách mới để bán đồ cũ hiệu quả cùng Chợ Việt.</p>
                 </div>
                 <div class="text-center mt-3">
                     <button id="about-show-more-btn" class="btn px-4" style="background: linear-gradient(135deg, #FFD333, #FFA500); color: #333; font-weight: 600; border: none; box-shadow: 0 4px 15px rgba(255, 211, 51, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 211, 51, 0.6)'; this.style.background='linear-gradient(135deg, #FFA500, #FFD333)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 211, 51, 0.4)'; this.style.background='linear-gradient(135deg, #FFD333, #FFA500)';">Xem thêm</button>

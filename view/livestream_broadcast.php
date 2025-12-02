@@ -14,7 +14,7 @@ $livestream = $mLivestream->getLivestreamById($livestream_id);
 // Kiểm tra livestream có tồn tại không
 if (!$livestream) {
     echo "<div style='background: #f8d7da; color: #721c24; padding: 20px; margin: 20px; border-radius: 5px;'>";
-    echo "<h3>❌ Lỗi: Không tìm thấy livestream</h3>";
+    echo "<h3>Lỗi: Không tìm thấy livestream</h3>";
     echo "<p>Livestream không tồn tại hoặc đã bị xóa.</p>";
     echo "<a href='index.php?my-livestreams' class='btn btn-primary'>Quay lại danh sách livestream</a>";
     echo "</div>";
@@ -25,7 +25,7 @@ if (!$livestream) {
 // Kiểm tra quyền truy cập
 if ($livestream['user_id'] != $_SESSION['user_id']) {
     echo "<div style='background: #f8d7da; color: #721c24; padding: 20px; margin: 20px; border-radius: 5px;'>";
-    echo "<h3>❌ Lỗi: Không có quyền truy cập</h3>";
+    echo "<h3>Lỗi: Không có quyền truy cập</h3>";
     echo "<p>Bạn không có quyền truy cập livestream này.</p>";
     echo "<a href='index.php?my-livestreams' class='btn btn-primary'>Quay lại danh sách livestream</a>";
     echo "</div>";
@@ -198,45 +198,45 @@ echo "<script>document.title = 'Broadcast Livestream - Chợ Việt';</script>";
 const LIVESTREAM_ID = <?= $livestream_id ?>;
 const USER_ID = <?= isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0 ?>;
 const USERNAME = '<?= isset($_SESSION['username']) ? addslashes($_SESSION['username']) : 'Streamer' ?>';
-const log = (m)=>{ document.getElementById('status').textContent = m; console.log(m); };
+const log = (m)=>{ document.getElementById('status').textContent = m; console.log('Streamer:', m); };
 
 let localStream=null, broadcastWs=null, pc=null;
 
 function initWs(){
   broadcastWs = new WebSocket('ws://localhost:3000');
   broadcastWs.onopen = ()=>{
-    log('WebSocket connected');
+    log('WebSocket streamer đã kết nối');
     broadcastWs.send(JSON.stringify({ type:'join_livestream', livestream_id:LIVESTREAM_ID, user_id: USER_ID||('broadcaster_'+Date.now()), user_type:'streamer' }));
   };
   broadcastWs.onmessage = (ev)=>{
     const msg = JSON.parse(ev.data||'{}');
-    console.log('Broadcast received:', msg);
+    console.log('Streamer nhận message:', msg);
     if (msg.type==='webrtc_answer' && pc && msg.sdp){ 
-      console.log('Received answer from viewer');
+      console.log('Streamer: Nhận answer từ viewer');
       pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)).catch(()=>{}); 
     }
     else if (msg.type==='webrtc_ice' && pc && msg.candidate){ 
-      console.log('Received ICE candidate from viewer');
+      console.log('Streamer: Nhận ICE candidate từ viewer');
       pc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(()=>{}); 
     }
     else if (msg.type==='request_offer'){ 
-      console.log('Viewer requested offer, sending...');
+      console.log('Viewer yêu cầu offer, streamer đang gửi...');
       if (pc && pc.localDescription){
-        console.log('Sending existing offer to viewer');
+        console.log('Streamer: Gửi lại offer hiện có cho viewer');
         broadcastWs.send(JSON.stringify({type:'webrtc_offer', livestream_id:LIVESTREAM_ID, sdp: pc.localDescription}));
       } else {
-        console.log('No local description available, creating new offer...');
+        console.log('Streamer: Chưa có localDescription, tạo offer mới...');
         // Tạo offer mới nếu chưa có
         if (pc && localStream) {
           pc.createOffer().then(offer => {
             pc.setLocalDescription(offer);
             broadcastWs.send(JSON.stringify({type:'webrtc_offer', livestream_id:LIVESTREAM_ID, sdp: offer}));
-            console.log('New offer created and sent to viewer');
+            console.log('Streamer: Đã tạo offer mới và gửi cho viewer');
           }).catch(err => {
             console.error('Error creating offer for viewer:', err);
           });
         } else {
-          console.log('Cannot create offer: pc or localStream not available');
+          console.log('Streamer: Không thể tạo offer vì thiếu pc hoặc localStream');
         }
       }
     }
@@ -266,12 +266,12 @@ function initWs(){
     }
     else if (msg.type==='order_created'){ 
       // Cập nhật thống kê khi có đơn hàng mới
-      console.log('Streamer received order_created:', msg);
+      console.log('Streamer: Nhận order_created:', msg);
       refreshStats();
     }
     else if (msg.type==='livestream_stats_update'){ 
       // Cập nhật thống kê real-time từ WebSocket
-      console.log('Streamer received stats update:', msg.stats);
+      console.log('Streamer: Nhận cập nhật thống kê:', msg.stats);
       if (msg.stats) {
         document.getElementById('live-orders').textContent = msg.stats.order_count || 0;
         document.getElementById('live-revenue').textContent = formatRevenue(msg.stats.total_revenue || 0);
@@ -285,7 +285,7 @@ function initWs(){
     else if (msg.type==='livestream_like_count'){ 
       // Cập nhật lượt thích real-time
       updateLikesCount(msg.count || 0);
-      console.log('❤️ Streamer: Like count updated to', msg.count || 0);
+      console.log('Streamer: Số lượt thích đã cập nhật =', msg.count || 0);
     }
   };
 }
@@ -310,14 +310,14 @@ async function startLive(){
   
   if(!broadcastWs || broadcastWs.readyState!==1){ log('WebSocket chưa sẵn sàng.'); return; }
 
-  console.log('🎬 Starting livestream...');
+  console.log('Streamer: Bắt đầu livestream...');
   fetch('api/livestream-api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=update_status&livestream_id='+LIVESTREAM_ID+'&status=dang_live' }).catch(()=>{});
 
   pc = new RTCPeerConnection({ iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}] });
-  console.log('📡 Created RTCPeerConnection');
+  console.log('Created RTCPeerConnection');
   
   localStream.getTracks().forEach(t=> {
-    console.log('🎥 Adding track:', t.kind, {
+    console.log('Adding track:', t.kind, {
       id: t.id,
       enabled: t.enabled,
       muted: t.muted,
@@ -328,23 +328,23 @@ async function startLive(){
   
   pc.onicecandidate = ev=>{ 
     if(ev.candidate){ 
-      console.log('🧊 Sending ICE candidate to viewers');
+      console.log('Sending ICE candidate to viewers');
       broadcastWs.send(JSON.stringify({type:'webrtc_ice', livestream_id:LIVESTREAM_ID, candidate:ev.candidate})); 
     } 
   };
   
   pc.onconnectionstatechange = () => {
-    console.log('🔗 Streamer connection state:', pc.connectionState);
+    console.log('Streamer connection state:', pc.connectionState);
     if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-      console.log('🔄 Streamer connection lost, attempting to reconnect...');
+      console.log('Streamer connection lost, attempting to reconnect...');
       // Có thể restart livestream hoặc thông báo cho viewers
     }
   };
   
   pc.oniceconnectionstatechange = () => {
-    console.log('🧊 Streamer ICE connection state:', pc.iceConnectionState);
+    console.log('Streamer ICE connection state:', pc.iceConnectionState);
     if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
-      console.log('🧊 Streamer ICE connection lost');
+      console.log('Streamer ICE connection lost');
     }
   };
   

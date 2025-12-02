@@ -22,7 +22,7 @@ class cReview {
         $comment          = trim($_POST['comment'] ?? '');
 
         if ($reviewer_id <= 0 || $reviewed_user_id <= 0 || $product_id <= 0 || $rating <= 0) {
-            header("Location: ../index.php?tin-nhan&to={$reviewed_user_id}&toast=" . urlencode("❌ Thiếu thông tin đánh giá hợp lệ.") . "&type=error");
+            header("Location: ../index.php?tin-nhan&to={$reviewed_user_id}&toast=" . urlencode("Lỗi: Thiếu thông tin đánh giá hợp lệ.") . "&type=error");
             exit;
         }
 
@@ -48,7 +48,7 @@ class cReview {
             $message = $result['message'];
         } else {
             if ($model->daDanhGia($reviewer_id, $reviewed_user_id, $product_id)) {
-                header("Location: ../index.php?tin-nhan&to={$reviewed_user_id}&toast=" . urlencode("⚠️ Bạn đã đánh giá người này cho sản phẩm này rồi!") . "&type=warning");
+                header("Location: ../index.php?tin-nhan&to={$reviewed_user_id}&toast=" . urlencode("Cảnh báo: Bạn đã đánh giá người này cho sản phẩm này rồi!") . "&type=warning");
                 exit;
             }
 
@@ -58,9 +58,9 @@ class cReview {
 
         if ($ok) {
             // Đánh giá thành công: quay lại khung chat với thông tin sản phẩm đã đánh giá
-            header("Location: ../index.php?tin-nhan&to={$reviewed_user_id}&product_id={$product_id}&reviewed=1&toast=" . urlencode("✅ " . $message) . "&type=success");
+            header("Location: ../index.php?tin-nhan&to={$reviewed_user_id}&product_id={$product_id}&reviewed=1&toast=" . urlencode("Thành công: " . $message) . "&type=success");
         } else {
-            header("Location: ../index.php?tin-nhan&to={$reviewed_user_id}&product_id={$product_id}&toast=" . urlencode("❌ " . $message) . "&type=error");
+            header("Location: ../index.php?tin-nhan&to={$reviewed_user_id}&product_id={$product_id}&toast=" . urlencode("Lỗi: " . $message) . "&type=error");
         }
         exit;
     }

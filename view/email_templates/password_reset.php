@@ -16,7 +16,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div style="font-size: 60px; margin-bottom: 10px;">🔑</div>
+            <div style="font-size: 36px; margin-bottom: 10px;">Reset Password</div>
             <h1 style="margin: 0;">Đặt Lại Mật Khẩu</h1>
         </div>
         <div class="content">
@@ -25,7 +25,7 @@
             <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn trên Chợ Việt.</p>
             
             <div class="warning-box">
-                <p style="margin: 0;"><strong>⚠️ Lưu ý quan trọng:</strong></p>
+                <p style="margin: 0;"><strong>Lưu ý quan trọng:</strong></p>
                 <ul style="margin: 10px 0 0 0; padding-left: 20px;">
                     <li>Link đặt lại mật khẩu chỉ có hiệu lực trong <strong><?php echo htmlspecialchars($expires); ?></strong></li>
                     <li>Nếu không phải bạn yêu cầu, vui lòng bỏ qua email này</li>
@@ -35,7 +35,7 @@
             
             <center>
                 <a href="<?php echo htmlspecialchars($reset_url); ?>" class="btn">
-                    🔒 Đặt Lại Mật Khẩu
+                    Đặt Lại Mật Khẩu
                 </a>
             </center>
             
@@ -47,7 +47,7 @@
             </p>
             
             <div class="security-tips">
-                <h4 style="margin-top: 0;">🛡️ Mẹo bảo mật:</h4>
+                <h4 style="margin-top: 0;">Mẹo bảo mật:</h4>
                 <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
                     <li>Sử dụng mật khẩu mạnh (ít nhất 8 ký tự, có chữ hoa, số)</li>
                     <li>Không sử dụng lại mật khẩu từ website khác</li>

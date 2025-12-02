@@ -36,13 +36,13 @@ class Connect {
             if (isLocal()) {
                 // Local: Hiển thị chi tiết để debug
                 echo "<div style='background:#f8d7da;border:1px solid #f5c2c7;padding:20px;margin:20px;border-radius:5px;font-family:Arial;'>";
-                echo "<h3 style='color:#842029;margin:0 0 10px 0;'>❌ Lỗi kết nối Database (LOCAL)</h3>";
+                echo "<h3 style='color:#842029;margin:0 0 10px 0;'>Lỗi kết nối Database (LOCAL)</h3>";
                 echo "<p style='margin:5px 0;'><strong>Host:</strong> $host</p>";
                 echo "<p style='margin:5px 0;'><strong>Database:</strong> $dbname</p>";
                 echo "<p style='margin:5px 0;'><strong>User:</strong> $user</p>";
                 echo "<p style='margin:5px 0;'><strong>Chi tiết lỗi:</strong> " . mysqli_connect_error() . "</p>";
                 echo "<hr style='margin:15px 0;'>";
-                echo "<p style='margin:5px 0;'><strong>💡 Giải pháp:</strong></p>";
+                echo "<p style='margin:5px 0;'><strong>Giải pháp:</strong></p>";
                 echo "<ul style='margin:10px 0;padding-left:20px;'>";
                 echo "<li>Kiểm tra XAMPP MySQL đã chạy chưa</li>";
                 echo "<li>Kiểm tra thông tin trong <code>config/env_config.php</code></li>";

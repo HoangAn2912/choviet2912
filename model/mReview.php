@@ -51,7 +51,7 @@ class mReview extends Connect {
     }
 
     /**
-     * ✅ PHIÊN BẢN MỚI: Thêm đánh giá có liên kết với đơn hàng
+     * Phiên bản mới: Thêm đánh giá có liên kết với đơn hàng
      */
     public function addReview($data) {
         $conn = $this->connect();

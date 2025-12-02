@@ -366,10 +366,10 @@ include_once __DIR__ . '/header.php';
         
         <div class="header">
             <?php if ($is_business): ?>
-                <h1>🎥 Gia Hạn Gói Livestream</h1>
+                <h1><i class="fas fa-video mr-2"></i>Gia Hạn Gói Livestream</h1>
                 <p style="color: #000">Chọn gói để gia hạn hoặc nâng cấp gói livestream của bạn</p>
             <?php else: ?>
-                <h1>🎥 Đăng Ký Gói Livestream Doanh Nghiệp</h1>
+                <h1><i class="fas fa-video mr-2"></i>Đăng Ký Gói Livestream Doanh Nghiệp</h1>
                 <p>Nâng cấp lên tài khoản doanh nghiệp để bắt đầu livestream bán hàng</p>
             <?php endif; ?>
         </div>
@@ -377,20 +377,20 @@ include_once __DIR__ . '/header.php';
         <?php if ($user_id > 0 && !$is_business): ?>
         <!-- Thông báo cho tài khoản cá nhân -->
         <div class="active-package-alert" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-            <h3>ℹ️ Tài Khoản Cá Nhân</h3>
+            <h3><i class="fas fa-info-circle mr-2"></i>Tài Khoản Cá Nhân</h3>
             <p>Bạn đang sử dụng tài khoản <strong>Cá Nhân</strong>. Để sử dụng tính năng livestream, vui lòng:</p>
             <ul style="text-align: left; margin: 10px 0; padding-left: 30px;">
                 <li>Đăng ký gói livestream bên dưới</li>
                 <li>Hệ thống sẽ <strong>tự động nâng cấp</strong> tài khoản của bạn lên <strong>Doanh Nghiệp</strong></li>
                 <li>Sau đó bạn có thể livestream bán hàng không giới hạn theo gói đã chọn</li>
             </ul>
-            <p style="margin-top: 15px;">💡 <strong>Lưu ý:</strong> Việc nâng cấp lên doanh nghiệp là <strong>MIỄN PHÍ</strong>, bạn chỉ cần thanh toán phí gói livestream.</p>
+            <p style="margin-top: 15px;"><i class="fas fa-lightbulb mr-2"></i><strong>Lưu ý:</strong> Việc nâng cấp lên doanh nghiệp là <strong>MIỄN PHÍ</strong>, bạn chỉ cần thanh toán phí gói livestream.</p>
         </div>
         <?php endif; ?>
 
         <?php if ($activeRegistration): ?>
         <div class="active-package-alert">
-            <h3>✅ Bạn đang sử dụng gói: <?= htmlspecialchars($activeRegistration['package_name']) ?></h3>
+            <h3><i class="fas fa-check-circle text-success mr-2"></i>Bạn đang sử dụng gói: <?= htmlspecialchars($activeRegistration['package_name']) ?></h3>
             <p><i class="fas fa-clock mr-1"></i>Hiệu lực đến: <strong><?= date('d/m/Y H:i', strtotime($activeRegistration['expiry_date'])) ?></strong></p>
             <p>Bạn có thể mua gói mới để gia hạn hoặc nâng cấp.</p>
         </div>
@@ -400,11 +400,11 @@ include_once __DIR__ . '/header.php';
             <?php foreach ($packages as $package): ?>
             <div class="package-card <?= $package['id'] == 3 ? 'vip' : '' ?>">
                 <?php if ($package['id'] == 1): ?>
-                    <div class="package-badge">⚡ Gói Thử Nghiệm</div>
+                    <div class="package-badge"><i class="fas fa-bolt mr-1"></i>Gói Thử Nghiệm</div>
                 <?php elseif ($package['id'] == 2): ?>
-                    <div class="package-badge">🔥 Phổ Biến</div>
+                    <div class="package-badge"><i class="fas fa-fire mr-1"></i>Phổ Biến</div>
                 <?php else: ?>
-                    <div class="package-badge">👑 KHÔNG GIỚI HẠN</div>
+                    <div class="package-badge"><i class="fas fa-crown mr-1"></i>KHÔNG GIỚI HẠN</div>
                 <?php endif; ?>
                 
                 <h3 class="package-name"><?= htmlspecialchars($package['package_name']) ?></h3>
@@ -463,7 +463,7 @@ include_once __DIR__ . '/header.php';
                         <?php endif; ?>
                     <?php else: ?>
                         <button class="btn-purchase btn-disabled" onclick="alert('Vui lòng đăng nhập để đăng ký gói!')">
-                            🔒 Đăng nhập để đăng ký
+                            <i class="fas fa-lock mr-2"></i>Đăng nhập để đăng ký
                         </button>
                     <?php endif; ?>
                 </div>
@@ -473,23 +473,23 @@ include_once __DIR__ . '/header.php';
 
         <div class="info-section">
             <h2><i class="fas fa-info-circle mr-2"></i>Thông tin quan trọng</h2>
-            <p><strong>✅ Ai được sử dụng tính năng livestream?</strong></p>
+            <p><strong><i class="fas fa-check-circle text-success mr-2"></i>Ai được sử dụng tính năng livestream?</strong></p>
             <p>Chỉ tài khoản <strong>Doanh Nghiệp</strong> mới được phép mua gói và livestream bán hàng.</p>
             
-            <p><strong>🔄 Chính sách gia hạn & nâng cấp:</strong></p>
+            <p><strong><i class="fas fa-sync-alt mr-2"></i>Chính sách gia hạn & nâng cấp:</strong></p>
             <ul>
                 <li>Khi mua gói mới, gói cũ sẽ tự động bị hủy</li>
                 <li>Thời hạn gói mới tính từ thời điểm thanh toán thành công</li>
                 <li>Bạn có thể xem lịch sử mua gói trong trang cá nhân</li>
             </ul>
             
-            <p><strong>💰 Phương thức thanh toán:</strong></p>
+            <p><strong><i class="fas fa-coins mr-2"></i>Phương thức thanh toán:</strong></p>
             <ul>
                 <li><strong>Ví nội bộ:</strong> Thanh toán ngay lập tức bằng số dư trong ví</li>
                 <li><strong>VNPay:</strong> Thanh toán qua cổng VNPay (ATM, Visa, Mastercard)</li>
             </ul>
             
-            <p><strong>📞 Hỗ trợ:</strong></p>
+            <p><strong><i class="fas fa-phone mr-2"></i>Hỗ trợ:</strong></p>
             <p>Nếu gặp vấn đề, vui lòng liên hệ <strong>support@choviet29.com</strong> hoặc hotline <strong>1900 xxxx</strong></p>
         </div>
                 </div>

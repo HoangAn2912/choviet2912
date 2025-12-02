@@ -15,7 +15,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div style="font-size: 50px; margin-bottom: 10px;">❌</div>
+            <div style="font-size: 32px; margin-bottom: 10px;">Thông báo</div>
             <h1 style="margin: 0;">Tin Đăng Bị Từ Chối</h1>
         </div>
         <div class="content">
@@ -23,7 +23,7 @@
             <p>Rất tiếc, tin đăng của bạn không được phê duyệt.</p>
             
             <div class="error-box">
-                <h3 style="margin-top: 0; color: #721c24;">📌 <?php echo htmlspecialchars($post_title); ?></h3>
+                <h3 style="margin-top: 0; color: #721c24;"><?php echo htmlspecialchars($post_title); ?></h3>
                 <p style="margin: 0; color: #721c24;">
                     <strong>Lý do:</strong> <?php echo htmlspecialchars($reason); ?>
                 </p>

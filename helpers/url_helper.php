@@ -40,7 +40,7 @@ function getEnvironmentConfig() {
         if (!isset($allConfigs[$env])) {
             // Lỗi: Môi trường không tồn tại
             if (defined('APP_ENV') && APP_ENV === 'local') {
-                die("❌ LỖI CONFIG: Môi trường '$env' không tồn tại trong config/env_config.php<br>" .
+                die("LỖI CONFIG: Môi trường '$env' không tồn tại trong config/env_config.php<br>" .
                     "👉 Các môi trường có sẵn: " . implode(', ', array_keys($allConfigs)));
             } else {
                 // Production: Fallback sang local
@@ -54,7 +54,7 @@ function getEnvironmentConfig() {
     } catch (Exception $e) {
         // Lỗi khi đọc config
         if (defined('APP_ENV') && APP_ENV === 'local') {
-            die("❌ LỖI khi đọc config: " . $e->getMessage());
+            die("LỖI khi đọc config: " . $e->getMessage());
         } else {
             // Production: Sử dụng fallback
             $config = [
@@ -267,13 +267,13 @@ function showEnvironmentInfo() {
     
     $config = getEnvironmentConfig();
     echo "<div style='background:#fff3cd;border:1px solid #ffc107;padding:15px;margin:10px 0;border-radius:5px;'>";
-    echo "<h4 style='margin:0 0 10px 0;color:#856404;'>⚙️ Thông tin môi trường</h4>";
+    echo "<h4 style='margin:0 0 10px 0;color:#856404;'>Thông tin môi trường</h4>";
     echo "<table style='width:100%;border-collapse:collapse;'>";
     echo "<tr><td style='padding:5px;border-bottom:1px solid #ddd;'><strong>Môi trường:</strong></td><td style='padding:5px;border-bottom:1px solid #ddd;'>" . getCurrentEnvironment() . "</td></tr>";
     echo "<tr><td style='padding:5px;border-bottom:1px solid #ddd;'><strong>Base URL:</strong></td><td style='padding:5px;border-bottom:1px solid #ddd;'>" . getBaseUrl() . "</td></tr>";
     echo "<tr><td style='padding:5px;border-bottom:1px solid #ddd;'><strong>Base Path:</strong></td><td style='padding:5px;border-bottom:1px solid #ddd;'>" . getBasePath() . "</td></tr>";
     echo "<tr><td style='padding:5px;border-bottom:1px solid #ddd;'><strong>Database:</strong></td><td style='padding:5px;border-bottom:1px solid #ddd;'>" . config('db_name', 'N/A') . "</td></tr>";
-    echo "<tr><td style='padding:5px;border-bottom:1px solid #ddd;'><strong>Debug Mode:</strong></td><td style='padding:5px;border-bottom:1px solid #ddd;'>" . (config('debug', false) ? '✅ Bật' : '❌ Tắt') . "</td></tr>";
+    echo "<tr><td style='padding:5px;border-bottom:1px solid #ddd;'><strong>Debug Mode:</strong></td><td style='padding:5px;border-bottom:1px solid #ddd;'>" . (config('debug', false) ? 'Bật' : 'Tắt') . "</td></tr>";
     echo "</table>";
     echo "</div>";
 }

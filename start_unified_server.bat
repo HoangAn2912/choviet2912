@@ -5,13 +5,13 @@ echo.
 REM Kiểm tra Node.js
 node --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ❌ Node.js chưa được cài đặt hoặc chưa có trong PATH
+    echo [Loi] Node.js chua duoc cai dat hoac chua co trong PATH
     echo Vui lòng cài đặt Node.js từ https://nodejs.org/
     pause
     exit /b 1
 )
 
-echo ✅ Node.js đã sẵn sàng
+echo [OK] Node.js da san sang
 echo.
 
 REM Dừng server cũ nếu đang chạy

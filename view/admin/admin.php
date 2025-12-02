@@ -437,9 +437,9 @@ if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) 
             profileDropdownToggle.style.position = 'relative';
             profileDropdownToggle.style.zIndex = '1031';
             
-            console.log('✅ Profile dropdown initialized successfully');
+            console.log('Profile dropdown initialized successfully');
         } catch (e) {
-            console.error('❌ Error initializing dropdown:', e);
+            console.error('Error initializing dropdown:', e);
             
             // Fallback: Toggle thủ công
             profileDropdownToggle.addEventListener('click', function(e) {

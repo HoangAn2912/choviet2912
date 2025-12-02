@@ -21,7 +21,7 @@ class cC2COrder {
         // Validate CSRF token
         $csrfToken = $_POST['csrf_token'] ?? '';
         if (!Security::validateCSRFToken($csrfToken)) {
-            header("Location: index.php?toast=" . urlencode("❌ CSRF token không hợp lệ!") . "&type=error");
+            header("Location: index.php?toast=" . urlencode("[Lỗi] CSRF token không hợp lệ!") . "&type=error");
             exit;
         }
 
@@ -53,9 +53,9 @@ class cC2COrder {
         $result = $this->model->createOrder($data);
 
         if ($result['success']) {
-            header("Location: index.php?c2c-order-detail&id=" . $result['order_id'] . "&toast=" . urlencode("✅ " . $result['message']) . "&type=success");
+            header("Location: index.php?c2c-order-detail&id=" . $result['order_id'] . "&toast=" . urlencode("[Thành công] " . $result['message']) . "&type=success");
         } else {
-            header("Location: index.php?detail&id=" . $data['product_id'] . "&toast=" . urlencode("❌ " . $result['message']) . "&type=error");
+            header("Location: index.php?detail&id=" . $data['product_id'] . "&toast=" . urlencode("[Lỗi] " . $result['message']) . "&type=error");
         }
         exit;
     }
@@ -78,7 +78,7 @@ class cC2COrder {
 
         // Kiểm tra quyền truy cập
         if (!$this->model->canAccessOrder($order_id, $user_id)) {
-            header("Location: index.php?toast=" . urlencode("❌ Bạn không có quyền xem đơn hàng này!") . "&type=error");
+            header("Location: index.php?toast=" . urlencode("[Lỗi] Bạn không có quyền xem đơn hàng này!") . "&type=error");
             exit;
         }
 
@@ -102,7 +102,7 @@ class cC2COrder {
         // Validate CSRF
         $csrfToken = $_POST['csrf_token'] ?? '';
         if (!Security::validateCSRFToken($csrfToken)) {
-            header("Location: index.php?toast=" . urlencode("❌ CSRF token không hợp lệ!") . "&type=error");
+            header("Location: index.php?toast=" . urlencode("[Lỗi] CSRF token không hợp lệ!") . "&type=error");
             exit;
         }
 
@@ -114,9 +114,9 @@ class cC2COrder {
         $result = $this->model->updateOrderStatus($order_id, $new_status, $user_id, $note);
 
         if ($result['success']) {
-            header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("✅ " . $result['message']) . "&type=success");
+            header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("[Thành công] " . $result['message']) . "&type=success");
         } else {
-            header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("❌ " . $result['message']) . "&type=error");
+            header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("[Lỗi] " . $result['message']) . "&type=error");
         }
         exit;
     }
@@ -152,9 +152,9 @@ class cC2COrder {
         $result = $this->model->acceptOffer($order_id, $user_id, $offer_price);
 
         if ($result['success']) {
-            header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("✅ " . $result['message']) . "&type=success");
+            header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("[Thành công] " . $result['message']) . "&type=success");
         } else {
-            header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("❌ " . $result['message']) . "&type=error");
+            header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("[Lỗi] " . $result['message']) . "&type=error");
         }
         exit;
     }
@@ -212,7 +212,7 @@ class cC2COrder {
         
         // Chỉ buyer mới có thể xác nhận hoàn tất
         if ($order['buyer_id'] != $user_id) {
-            header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("❌ Bạn không có quyền!") . "&type=error");
+            header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("[Lỗi] Bạn không có quyền!") . "&type=error");
             exit;
         }
 
@@ -224,7 +224,7 @@ class cC2COrder {
             $this->model->releaseEscrowToSeller($order_id, $order['seller_id']);
         }
 
-        header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("✅ Đơn hàng đã hoàn tất!") . "&type=success");
+        header("Location: index.php?c2c-order-detail&id={$order_id}&toast=" . urlencode("[Thành công] Đơn hàng đã hoàn tất!") . "&type=success");
         exit;
     }
 }

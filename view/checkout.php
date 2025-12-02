@@ -850,7 +850,7 @@ function sendOrderCreatedNotification(livestreamId, orderData) {
         let messageSent = false;
         
         ws.onopen = function() {
-        console.log('WebSocket connected, joining livestream room');
+        console.log('Checkout: Đã kết nối WebSocket, tham gia phòng livestream');
             // Join livestream room trước
             ws.send(JSON.stringify({
                 type: 'join_livestream',
@@ -862,7 +862,7 @@ function sendOrderCreatedNotification(livestreamId, orderData) {
             // Gửi message order_created sau khi join (delay nhỏ)
             setTimeout(() => {
                 if (!messageSent && ws.readyState === WebSocket.OPEN) {
-                    console.log('Sending order_created message');
+                    console.log('Checkout: Gửi message order_created qua WebSocket');
                     ws.send(JSON.stringify({
                         type: 'order_created',
                         livestream_id: livestreamId,
@@ -881,11 +881,11 @@ function sendOrderCreatedNotification(livestreamId, orderData) {
         };
         
         ws.onerror = function(error) {
-            console.warn('⚠️ WebSocket error (non-critical):', error);
+            console.warn('WebSocket error (non-critical):', error);
             // Không ảnh hưởng đến flow chính
         };
     } catch (error) {
-        console.warn('⚠️ Failed to send order_created via WebSocket (non-critical):', error);
+        console.warn('Failed to send order_created via WebSocket (non-critical):', error);
         // Không ảnh hưởng đến flow chính
     }
 }

@@ -9,7 +9,7 @@ class cPost {
             // Validate CSRF token
             $csrfToken = $_POST['csrf_token'] ?? '';
             if (!Security::validateCSRFToken($csrfToken)) {
-                header("Location: index.php?toast=" . urlencode("❌ CSRF token không hợp lệ!") . "&type=error");
+                header("Location: index.php?toast=" . urlencode("Lỗi: CSRF token không hợp lệ!") . "&type=error");
                 exit;
             }
             
@@ -17,7 +17,7 @@ class cPost {
             RateLimiter::middleware('post_create', 5, 3600);
             $idLoaiSanPham = intval($_POST['category_id'] ?? 0);
             if ($idLoaiSanPham == 0) {
-                header("Location: index.php?toast=" . urlencode("❌ Bạn chưa chọn danh mục sản phẩm!") . "&type=error");
+                header("Location: index.php?toast=" . urlencode("Lỗi: Bạn chưa chọn danh mục sản phẩm!") . "&type=error");
                 exit;
             }
 
@@ -27,7 +27,7 @@ class cPost {
             $idNguoiDang = $_SESSION['user_id'] ?? 0;
 
             if ($idNguoiDang == 0) {
-                header("Location: index.php?toast=" . urlencode("❌ Bạn cần đăng nhập để đăng tin!") . "&type=error");
+                header("Location: index.php?toast=" . urlencode("Lỗi: Bạn cần đăng nhập để đăng tin!") . "&type=error");
                 exit;
             }
 
@@ -52,7 +52,7 @@ class cPost {
                     
                     if (!$validation['valid']) {
                         $errors = implode(', ', $validation['errors']);
-                        header("Location: index.php?toast=" . urlencode("❌ " . $errors) . "&type=error");
+                        header("Location: index.php?toast=" . urlencode("Lỗi: " . $errors) . "&type=error");
                         exit;
                     }
 
@@ -68,7 +68,7 @@ class cPost {
             }
 
             if (count($anhTenList) < 2) {
-                header("Location: index.php?toast=" . urlencode("❌ Bạn phải chọn ít nhất 2 ảnh để đăng tin.") . "&type=error");
+                header("Location: index.php?toast=" . urlencode("Lỗi: Bạn phải chọn ít nhất 2 ảnh để đăng tin.") . "&type=error");
                 exit;
             }
 
@@ -82,7 +82,7 @@ class cPost {
             $soDu = intval($thongTin['balance'] ?? 0);
 
                 if ($soDu < 11000) {
-                    header("Location: index.php?toast=" . urlencode("❌ Tài khoản không đủ 11.000đ để đăng tin.") . "&type=error");
+                    header("Location: index.php?toast=" . urlencode("Lỗi: Tài khoản không đủ 11.000đ để đăng tin.") . "&type=error");
                     exit;
                 }
             }
@@ -90,10 +90,10 @@ class cPost {
             $result = $model->insertSanPham($tieuDe, $price, $moTa, $hinhAnh, $idNguoiDang, $idLoaiSanPham);
 
             if ($result) {
-                header("Location: index.php?toast=" . urlencode("🎉 Đăng tin thành công! Tin đang chờ duyệt.") . "&type=success");
+                header("Location: index.php?toast=" . urlencode("Đăng tin thành công! Tin đang chờ duyệt.") . "&type=success");
                 exit;
             } else {
-                header("Location: index.php?toast=" . urlencode("❌ Đăng tin thất bại. Vui lòng thử lại!") . "&type=error");
+                header("Location: index.php?toast=" . urlencode("Lỗi: Đăng tin thất bại. Vui lòng thử lại!") . "&type=error");
                 exit;
             }
         }
@@ -208,7 +208,7 @@ public function capNhatTrangThaiBan() {
             $model = new mPost();
             $tinCu = $model->laySanPhamTheoId($id);
             if (!$tinCu || $tinCu['user_id'] != $idNguoiDang) {
-                header("Location: index.php?toast=" . urlencode("❌ Không tìm thấy tin!") . "&type=error");
+                header("Location: index.php?toast=" . urlencode("Lỗi: Không tìm thấy tin!") . "&type=error");
                 exit;
             }
             $idLoaiSanPham = $tinCu['category_id'];
@@ -256,11 +256,11 @@ public function capNhatTrangThaiBan() {
             // Kiểm tra số lượng ảnh
             $anhTenList = array_filter($anhTenList); // Loại bỏ phần tử rỗng
             if (count($anhTenList) < 2) {
-                header("Location: index.php?quan-ly-tin&toast=" . urlencode("❌ Tổng số ảnh phải từ 2 đến 6 ảnh!") . "&type=error");
+                header("Location: index.php?quan-ly-tin&toast=" . urlencode("Lỗi: Tổng số ảnh phải từ 2 đến 6 ảnh!") . "&type=error");
                 exit;
             }
             if (count($anhTenList) > 6) {
-                header("Location: index.php?quan-ly-tin&toast=" . urlencode("❌ Tổng số ảnh không được vượt quá 6 ảnh!") . "&type=error");
+                header("Location: index.php?quan-ly-tin&toast=" . urlencode("Lỗi: Tổng số ảnh không được vượt quá 6 ảnh!") . "&type=error");
                     exit;
             }
 
@@ -268,9 +268,9 @@ public function capNhatTrangThaiBan() {
             $ok = $model->capNhatSanPham($id, $tieuDe, $price, $moTa, $hinhAnh, $idLoaiSanPham, $idNguoiDang);
 
             if ($ok) {
-                header("Location: index.php?quan-ly-tin&toast=" . urlencode("✅ Đã cập nhật và chuyển về chờ duyệt!") . "&type=success");
+                header("Location: index.php?quan-ly-tin&toast=" . urlencode("Đã cập nhật và chuyển về chờ duyệt!") . "&type=success");
             } else {
-                header("Location: index.php?quan-ly-tin&toast=" . urlencode("❌ Cập nhật thất bại!") . "&type=error");
+                header("Location: index.php?quan-ly-tin&toast=" . urlencode("Lỗi: Cập nhật thất bại!") . "&type=error");
             }
         }
     }
@@ -292,15 +292,15 @@ public function capNhatTrangThaiBan() {
 
         $soDu = $model->laySoDuNguoiDung($idNguoiDung);
         if ($soDu < 11000) {
-            header("Location: index.php?quan-ly-tin&toast=" . urlencode("⚠️ Bạn không đủ tiền để đẩy tin. Vui lòng nạp thêm.") . "&type=warning");
+            header("Location: index.php?quan-ly-tin&toast=" . urlencode("Cảnh báo: Bạn không đủ tiền để đẩy tin. Vui lòng nạp thêm.") . "&type=warning");
             return;
         }
 
         $ok = $model->dayTin($idTin, $idNguoiDung);
         if ($ok) {
-            header("Location: index.php?quan-ly-tin&toast=" . urlencode("🚀 Đã đẩy tin thành công!") . "&type=success");
+            header("Location: index.php?quan-ly-tin&toast=" . urlencode("Đã đẩy tin thành công!") . "&type=success");
         } else {
-            header("Location: index.php?quan-ly-tin&toast=" . urlencode("❌ Có lỗi xảy ra khi đẩy tin!") . "&type=error");
+            header("Location: index.php?quan-ly-tin&toast=" . urlencode("Lỗi: Có lỗi xảy ra khi đẩy tin!") . "&type=error");
         }
     }
 }

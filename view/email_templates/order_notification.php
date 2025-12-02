@@ -29,7 +29,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="icon">🛍️</div>
+            <div class="icon">Chợ Việt</div>
             <h1>Đơn Hàng Mới!</h1>
             <p>Bạn có một đơn hàng mới cần xử lý</p>
         </div>
@@ -40,17 +40,17 @@
             
             <div class="order-box">
                 <div class="order-code">Mã đơn hàng: #<?php echo htmlspecialchars($order_code); ?></div>
-                <div class="total-amount">💰 <?php echo htmlspecialchars($total_amount); ?> đ</div>
+                <div class="total-amount">Tổng: <?php echo htmlspecialchars($total_amount); ?> đ</div>
             </div>
             
             <div class="customer-info">
-                <h3>📋 Thông Tin Khách Hàng</h3>
+                <h3>Thông Tin Khách Hàng</h3>
                 <p><strong>Tên:</strong> <?php echo htmlspecialchars($customer_name); ?></p>
                 <p><strong>Số điện thoại:</strong> <?php echo htmlspecialchars($customer_phone); ?></p>
             </div>
             
             <?php if (!empty($items)): ?>
-            <h3>📦 Sản Phẩm Trong Đơn</h3>
+            <h3>Sản Phẩm Trong Đơn</h3>
             <div class="items-list">
                 <?php foreach ($items as $item): ?>
                 <div class="item">
@@ -71,7 +71,7 @@
             </center>
             
             <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #666; font-size: 14px;">
-                <strong>💡 Lưu ý:</strong> Vui lòng xác nhận đơn hàng và chuẩn bị hàng trong vòng 24 giờ.
+                <strong>Lưu ý:</strong> Vui lòng xác nhận đơn hàng và chuẩn bị hàng trong vòng 24 giờ.
                 Khách hàng đang chờ đợi sản phẩm từ bạn!
             </p>
         </div>

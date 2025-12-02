@@ -466,11 +466,11 @@ include_once("controller/cLoginLogout.php");
                     if (result.success && result.available) {
                         this.tenDangNhap.classList.add('success');
                         this.tenDangNhap.classList.remove('error');
-                        this.showToast('✅ ' + result.message, 'success', 3000);
+                        this.showToast(result.message, 'success', 3000);
                     } else {
                         this.tenDangNhap.classList.add('error');
                         this.tenDangNhap.classList.remove('success');
-                        this.showToast('❌ ' + result.message, 'error', 5000);
+                        this.showToast(result.message, 'error', 5000);
                     }
                     
                 } catch (error) {
@@ -505,11 +505,11 @@ include_once("controller/cLoginLogout.php");
                     if (result.success && result.valid) {
                         this.password.classList.add('success');
                         this.password.classList.remove('error');
-                        this.showToast('✅ ' + result.message, 'success', 3000);
+                        this.showToast(result.message, 'success', 3000);
                     } else {
                         this.password.classList.add('error');
                         this.password.classList.remove('success');
-                        this.showToast('❌ ' + result.message, 'error', 5000);
+                        this.showToast(result.message, 'error', 5000);
                     }
                     
                 } catch (error) {
@@ -581,7 +581,7 @@ include_once("controller/cLoginLogout.php");
                 // Kiểm tra mật khẩu hợp lệ
                 const passwordValidation = this.validatePassword(this.password.value);
                 if (!passwordValidation.valid) {
-                    this.showToast('❌ ' + passwordValidation.message, 'error');
+                    this.showToast(passwordValidation.message, 'error');
                     return false;
                 }
                 

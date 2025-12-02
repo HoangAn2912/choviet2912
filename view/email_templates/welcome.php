@@ -15,7 +15,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div style="font-size: 60px; margin-bottom: 10px;">🎉</div>
+            <div style="font-size: 36px; margin-bottom: 10px;">Chào mừng!</div>
             <h1 style="margin: 0;">Chào Mừng Đến Với Chợ Việt!</h1>
         </div>
         <div class="content">
@@ -23,25 +23,25 @@
             
             <p>Chúc mừng bạn đã tạo tài khoản thành công tại <strong>Chợ Việt</strong> - nền tảng mua bán trực tuyến hàng đầu Việt Nam! 🇻🇳</p>
             
-            <h3>🌟 Bạn có thể làm gì trên Chợ Việt?</h3>
+            <h3>Bạn có thể làm gì trên Chợ Việt?</h3>
             
             <div class="feature">
-                <h4 style="margin: 0 0 10px 0;">🛍️ Mua Sắm</h4>
+                <h4 style="margin: 0 0 10px 0;">Mua Sắm</h4>
                 <p style="margin: 0;">Tìm kiếm và mua hàng nghìn sản phẩm từ người bán uy tín</p>
             </div>
             
             <div class="feature">
-                <h4 style="margin: 0 0 10px 0;">📦 Bán Hàng</h4>
+                <h4 style="margin: 0 0 10px 0;">Bán Hàng</h4>
                 <p style="margin: 0;">Đăng tin miễn phí, quản lý sản phẩm và đơn hàng dễ dàng</p>
             </div>
             
             <div class="feature">
-                <h4 style="margin: 0 0 10px 0;">🎥 Livestream</h4>
+                <h4 style="margin: 0 0 10px 0;">Livestream</h4>
                 <p style="margin: 0;">Bán hàng trực tiếp qua livestream, tương tác realtime với khách hàng</p>
             </div>
             
             <div class="feature">
-                <h4 style="margin: 0 0 10px 0;">💬 Chat</h4>
+                <h4 style="margin: 0 0 10px 0;">Chat</h4>
                 <p style="margin: 0;">Nhắn tin trực tiếp với người mua/bán, trao đổi thông tin nhanh chóng</p>
             </div>
             
@@ -51,7 +51,7 @@
             </center>
             
             <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #666;">
-                <strong>💡 Mẹo:</strong> Hoàn thiện hồ sơ của bạn để tăng uy tín và bán hàng hiệu quả hơn!
+                <strong>Mẹo:</strong> Hoàn thiện hồ sơ của bạn để tăng uy tín và bán hàng hiệu quả hơn!
             </p>
         </div>
         <div class="footer">
