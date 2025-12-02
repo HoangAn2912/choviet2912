@@ -114,7 +114,7 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Không tìm thấy livestream']);
         }
         break;
-
+        
     case 'update_livestream_info':
         // Cập nhật tiêu đề và mô tả livestream từ streamer panel
         $livestream_id = $_POST['livestream_id'] ?? null;

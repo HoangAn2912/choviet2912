@@ -7,7 +7,7 @@ function showToast(message, type = "success") {
   
     const [bg, textColor] = colors[type] || ["#ccc", "#000"];
   
-    Toastify({
+    const toast = Toastify({
       text: message,
       duration: 4000,
       close: true,
@@ -21,6 +21,20 @@ function showToast(message, type = "success") {
         padding: "10px 15px",
       },
       stopOnFocus: true,
-    }).showToast();
+    });
+  
+    toast.showToast();
+  
+    // Đổi màu dấu X (nút đóng) sang màu đen cho rõ hơn
+    setTimeout(() => {
+      try {
+        const closeBtn = document.querySelector(".toastify .toast-close");
+        if (closeBtn) {
+          closeBtn.style.color = "#000000";
+        }
+      } catch (e) {
+        console.warn("Không thể chỉnh màu nút đóng toast:", e);
+      }
+    }, 0);
   }
   

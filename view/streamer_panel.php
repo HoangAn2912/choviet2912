@@ -460,7 +460,7 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
 
 <div class="page-background">
     <div class="content-wrapper">
-        <div class="container-fluid streamer-panel">
+<div class="container-fluid streamer-panel">
     <div class="row">
         <div class="col-12">
             <!-- Panel Header -->
@@ -702,7 +702,7 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
             </div>
         </div>
     </div>
-</div>
+            </div>
         </div>
     </div>
 </div>

@@ -12,6 +12,7 @@ $cUser = new cUser();
 $current_user_id = $_SESSION['user_id'];
 $to_user_id = isset($_GET['to']) ? intval($_GET['to']) : 0;
 $product_id = isset($_GET['product_id']) ? intval($_GET['product_id']) : 0;
+$hide_review_for_product = (isset($_GET['reviewed']) && intval($_GET['reviewed']) === 1 && $product_id > 0);
 $conversations = $cChat->getConversationUsers($current_user_id);
 $receiver = ($to_user_id) ? $cUser->getUserById($to_user_id) : null;
 ?>
@@ -141,11 +142,14 @@ const ID_SAN_PHAM = 0;
     <input type="text" class="form-control mb-3" placeholder="Tìm người dùng..." id="searchUserInput">
       <ul class="list-unstyled">
         <?php foreach ($conversations as $user): ?>
+        <?php
+          $avatarFile = !empty($user['avatar']) ? $user['avatar'] : 'default-avatar.jpg';
+        ?>
         <li class="media p-2 mb-2 rounded chat-user <?= ($user['id'] == $to_user_id ? 'active' : '') ?>" 
             data-id="<?= $user['id'] ?>"
             style="cursor: pointer;" 
             onclick="openConversation(<?= $user['id'] ?>)">
-          <img src="img/<?= htmlspecialchars($user['avatar']) ?>" class="mr-3 rounded-circle" width="50" height="50">
+          <img src="img/<?= htmlspecialchars($avatarFile) ?>" class="mr-3 avatar-square-lg" alt="Avatar">
           <div class="media-body">
             <h6 class="mb-0 font-weight-bold d-flex align-items-center justify-content-between">
               <span class="js-username" title="<?= htmlspecialchars($user['username']) ?>"><?= htmlspecialchars($user['username']) ?></span>
@@ -165,17 +169,26 @@ const ID_SAN_PHAM = 0;
     <div class="col-md-8 col-lg-9 d-flex flex-column p-4 bg-white">
       <?php if ($receiver): ?>
       <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-        <div class="d-flex align-items-center">
-        <img src="img/<?= htmlspecialchars($receiver['avatar']) ?>" class="rounded-circle mr-2 chat-header-avatar" width="40" height="40">
-      <strong><?= htmlspecialchars($receiver['username']) ?></strong>
-    </div>
-
+        <a href="index.php?thongtin=<?= (int)($receiver['id'] ?? 0) ?>"
+           class="d-flex align-items-center"
+           style="text-decoration:none; color: inherit;">
+          <img src="img/<?= htmlspecialchars($receiver['avatar'] ?? 'default-avatar.jpg') ?>" class="mr-2 avatar-square" alt="Avatar">
+          <strong><?= htmlspecialchars($receiver['username']) ?></strong>
+        </a>
+        <!-- Nút viết đánh giá: ẩn nếu vừa đánh giá xong cho đúng người bán + sản phẩm -->
+        <button type="button"
+                id="btnWriteReview"
+                class="btn btn-warning text-white"
+                onclick="openReviewModal()"
+                style="<?= $hide_review_for_product ? 'display:none;' : 'display:inline-flex;' ?> font-weight:600; border-radius:20px;">
+          <i class="fas fa-star mr-1"></i>Viết đánh giá
+        </button>
       </div>
 
       <div id="chatMessages" class="flex-grow-1 overflow-auto mb-3" style="max-height: 60vh;"></div>
 
       <form class="d-flex align-items-center" id="formChat" onsubmit="event.preventDefault(); sendMessage(this.content.value); this.content.value='';">
-<input name="content" type="text" class="form-control" placeholder="Nhập tin nhắn..." required>
+        <input name="content" type="text" class="form-control" placeholder="Nhập tin nhắn..." required>
         <button class="btn btn-warning text-white ml-2"><i class="fa fa-paper-plane"></i></button>
       </form>
       <?php else: ?>
@@ -188,39 +201,49 @@ const ID_SAN_PHAM = 0;
   </div>
 </div>
 
-<!-- Modal đánh giá -->
+<!-- Modal đánh giá người bán -->
 <div class="modal fade" id="modalDanhGia" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-  <form action="api/review-api.php?act=themDanhGia" method="post">
-      <input type="hidden" name="reviewer_id" value="">
-<input type="hidden" name="reviewed_user_id" value="">
-<input type="hidden" name="product_id" value="">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <form action="api/review-api.php?act=themDanhGia" method="post" id="reviewForm">
+        <input type="hidden" name="reviewed_user_id" value="<?= $to_user_id ?>">
+        <input type="hidden" name="product_id" id="review-product-id" value="0">
+        <input type="hidden" name="order_type" value="">
+        <input type="hidden" name="order_id" value="">
 
-      <div class="modal-header">
-        <h5 class="modal-title">Đánh giá người bán</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+        <div class="modal-header">
+          <h5 class="modal-title">Đánh giá người bán</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
 
-      <div class="modal-body">
-        <label>Số sao</label>
-        <select name="rating" class="form-control" required>
-          <?php for ($i = 5; $i >= 1; $i--): ?>
-            <option value="<?= $i ?>"><?= $i ?> sao</option>
-          <?php endfor; ?>
-        </select>
+        <div class="modal-body">
+          <p class="mb-2">
+            <strong>Sản phẩm:</strong>
+            <span id="review-product-title">Chưa xác định</span>
+          </p>
 
-        <label class="mt-2">Bình luận</label>
-        <textarea name="comment" class="form-control" required></textarea>
-      </div>
+          <label class="mt-2 d-block">Số sao</label>
+          <div class="d-flex align-items-center mb-2">
+            <input type="hidden" name="rating" id="review-rating" value="5">
+            <div id="review-star-container">
+              <?php for ($i = 1; $i <= 5; $i++): ?>
+                <i class="fas fa-star review-star-icon" data-value="<?= $i ?>" style="font-size: 1.4rem; color: #ffc107; cursor: pointer; margin-right: 4px;"></i>
+              <?php endfor; ?>
+            </div>
+            <span id="review-rating-text" class="ml-2 small text-muted">5 sao</span>
+          </div>
 
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
-      </div>
-    </form>
+          <label class="mt-2">Bình luận</label>
+          <textarea name="comment" class="form-control" rows="3" required></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
-
-
 
 <script src="js/chat.js"></script>
 <script>
@@ -260,9 +283,6 @@ const ID_SAN_PHAM = 0;
       form.parentNode.insertBefore(suggestContainer, form);
     }
   });
-</script>
-
-<script>
 document.getElementById("searchUserInput").addEventListener("input", function () {
   const keyword = this.value.toLowerCase().trim();
   const users = document.querySelectorAll(".chat-user");
@@ -287,72 +307,131 @@ function openConversation(toId) {
   }
   window.location.href = `index.php?tin-nhan&to=${toId}`;
 }
-// Hàm gọi API lấy tin đầu và thêm nút "Viết đánh giá"
-async function checkFirstMessageAndShowButton(from, to, selector) {
-  try {
-    // Kiểm tra đã đánh giá chưa
-    const checkRes = await fetch(`api/check-reviewed.php?from=${from}&to=${to}&product_id=${ID_SAN_PHAM}`);
-    if (!checkRes.ok) return;
-    const checkData = await checkRes.json();
-    if (checkData.reviewed) return; // Đã đánh giá thì không hiển thị nút
-console.log('API check-reviewed:', checkData);
-    // Lấy tin nhắn đầu tiên
-    const res = await fetch(`api/chat-first-message.php?from=${from}&to=${to}`);
-    if (!res.ok) return;
-    const msg = await res.json();
+function openReviewModal() {
+  // Ưu tiên lấy sản phẩm gần nhất từ DOM để luôn đúng ngay cả khi JS global chưa set kịp
+  const chatBox = document.getElementById('chatMessages');
+  let latest = null;
+  if (chatBox) {
+    // Ưu tiên card sản phẩm do chính mình gửi (tin nhắn bên phải - text-right)
+    let cards = chatBox.querySelectorAll('.text-right .product-card-message');
+    // Nếu không có (trường hợp hiếm), fallback tất cả product-card
+    if (!cards.length) {
+      cards = chatBox.querySelectorAll('.product-card-message');
+    }
+    if (cards.length > 0) {
+      const lastCard = cards[cards.length - 1];
+      try {
+        // Lấy product_id từ link chi tiết
+        const link = lastCard.querySelector('a[href*="index.php?detail&id="]');
+        let productId = null;
+        if (link) {
+          const match = link.getAttribute('href').match(/detail&id=(\d+)/);
+          if (match) {
+            productId = parseInt(match[1], 10);
+          }
+        }
 
-    const firstTime = new Date(msg.thoi_pricen).getTime();
-    const now = Date.now();
-    const isSender = msg.sender_id == from;
-    const timePassed = (now - firstTime) > 3600000; // hơn 1 giờ
-
-    if (isSender && timePassed) {
-      const html = `<a href="index.php?action=danhprice&from=${msg.sender_id}&to=${msg.receiver_id}&product_id=${msg.product_id}" 
-  class="btn btn-sm btn-outline-warning mt-1">Viết đánh giá</a>`;
-      const el = document.querySelector(selector);
-      if (el && !el.querySelector('.btn-outline-warning')) {
-        el.insertAdjacentHTML("beforeend", html);
+        if (productId) {
+          // Lấy tên sản phẩm từ thẻ h6
+          const h6 = lastCard.querySelector('h6');
+          const productTitle = h6 ? h6.textContent.trim() : '';
+          latest = {
+            productId,
+            productTitle
+          };
+        }
+      } catch (e) {
+        console.warn('Không thể lấy sản phẩm từ DOM để đánh giá:', e);
       }
     }
-  } catch (err) {
-    console.error("❌ Lỗi API chat-first-message hoặc check-reviewed:", err);
   }
-}
 
-// Hàm hiển thị modal và gán giá trị
-function openReviewModal(idNguoiDanhGia, idNguoiDuocDanhGia, idSanPham) {
-  const modalEl = document.getElementById('modalDanhGia');
-  if (!modalEl) {
-    console.error("Không tìm thấy modal DOM");
+  // Fallback: nếu không lấy được từ DOM, dùng global (trong trường hợp realtime)
+  if (!latest && window.latestProductForReview && window.latestProductForReview.productId) {
+    latest = window.latestProductForReview;
+  }
+
+  if (!latest || !latest.productId) {
+    alert('Chưa xác định được sản phẩm để đánh giá. Vui lòng gửi/nhận sản phẩm trước.');
     return;
   }
 
-  // Gán dữ liệu vào form
-  modalEl.querySelector('input[name="reviewer_id"]').value = idNguoiDanhGia;
-modalEl.querySelector('input[name="reviewed_user_id"]').value = idNguoiDuocDanhGia;
-  modalEl.querySelector('input[name="product_id"]').value = idSanPham;
+  const modalEl = document.getElementById('modalDanhGia');
+  if (!modalEl) return;
+  if (typeof bootstrap === "undefined") {
+    console.error("Bootstrap chưa được load!");
+    return;
+  }
 
-  // Delay để đảm bảo bootstrap đã load
-  setTimeout(() => {
-    if (typeof bootstrap === "undefined") {
-      console.error("Bootstrap chưa được load!");
-      return;
-    }
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-  }, 50); // delay nhẹ để đảm bảo script bootstrap được load xong
+  // Gán product_id và tiêu đề sản phẩm vào modal
+  const inputProductId = document.getElementById('review-product-id');
+  const titleEl = document.getElementById('review-product-title');
+  if (inputProductId) {
+    inputProductId.value = latest.productId;
+  }
+  if (titleEl) {
+    titleEl.textContent = latest.productTitle || ('Sản phẩm #' + latest.productId);
+  }
+
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
 }
 
+// Khởi tạo chọn sao trong modal đánh giá
+document.addEventListener('DOMContentLoaded', function () {
+  const modal = document.getElementById('modalDanhGia');
+  const ratingInput = document.getElementById('review-rating');
+  const ratingText = document.getElementById('review-rating-text');
+
+  function initStars() {
+    if (!modal || !ratingInput) return;
+    const stars = modal.querySelectorAll('.review-star-icon');
+    if (!stars.length) return;
+
+    function setRating(value) {
+      const v = Math.max(1, Math.min(5, value));
+      ratingInput.value = v;
+      stars.forEach(star => {
+        const starValue = parseInt(star.getAttribute('data-value'), 10);
+        star.style.color = starValue <= v ? '#ffc107' : '#e0e0e0';
+      });
+      if (ratingText) {
+        ratingText.textContent = v + ' sao';
+      }
+    }
+
+    stars.forEach(star => {
+      star.addEventListener('click', function () {
+        const v = parseInt(this.getAttribute('data-value'), 10);
+        setRating(v);
+      });
+      star.addEventListener('mouseenter', function () {
+        const v = parseInt(this.getAttribute('data-value'), 10);
+        stars.forEach(s => {
+          const starValue = parseInt(s.getAttribute('data-value'), 10);
+          s.style.color = starValue <= v ? '#ffc107' : '#e0e0e0';
+        });
+      });
+    });
+
+    // Khôi phục màu khi rời khỏi vùng sao
+    const starContainer = document.getElementById('review-star-container');
+    if (starContainer) {
+      starContainer.addEventListener('mouseleave', function () {
+        const v = parseInt(ratingInput.value || '5', 10);
+        setRating(v);
+      });
+    }
+
+    // Giá trị mặc định
+    setRating(parseInt(ratingInput.value || '5', 10));
+  }
+
+  initStars();
+});
 
 // Chạy sau khi load
 document.addEventListener("DOMContentLoaded", () => {
-  const fromId = CURRENT_USER_ID;
-  document.querySelectorAll(".chat-user").forEach(userEl => {
-    const toId = userEl.getAttribute("data-id");
-    const selector = `.chat-user[data-id="${toId}"] .media-body`;
-    checkFirstMessageAndShowButton(fromId, toId, selector);
-  });
-  
   // Ẩn chấm đỏ của cuộc trò chuyện đang xem
   if (typeof TO_USER_ID !== 'undefined') {
     const currentDot = document.querySelector(`.chat-user[data-id="${TO_USER_ID}"] .unread-dot`);
@@ -361,16 +440,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   
-  // Tự động gửi tin nhắn sản phẩm khi mở chat lần đầu
+  // Tự động gửi tin nhắn sản phẩm khi mở chat từ trang chi tiết sản phẩm
   if (typeof ID_SAN_PHAM !== 'undefined' && ID_SAN_PHAM > 0 && typeof TO_USER_ID !== 'undefined') {
     // Đợi một chút để WebSocket kết nối xong
     setTimeout(() => {
-      // Kiểm tra xem đã có tin nhắn nào chưa
+      // Lấy toàn bộ lịch sử tin nhắn để kiểm tra đã từng gửi card của sản phẩm này chưa
       fetch(`/api/chat-file-api.php?from=${CURRENT_USER_ID}&to=${TO_USER_ID}`)
         .then(res => res.json())
         .then(messages => {
-          // Nếu chưa có tin nhắn nào, gửi tin nhắn sản phẩm
-          if (!messages || messages.length === 0) {
+          // Nếu trong lịch sử CHƯA có card của đúng sản phẩm này thì mới auto gửi
+          const hasThisProductCard = (messages || []).some(m => {
+            const content = (m.content || m.noi_dung || '');
+            return content.includes('product-card-message') &&
+                   content.includes(`index.php?detail&id=${ID_SAN_PHAM}`);
+          });
+
+          if (!hasThisProductCard) {
             // Lấy thông tin sản phẩm
             fetch(`/api/get-product-info.php?product_id=${ID_SAN_PHAM}`)
               .then(res => res.json())

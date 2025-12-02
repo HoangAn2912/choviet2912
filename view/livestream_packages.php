@@ -361,8 +361,8 @@ include_once __DIR__ . '/header.php';
 <div class="page-background">
     <div class="content-wrapper">
         <div class="container-fluid p-0">
-            <div class="livestream-packages-page">
-                <div class="container">
+<div class="livestream-packages-page">
+    <div class="container">
         
         <div class="header">
             <?php if ($is_business): ?>

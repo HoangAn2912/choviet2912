@@ -105,8 +105,24 @@ if (isset($_SESSION['user_id'])) {
     <!-- CSRF Handler -->
     <script src="js/csrf-handler.js"></script>
 
-    <!-- Custom Dropdown Styles -->
+    <!-- Custom Dropdown Styles + Global Avatar Styles -->
     <style>
+        /* ================= GLOBAL AVATAR STYLES ================= */
+        .avatar-square {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: inline-block;
+        }
+
+        .avatar-square-lg {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: inline-block;
+        }
         /* ========================================
            DROPDOWN MENU CUSTOM STYLES
         ======================================== */
@@ -470,7 +486,7 @@ if (isset($_SESSION['user_id'])) {
             .header-user {
                 grid-column: 1 / -1;
             }
-            .search-form-full {
+                        .search-form-full {
                 max-width: 100%;
                 width: 100%;
             }
@@ -1164,15 +1180,68 @@ if (isset($_SESSION['user_id'])) {
         }
 
         /* Search bar - Tự động điều chỉnh */
-        .input-group {
-            min-width: 200px;
-            padding: 0 20%;
+        .header-search .input-group {
+            max-width: 600px;
+            width: 100%;
+        }
+        .header-search .search-submit-btn {
+            min-width: 140px;
+        }
+        .preview-anh-moi {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .preview-anh-moi .preview-item {
+            position: relative;
+            width: 85px;
+            height: 85px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px dashed #ddd;
+            background: #fafafa;
+        }
+        .preview-anh-moi .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preview-anh-moi .preview-item button {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            font-size: 12px;
+            line-height: 20px;
+            cursor: pointer;
         }
 
-        @media (min-width: 992px) and (max-width: 1200px) {
-            .input-group {
-                min-width: 150px;
-                max-width: 300px;
+        @media (max-width: 991px) {
+            .header-line-1 {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                grid-template-areas:
+                    "logo user"
+                    "search search";
+                row-gap: 0.75rem;
+            }
+            .header-logo {
+                grid-area: logo;
+            }
+            .header-user {
+                grid-area: user;
+                justify-content: flex-end;
+                padding-left: 0;
+            }
+            .header-search {
+                grid-area: search;
+                width: 100%;
             }
         }
 
@@ -1180,6 +1249,22 @@ if (isset($_SESSION['user_id'])) {
         .navbar-nav:last-child {
             flex-wrap: nowrap !important;
             white-space: nowrap !important;
+        }
+
+        /* Bo tròn cố định cho các nút ở Header line 2 (override bootstrap) */
+        .header-line-2 .btn,
+        .header-line-2 .nav-link {
+            border-radius: 20px !important;
+        }
+        .header-line-2 .primary-actions {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-line-2 .primary-actions > * {
+            flex: 1 1 0;
+            min-width: 0;
         }
 
         /* Đảm bảo dropdown không bị cắt - Chỉ desktop */
@@ -1216,13 +1301,14 @@ if (isset($_SESSION['user_id'])) {
             
             <!-- Tìm kiếm - Canh giữa -->
             <div class="header-search d-flex align-items-center justify-content-center" style="width: 100%; min-width: 0;">
-                <form action="index.php" method="get" class="search-form-full" style="width: 100%;">
+                <form action="index.php" method="get" class="search-form-full" style="width: 100%; max-width: 600px;">
                     <input type="hidden" name="search" value="1">
-                    <div class="input-group" style="max-width: 100%;">
-                        <input type="text" name="keyword" class="form-control" placeholder="Tìm kiếm sản phẩm..." required>
-                        <div class="input-group-append">
-                            <button class="btn search-submit-btn" type="submit">
-                                <i class="fa fa-search"></i>
+                    <div class="input-group" style="flex-wrap: nowrap;">
+                        <input type="text" name="keyword" class="form-control" placeholder="Tìm kiếm sản phẩm..." required style="min-width: 120px;">
+                        <div class="input-group-append" style="flex: 0 0 auto;">
+                            <button class="btn search-submit-btn d-flex align-items-center justify-content-center" type="submit" style="min-width: 140px;">
+                                <span>Tìm kiếm</span>
+                                <i class="fa fa-search ml-2"></i>
                             </button>
                         </div>
                     </div>
@@ -1241,13 +1327,13 @@ if (isset($_SESSION['user_id'])) {
                                 $avatarFile = $userHeader['avatar'];
                             }
                             ?>
-                            <img src="<?= $avatarPath . htmlspecialchars($avatarFile) ?>" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                            <img src="<?= $avatarPath . htmlspecialchars($avatarFile) ?>" class="avatar-square" alt="Avatar">
                             <span style="font-size: 0.9rem;" class="d-none d-md-inline">
                                 <?= strlen($userHeader['username']) > 10 ? substr(htmlspecialchars($userHeader['username']), 0, 10) . '...' : htmlspecialchars($userHeader['username']) ?>
                             </span>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end">
-                            <a class="dropdown-item" href="index.php?thongtin=<?= $_SESSION['user_id'] ?>">
+                            <a class="dropdown-item" href="<?= htmlspecialchars($userHeader['username']) ?>">
                                 <i class="fas fa-user mr-2"></i>Quản lý thông tin
                             </a>
                             <div class="dropdown-divider"></div>
@@ -1264,15 +1350,15 @@ if (isset($_SESSION['user_id'])) {
             </div>
         </div>
         
-        <!-- LINE 2: Danh mục sản phẩm -->
-        <div class="row px-xl-5 py-2 header-line-2" id="header-line-2" style="min-height: 45px; align-items: center; border-top: 1px solid rgba(255,255,255,0.1);">
-            <!-- Danh mục sản phẩm - Góc trái -->
-            <div class="col-auto">
-                <button type="button" class="btn d-flex align-items-center justify-content-between" id="category-toggle-btn" style="background: linear-gradient(135deg, #FFD333, #FFA500); color: #333; height: 40px; padding: 0 20px; border-radius: 20px; border: none; font-weight: 600; font-size: 0.9rem;">
-                    <i class="fa fa-bars mr-2"></i>
-                    <span>Danh mục sản phẩm</span>
-                    <i class="fa fa-angle-down ml-2" id="category-toggle-icon"></i>
-                </button>
+        <!-- LINE 2 -->
+        <div class="px-xl-5 py-2 header-line-2" id="header-line-2" style="border-top: 1px solid rgba(255,255,255,0.1);">
+            <div class="row align-items-center gy-2">
+                <div class="col-lg-3 d-flex">
+                    <button type="button" class="btn flex-fill d-flex align-items-center justify-content-between" id="category-toggle-btn" style="background: linear-gradient(135deg, #FFD333, #FFA500); color: #333; height: 40px; padding: 0 20px; border-radius: 20px !important; border: none; font-weight: 600; font-size: 0.9rem;">
+                        <i class="fa fa-bars mr-2"></i>
+                        <span>Danh mục sản phẩm</span>
+                        <i class="fa fa-angle-down ml-2" id="category-toggle-icon"></i>
+                    </button>
                 <nav class="collapse position-absolute navbar navbar-vertical navbar-light align-items-start p-0 bg-light" id="navbar-vertical" style="width: 280px; z-index: 999; display: none; margin-top: 5px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                     <div class="w-100">
                         <?php if (!empty($data)) : ?>
@@ -1300,16 +1386,15 @@ if (isset($_SESSION['user_id'])) {
                         <?php endif; ?>
                     </div>
                 </nav>
-            </div>
-            
-            <!-- Menu items - Chính giữa -->
-            <div class="col d-flex align-items-center justify-content-center" style="gap: 10px; flex-wrap: wrap;">
-                <!-- Đăng bài -->
-                <a href="javascript:void(0);" class="btn btn-dang-tin text-white d-flex align-items-center px-3" style="font-weight: 600; height: 40px; font-size: 0.9rem; background: linear-gradient(135deg, #FFD333, #FFA500); border: none; border-radius: 20px;">
-                    <i class="fas fa-edit mr-2"></i> ĐĂNG BÀI
-                </a>
+                </div>
+                <div class="col-lg-3 d-flex">
+                    <a href="javascript:void(0);" class="btn btn-dang-tin text-white d-flex align-items-center justify-content-center flex-fill px-3" style="font-weight: 600; height: 40px; font-size: 0.9rem; background: linear-gradient(135deg, #FFD333, #FFA500); border: none; border-radius: 20px !important;">
+                        <i class="fas fa-edit mr-2"></i> ĐĂNG BÀI
+                    </a>
+                </div>
                 
-                <a href="index.php?tin-nhan" class="nav-link d-flex align-items-center position-relative text-white" style="padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 20px; transition: all 0.3s;">
+                <div class="col-lg-6 d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start" style="gap: 10px;">
+                <a href="index.php?tin-nhan" class="nav-link d-flex align-items-center position-relative text-white" style="padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 20px !important; transition: all 0.3s;">
                     <i class="fas fa-envelope mr-2"></i> Tin nhắn
                     <?php if (isset($hasUnread) && $hasUnread): ?>
                         <span class="position-absolute" style="top: 5px; right: 5px; width: 8px; height: 8px; background: red; border-radius: 50%;"></span>
@@ -1361,12 +1446,10 @@ if (isset($_SESSION['user_id'])) {
                     </div>
                 </div>
                 <?php endif; ?>
-            </div>
-            
-            <!-- Vị trí (Lọc) - Bên phải -->
-            <div class="col-auto">
+
+                <!-- Vị trí (Lọc) -->
                 <div class="dropdown">
-                    <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" type="button" id="locationFilter" data-bs-toggle="dropdown" aria-expanded="false" style="height: 40px; font-size: 0.9rem; border-radius: 20px; padding: 0.5rem 1rem;">
+                    <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" type="button" id="locationFilter" data-bs-toggle="dropdown" aria-expanded="false" style="height: 40px; font-size: 0.9rem; border-radius: 20px !important; padding: 0.5rem 1rem; min-width: 220px; justify-content: space-between;">
                         <i class="fas fa-map-marker-alt mr-2"></i>
                         <span id="location-text">Hồ Chí Minh</span>
                     </button>
@@ -1387,6 +1470,7 @@ if (isset($_SESSION['user_id'])) {
                             </a>
                         </li>
                     </ul>
+                </div>
                 </div>
             </div>
         </div>
@@ -1485,6 +1569,10 @@ if (isset($_SESSION['user_id'])) {
             </label>
                             <input type="file" class="form-control-file" id="hinhAnh" name="image[]" accept=".jpg,.jpeg,.png" multiple required>
             <small class="form-text text-muted mt-2">Chọn từ 2 đến 6 hình ảnh (định dạng .jpg, .png).</small>
+            <div id="preview-anh-moi" class="preview-anh-moi border rounded p-2 bg-white">
+              <p class="text-muted small mb-0">Chưa có ảnh nào được chọn</p>
+            </div>
+            <small class="form-text text-muted">Bạn có thể thêm nhiều ảnh, kéo thả hoặc xóa ảnh không mong muốn.</small>
             </div>
 
             <!-- Nút Đăng tin -->
@@ -1507,7 +1595,8 @@ if (isset($_SESSION['user_id'])) {
     const userId = <?= (int)$_SESSION['user_id'] ?>;
     if (!userId) return;
 
-    let lastSignature = '';
+    const STORAGE_KEY = 'chat_unread_signature_' + userId;
+    let lastSignature = localStorage.getItem(STORAGE_KEY) || '';
 
     async function checkUnreadMessages() {
         try {
@@ -1518,6 +1607,7 @@ if (isset($_SESSION['user_id'])) {
             if (!response.ok) {
                 if (response.status === 404) {
                     lastSignature = '';
+                    localStorage.removeItem(STORAGE_KEY);
                 }
                 return;
             }
@@ -1531,11 +1621,13 @@ if (isset($_SESSION['user_id'])) {
 
             if (totalUnread > 0 && signature !== lastSignature) {
                 lastSignature = signature;
+                localStorage.setItem(STORAGE_KEY, signature);
                 if (typeof showToast === 'function') {
                     showToast('Bạn có tin nhắn mới', 'warning');
                 }
             } else if (totalUnread === 0) {
                 lastSignature = '';
+                localStorage.removeItem(STORAGE_KEY);
             }
         } catch (error) {
             console.warn('Không thể kiểm tra tin nhắn mới:', error);
@@ -1549,7 +1641,8 @@ if (isset($_SESSION['user_id'])) {
     });
 
     checkUnreadMessages();
-    setInterval(checkUnreadMessages, 15000);
+    // Kiểm tra nhanh hơn: 1s/lần để phát hiện tin nhắn mới
+    setInterval(checkUnreadMessages, 1000);
 })();
 </script>
 <?php endif; ?>

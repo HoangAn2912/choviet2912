@@ -1,4 +1,5 @@
 <script>
+let dangTinSelectedFiles = [];
 document.addEventListener('DOMContentLoaded', function () {
   const dangTinBtn = document.querySelector('.btn-dang-tin');
   const modal = document.getElementById('dangTinModal');
@@ -7,25 +8,101 @@ document.addEventListener('DOMContentLoaded', function () {
   const modalSubtitle = document.getElementById('modal-subtitle');
   const backBtn = document.getElementById('backBtn');
   const closeBtn = document.getElementById('closeBtn');
+  const hinhAnhInput = document.getElementById('hinhAnh');
+  const previewAnhMoi = document.getElementById('preview-anh-moi');
 
   let danhMucGocHtml = '';
   let currentLevel = 'cha'; // cha | con | form
 
+  function resetDangTinImages() {
+    dangTinSelectedFiles = [];
+    updateDangTinFileInput();
+    renderDangTinPreview();
+    if (hinhAnhInput) {
+      hinhAnhInput.value = '';
+    }
+  }
+
+  function renderDangTinPreview() {
+    if (!previewAnhMoi) return;
+    previewAnhMoi.innerHTML = '';
+    if (!dangTinSelectedFiles.length) {
+      previewAnhMoi.innerHTML = '<p class="text-muted small mb-0">Chưa có ảnh nào được chọn</p>';
+      return;
+    }
+
+    dangTinSelectedFiles.forEach((file, index) => {
+      const item = document.createElement('div');
+      item.className = 'preview-item';
+
+      const img = document.createElement('img');
+      const reader = new FileReader();
+      reader.onload = e => { img.src = e.target.result; };
+      reader.readAsDataURL(file);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.innerHTML = '&times;';
+      removeBtn.onclick = () => removeDangTinPreview(index);
+
+      item.appendChild(img);
+      item.appendChild(removeBtn);
+      previewAnhMoi.appendChild(item);
+    });
+  }
+
+  function updateDangTinFileInput() {
+    if (!hinhAnhInput) return;
+    const dataTransfer = new DataTransfer();
+    dangTinSelectedFiles.forEach(file => dataTransfer.items.add(file));
+    hinhAnhInput.files = dataTransfer.files;
+  }
+
+  function removeDangTinPreview(index) {
+    dangTinSelectedFiles.splice(index, 1);
+    updateDangTinFileInput();
+    renderDangTinPreview();
+  }
+
+  window.removeDangTinPreview = removeDangTinPreview;
+
+  if (hinhAnhInput) {
+    hinhAnhInput.addEventListener('change', function (e) {
+      const newFiles = Array.from(e.target.files);
+      let added = false;
+      newFiles.forEach(file => {
+        const exists = dangTinSelectedFiles.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
+        if (!exists) {
+          dangTinSelectedFiles.push(file);
+          added = true;
+        }
+      });
+      hinhAnhInput.value = ''; // cho phép chọn lại cùng file
+      if (added) {
+        updateDangTinFileInput();
+        renderDangTinPreview();
+      }
+    });
+  }
+
   if (dangTinBtn) {
     dangTinBtn.addEventListener('click', function () {
       modal.style.display = 'block';
+      resetDangTinImages();
     });
   }
 
   if (closeBtn) {
     closeBtn.addEventListener('click', function () {
       modal.style.display = 'none';
+      resetDangTinImages();
     });
   }
 
   window.onclick = function (event) {
     if (event.target == modal) {
       modal.style.display = "none";
+      resetDangTinImages();
     }
   }
 
@@ -140,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return false;
   }
 
-  const files = hinhAnhInput.files;
+  const files = hinhAnhInput && hinhAnhInput.files ? hinhAnhInput.files : (dangTinSelectedFiles || []);
   if (files.length < 2 || files.length > 6) {
     alert('Vui lòng chọn từ 2 đến 6 hình ảnh.');
     return false;

@@ -45,10 +45,23 @@ if (!empty($anh)) {
 <head>
 <link href="../css/profile.css" rel="stylesheet">
 <style>
+    .page-background {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+        min-height: calc(80vh - 10px);
+        padding: 0 2rem 2rem 2rem;
+    }
+    .content-wrapper {
+        background: #ffffff;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+    }
     .profile-product-list {
-    max-height: 450px;   /* hoặc 5*90px nếu mỗi sản phẩm ~90px */
+        max-height: 450px;
     overflow-y: auto;
-    padding-right: 8px;  /* tránh che nội dung bởi thanh cuộn */
+        padding-right: 8px;
 }
 /* Thanh tab */
 .profile-tabs {
@@ -71,19 +84,35 @@ if (!empty($anh)) {
     border-bottom: 3px solid #FFA800;
 }
 
+    /* Đánh giá sản phẩm - tinh chỉnh khoảng cách */
+    .profile-reviews-card {
+        padding: 20px 25px 15px 25px;
+    }
+    .profile-review-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .profile-review-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    .profile-review-item .review-comment {
+        margin-bottom: 0;
+    }
 </style>
 </head>
 <?php
 include_once("view/header.php");
 ?>
-<div class="container my-5">
+<div class="page-background">
+    <div class="content-wrapper">
     <div class="row">
         <!-- Cột trái: Thông tin user -->
         <div class="col-md-4">
             <div class="card profile-info text-center p-4">
                 <?php
                     $avatarPath = 'img/';
-                    $avatarFile = 'default.jpg';
+                    $avatarFile = 'default-avatar.jpg';
                     if (!empty($user['avatar'])) {
                         $anh = basename($user['avatar']);
                         $absolutePath = $_SERVER['DOCUMENT_ROOT'] . getBasePath() . '/' . $avatarPath . $anh;
@@ -201,8 +230,8 @@ include_once("view/header.php");
             </div>
 
              <!-- Đánh giá -->
-            <div class="card profile-posts profile-product-list" style="padding: 25px;">
-                <h5 class="mb-3 profile-tabs">Đánh giá sản phẩm</h5>
+            <div class="card profile-posts profile-product-list profile-reviews-card">
+                <h5 class="profile-tabs" style="margin-bottom: 0px;">Đánh giá sản phẩm</h5>
                 <?php if (empty($reviews)): ?>
                     <div class="text-center text-muted">
                         <img src="img/no-posts.png" style="max-width: 200px;" alt="Không có đánh giá">
@@ -210,7 +239,7 @@ include_once("view/header.php");
                     </div>
                 <?php else: ?>
                     <?php foreach ($reviews as $review): ?>
-                        <div class="d-flex mb-3 align-items-start">
+                        <div class="d-flex align-items-start profile-review-item" style="padding: 0 15px; margin-top: 15px;">
                             <?php
                                 $firstImg = '';
                                 if (!empty($review['image'])) {
@@ -243,6 +272,7 @@ $half = $review['rating'] - $full >= 0.5;
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
+            </div>
             </div>
         </div>
     </div>

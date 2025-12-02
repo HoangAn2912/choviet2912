@@ -131,7 +131,23 @@ class mChat extends Connect {
         return intval($row['so_chua_doc'] ?? 0);
     }
 
+    /**
+     * Lấy tin nhắn đầu tiên giữa 2 user từ file JSON (ưu tiên),
+     * nếu không có file thì fallback về bảng messages trong DB.
+     */
     public function getFirstMessage($from, $to) {
+        // Ưu tiên đọc từ file JSON (chat_id1_id2.json)
+        $messages = $this->readChatFile($from, $to);
+        if (!empty($messages)) {
+            // Mảng đã được lưu theo thời gian, nhưng đảm bảo sort tăng dần theo timestamp
+            usort($messages, function ($a, $b) {
+                return strtotime($a['timestamp'] ?? $a['created_time'] ?? 'now')
+                     <=> strtotime($b['timestamp'] ?? $b['created_time'] ?? 'now');
+            });
+            return $messages[0];
+        }
+
+        // Fallback: đọc từ DB nếu vì lý do nào đó không có file JSON
         $conn = $this->connect();
         $sql = "SELECT * FROM messages 
                 WHERE ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) 

@@ -1185,10 +1185,10 @@ $defaultColor = 'bg-warning';
 
 $featuredCategories = array_slice($parentCategories, 0, 5, true);
 ?>
-<div class="container-fluid pt-2">
+<div class="container-fluid pt-2" style="padding-bottom: 0px;">
     <div class="row px-xl-5">
         <div class="col-12">
-            <h4 class="font-weight-bold mb-3 text-dark">
+            <h4 class="font-weight-bold mb-3 pt-2 text-dark">
                 <i class="fas fa-th-large text-primary mr-2"></i>Danh mục nổi bật
             </h4>
         </div>
@@ -1248,8 +1248,8 @@ $featuredCategories = array_slice($parentCategories, 0, 5, true);
     <div class="row px-xl-5">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="section-title position-relative text-uppercase mb-0">
-                    <span class="bg-secondary pr-3">
+                <h2 class="section-title position-relative mb-0" style="text-transform:none;">
+                    <span class="pr-3">
                         <i class="fas fa-video text-danger mr-2"></i>Lives hôm nay
                     </span>
                 </h2>
@@ -1375,8 +1375,8 @@ $i = 0;
     <div class="row px-xl-5">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="section-title position-relative text-uppercase mb-0">
-                    <span class="bg-secondary pr-3">
+                <h2 class="section-title position-relative mb-0" style="text-transform:none;">
+                    <span class="pr-3">
                         <i class="fas fa-compass text-primary mr-2"></i>Khám phá danh mục
                     </span>
     </h2>
@@ -1422,8 +1422,8 @@ $i = 0;
     <div class="row px-xl-5">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="section-title position-relative text-uppercase mb-0">
-                    <span class="bg-secondary pr-3">
+                <h2 class="section-title position-relative mb-0" style="text-transform:none;">
+                    <span class="pr-3">
                         <i class="fas fa-user-friends text-success mr-2"></i>Tin đăng mới nhất
                     </span>
     </h2>

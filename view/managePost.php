@@ -241,11 +241,8 @@ function getNoProductText($status) {
       $avatarFullPath = $avatarPath . htmlspecialchars($avatarFile);
       ?>
       <img src="<?= $avatarFullPath ?>" 
-           class="rounded-circle mr-3" 
+           class="mr-3 avatar-square-lg" 
            alt="Avatar" 
-           width="50" 
-           height="50" 
-           style="object-fit: cover; border-radius: 50%; width: 50px; height: 50px; display: block;"
            onerror="this.onerror=null; this.src='img/default-avatar.png';">
       <div><div class="font-weight-bold"><?= htmlspecialchars($user['username'] ?? 'Người dùng') ?></div></div>
     </div>
@@ -334,7 +331,7 @@ function getNoProductText($status) {
                       </button>
                       <button class="btn btn-action btn-sm" onclick="showModalAnSanPham(<?= $post['id'] ?>)">
                         <i class="fas fa-eye-slash mr-1"></i> Ẩn sản phẩm
-                      </button>
+                        </button>
                       <button class="btn btn-edit btn-sm" onclick="window.location.href='index.php?quan-ly-tin&sua=<?= $post['id'] ?>'">
                         <i class="fas fa-edit mr-1"></i> Sửa tin
                       </button>
@@ -492,46 +489,46 @@ function getNoProductText($status) {
           <div class="row">
             <!-- Cột trái -->
             <div class="col-md-6">
-              <!-- Tiêu đề tin đăng -->
-              <div class="form-group">
-                <label for="tieuDeSua" class="font-weight-bold">
-                  Tiêu đề bài đăng <span class="text-danger">*</span>
-                </label>
-                <input type="text" class="form-control" id="tieuDeSua" name="title" placeholder="Nhập tên sản phẩm cần bán" value="<?= htmlspecialchars($tin['title'] ?? '') ?>" required>
-              </div>
+          <!-- Tiêu đề tin đăng -->
+          <div class="form-group">
+            <label for="tieuDeSua" class="font-weight-bold">
+              Tiêu đề bài đăng <span class="text-danger">*</span>
+            </label>
+                         <input type="text" class="form-control" id="tieuDeSua" name="title" placeholder="Nhập tên sản phẩm cần bán" value="<?= htmlspecialchars($tin['title'] ?? '') ?>" required>
+          </div>
 
-              <!-- Giá bán -->
-              <div class="form-group">
-                <label for="priceSua" class="font-weight-bold">
-                  Giá bán (đ) <span class="text-danger">*</span>
-                </label>
-                <input type="number" class="form-control" id="priceSua" name="price" placeholder="Nhập số tiền cần bán" value="<?= htmlspecialchars($tin['price'] ?? '') ?>" required>
-              </div>
+          <!-- Giá bán -->
+          <div class="form-group">
+            <label for="priceSua" class="font-weight-bold">
+              Giá bán (đ) <span class="text-danger">*</span>
+            </label>
+                         <input type="number" class="form-control" id="priceSua" name="price" placeholder="Nhập số tiền cần bán" value="<?= htmlspecialchars($tin['price'] ?? '') ?>" required>
+          </div>
 
-              <!-- Mô tả chi tiết -->
-              <div class="form-group">
-                <label for="moTaSua" class="font-weight-bold">
-                  Mô tả chi tiết <span class="text-danger">*</span>
-                </label>
+          <!-- Mô tả chi tiết -->
+          <div class="form-group">
+            <label for="moTaSua" class="font-weight-bold">
+              Mô tả chi tiết <span class="text-danger">*</span>
+            </label>
                 <textarea class="form-control" id="moTaSua" name="description" rows="4" placeholder="Mô tả chi tiết sản phẩm..." required><?= htmlspecialchars($tin['description'] ?? '') ?></textarea>
-              </div>
+          </div>
 
-              <!-- Loại sản phẩm -->
-              <div class="form-group">
-                <label class="font-weight-bold">
-                  Loại sản phẩm <span class="text-danger">*</span>
-                </label>
-                <input type="text" class="form-control" value="<?= htmlspecialchars($tenLoai) ?>" readonly>
+          <!-- Loại sản phẩm -->
+          <div class="form-group">
+            <label class="font-weight-bold">
+              Loại sản phẩm <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control" value="<?= htmlspecialchars($tenLoai) ?>" readonly>
               </div>
-            </div>
+          </div>
 
             <!-- Cột phải -->
             <div class="col-md-6">
-              <!-- Ảnh hiện tại -->
-              <div class="form-group">
-                <label class="font-weight-bold">Ảnh hiện tại</label>
+          <!-- Ảnh hiện tại -->
+          <div class="form-group">
+            <label class="font-weight-bold">Ảnh hiện tại</label>
                 <div class="preview-anh-cu mb-2" id="previewAnhCu" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
-                  <?php if (!empty($tin['image'])): ?>
+                             <?php if (!empty($tin['image'])): ?>
                     <?php 
                     $images = explode(',', $tin['image']);
                     foreach ($images as $index => $img): 
@@ -545,18 +542,18 @@ function getNoProductText($status) {
                         </button>
                         <input type="hidden" name="images_to_keep[]" value="<?= htmlspecialchars($img) ?>" class="img-keep-input">
                       </div>
-                    <?php endforeach; ?>
-                  <?php endif; ?>
-                </div>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </div>
                 <small class="form-text text-muted">Nhấn nút X để xóa ảnh. Tổng số ảnh (còn lại + mới) phải từ 2 đến 6 ảnh.</small>
-              </div>
+          </div>
 
-              <!-- Chọn ảnh mới -->
-              <div class="form-group">
-                <label for="hinhAnhSua" class="font-weight-bold">
+          <!-- Chọn ảnh mới -->
+          <div class="form-group">
+            <label for="hinhAnhSua" class="font-weight-bold">
                   Thêm ảnh mới (tùy chọn)
-                </label>
-                <input type="file" class="form-control-file" id="hinhAnhSua" name="image[]" accept=".jpg,.jpeg,.png" multiple>
+            </label>
+                         <input type="file" class="form-control-file" id="hinhAnhSua" name="image[]" accept=".jpg,.jpeg,.png" multiple>
                 <small class="form-text text-muted mt-2">Chọn thêm ảnh mới (định dạng .jpg, .png). Tổng số ảnh phải từ 2 đến 6 ảnh.</small>
                 <div id="previewAnhMoi" class="mt-2" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;"></div>
               </div>
@@ -634,7 +631,7 @@ function xacNhanDayTin(event) {
   
   // Chuyển hướng đến trang đẩy tin
   window.location.href = 'index.php?quan-ly-tin&daytin=' + currentDayTinId;
-}
+    }
 
 // Đóng modal đẩy tin khi click vào overlay
 document.addEventListener('DOMContentLoaded', function() {
@@ -738,7 +735,7 @@ function xacNhanDaBan(event) {
     confirmBtn.textContent = 'Đang xử lý...';
   }
   
-  fetch('index.php?action=capNhatTrangThai', {
+    fetch('index.php?action=capNhatTrangThai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `id=${currentProductId}&loai=Đã bán&note=${encodeURIComponent(note)}`
@@ -753,10 +750,10 @@ function xacNhanDaBan(event) {
     console.log('Response:', text); // Debug
     try {
       const data = JSON.parse(text);
-      if (data.status === 'success') {
+    if (data.status === 'success') {
         closeModalDaBan();
         window.location.href = "index.php?quan-ly-tin&toast=" + encodeURIComponent("Cập nhật thành công!") + "&type=success";
-      } else {
+    } else {
         showToast(data.message || "Cập nhật không thành công!", "error");
         if (confirmBtn) {
           confirmBtn.disabled = false;
@@ -780,7 +777,7 @@ function xacNhanDaBan(event) {
       confirmBtn.textContent = 'Xác nhận';
     }
   });
-}
+  }
 
 function xacNhanAnSanPham(event) {
   const selectedReason = document.querySelector('input[name="lyDoAnSanPham"]:checked');

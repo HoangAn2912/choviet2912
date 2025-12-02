@@ -77,7 +77,6 @@ function connectSocket() {
         socket.send(JSON.stringify({ type: 'mark_read', from: msg.from, to: CURRENT_USER_ID }));
       }
     }
-    // Không xử lý unread API nữa - chỉ dùng realtime qua onNewChatMessage
   });
 }
 
@@ -86,9 +85,14 @@ connectSocket();
 let chatBox = null;
 const shownMessages = new Set();
 
+// Theo dõi tin nhắn sản phẩm mới nhất để phục vụ nút "Viết đánh giá"
+window.latestProductForReview = null;
+let reviewButtonTimeout = null;
+const REVIEW_DELAY_MS = 30 * 1000; // 30 giây
+
 function renderMessage(msg, isFromSocket = false) {
   const content = msg.content || msg.noi_dung; // fallback tương thích cũ
-  const timestamp = msg.timestamp || "";
+  const timestamp = msg.timestamp || msg.created_time || "";
   const messageKey = `${msg.from}_${content}_${timestamp}`;
 
   if (shownMessages.has(messageKey)) return;
@@ -119,6 +123,67 @@ function renderMessage(msg, isFromSocket = false) {
     chatBox.insertAdjacentHTML('beforeend', html);
     chatBox.scrollTop = chatBox.scrollHeight;
   }
+
+  // Nếu là tin nhắn sản phẩm, cập nhật sản phẩm gần nhất để review
+  if (isProductMessage) {
+    try {
+      // Lấy product_id nếu có trong payload, nếu không thì parse từ link detail
+      let productId = msg.product_id || null;
+      if (!productId) {
+        const match = content.match(/index\.php\?detail&id=(\d+)/);
+        if (match) {
+          productId = parseInt(match[1], 10);
+        }
+      }
+
+      if (productId) {
+        // Lấy tên sản phẩm từ thẻ h6 trong card
+        let productTitle = '';
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        const h6 = tempDiv.querySelector('h6');
+        if (h6) {
+          productTitle = h6.textContent.trim();
+        }
+
+        window.latestProductForReview = {
+          productId,
+          productTitle,
+          timestamp: timestamp || new Date().toISOString()
+        };
+
+        scheduleReviewButtonCheck();
+      }
+    } catch (e) {
+      console.warn('Không thể cập nhật sản phẩm để đánh giá:', e);
+    }
+  }
+}
+
+function scheduleReviewButtonCheck() {
+  const btn = document.getElementById('btnWriteReview');
+  if (!btn || !window.latestProductForReview) return;
+
+  // Chỉ hiển thị cho người hiện tại (cả buyer/seller đều có thể đánh giá,
+  // nếu cần giới hạn bên mua thì sẽ kiểm tra phía server)
+
+  if (reviewButtonTimeout) {
+    clearTimeout(reviewButtonTimeout);
+    reviewButtonTimeout = null;
+  }
+
+  const ts = new Date(window.latestProductForReview.timestamp).getTime();
+  if (!ts || isNaN(ts)) return;
+
+  const diff = Date.now() - ts;
+  if (diff >= REVIEW_DELAY_MS) {
+    btn.style.display = 'inline-flex';
+  } else {
+    btn.style.display = 'none';
+    reviewButtonTimeout = setTimeout(() => {
+      btn.style.display = 'inline-flex';
+    }, REVIEW_DELAY_MS - diff);
+  }
 }
 
 // Gửi tin nhắn
@@ -138,24 +203,80 @@ function sendMessage(noiDung) {
   }
 }
 
-// Khi socket mở
-// Các listener đã chuyển vào connectSocket()
 
 // Load tin nhắn cũ từ file
 window.addEventListener("DOMContentLoaded", () => {
   chatBox = document.getElementById('chatMessages');
-  // Dùng đường dẫn tuyệt đối từ gốc site để tránh lệch path khi ở trong subfolder (vd: /view/...)
   if (typeof TO_USER_ID !== 'undefined') {
     fetch(`/api/chat-file-api.php?from=${CURRENT_USER_ID}&to=${TO_USER_ID}`)
       .then(res => res.json())
       .then(messages => {
-        // Chuẩn hóa dữ liệu cũ sang mới trên client (nếu có noi_dung)
+        // Chuẩn hóa và render tất cả tin nhắn
         messages.forEach(msg => {
           if (!msg.content && msg.noi_dung) {
             msg.content = msg.noi_dung;
           }
           renderMessage(msg, false);
         });
+
+        // TÌM CARD SẢN PHẨM GẦN NHẤT DO CHÍNH MÌNH GỬI (mình là người hỏi giá)
+        let latestProduct = null;
+        if (Array.isArray(messages) && messages.length > 0) {
+          for (let i = messages.length - 1; i >= 0; i--) {
+            const m = messages[i];
+            const content = m.content || m.noi_dung || '';
+            if (content.includes('product-card-message') && String(m.from) === String(CURRENT_USER_ID)) {
+              // Lấy product_id từ payload hoặc từ link detail
+              let productId = m.product_id || null;
+              if (!productId) {
+                const match = content.match(/index\.php\?detail&id=(\d+)/);
+                if (match) {
+                  productId = parseInt(match[1], 10);
+                }
+              }
+              if (!productId) continue;
+
+              // Lấy tên sản phẩm từ <h6>
+              let productTitle = '';
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = content;
+              const h6 = tempDiv.querySelector('h6');
+              if (h6) {
+                productTitle = h6.textContent.trim();
+              }
+
+              latestProduct = {
+                productId,
+                productTitle,
+                timestamp: m.timestamp || m.created_time || new Date().toISOString()
+              };
+              break; // dừng ở card gần nhất
+            }
+          }
+        }
+
+        // Nếu tìm được sản phẩm, lưu lại và BẬT NÚT LUÔN (để test cho chắc)
+        if (latestProduct) {
+          window.latestProductForReview = latestProduct;
+          const btn = document.getElementById('btnWriteReview');
+          if (btn) {
+            btn.style.display = 'inline-flex';
+          }
+        }
+
+        // Sau khi mở cuộc trò chuyện, đánh dấu đã đọc toàn bộ tin nhắn từ đối phương
+        const markReadPayload = {
+          type: 'mark_read',
+          from: TO_USER_ID,
+          to: CURRENT_USER_ID
+        };
+
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify(markReadPayload));
+        } else {
+          // Nếu socket chưa sẵn sàng, đẩy vào hàng đợi để gửi sau khi kết nối
+          sendQueue.push(markReadPayload);
+        }
       })
       .catch(err => console.error("❌ Lỗi khi đọc file JSON:", err));
   }

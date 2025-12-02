@@ -5,18 +5,18 @@ class mReview extends Connect {
     public function getReviewsBySellerId($sellerId) {
         $conn = $this->connect();
         $sql = "SELECT 
-                    users.username AS reviewer_name,
-                    products.title AS ten_san_pham,
-                    products.price AS gia_ban,
-                    products.image AS hinh_san_pham,
-                    reviews.rating,
-                    reviews.comment AS comment,
-                    reviews.created_date AS review_date
-                FROM reviews
-                INNER JOIN users ON reviews.reviewer_id = users.id
-                INNER JOIN products ON reviews.product_id = products.id
-                WHERE reviews.reviewed_user_id = ?
-                ORDER BY reviews.created_date DESC";
+                    u.username        AS reviewer_name,
+                    p.title           AS title,
+                    p.price           AS price,
+                    p.image           AS image,
+                    r.rating          AS rating,
+                    r.comment         AS description,
+                    r.created_date    AS review_date
+                FROM reviews r
+                INNER JOIN users    u ON r.reviewer_id = u.id
+                INNER JOIN products p ON r.product_id = p.id
+                WHERE r.reviewed_user_id = ?
+                ORDER BY r.created_date DESC";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $sellerId);
         $stmt->execute();
