@@ -47,6 +47,9 @@ class LoginLogoutController {
         $user = $this->model->checkLoginByIdentifier($identifier, $password);
         
         if ($user) {
+            // Debug: Log role_id để kiểm tra
+            error_log("Login Debug - User ID: " . $user['id'] . ", Username: " . $user['username'] . ", Role ID: " . $user['role_id']);
+            
             $this->createUserSession($user);
             $this->redirectBasedOnRole($user['role_id']);
         } else {
@@ -231,17 +234,26 @@ class LoginLogoutController {
      * Chuyển hướng dựa trên vai trò
      */
     private function redirectBasedOnRole($role) {
-        switch ((int) $role) {
+        $role = (int) $role;
+        
+        // Debug: Log redirect info
+        error_log("Redirect Debug - Role ID: " . $role . ", Base URL: " . $this->baseUrl);
+        
+        switch ($role) {
             case 1: // admin
                 header("Location: " . $this->baseUrl . "admin");
                 break;
-            case 2: // user (mặc định)
+            case 2: // user (mặc định) - TÀI KHOẢN THƯỜNG
                 // Fix double slash: rtrim baseUrl để loại bỏ trailing slash nếu có
-                header("Location: " . rtrim($this->baseUrl, '/') . '/index.php');
+                $redirectUrl = rtrim($this->baseUrl, '/') . '/index.php';
+                error_log("Redirect Debug - User thường redirect đến: " . $redirectUrl);
+                header("Location: " . $redirectUrl);
                 break;
-            case 3: // moderator
-                // Điều hướng tới trang phù hợp cho moderator (ví dụ quản lý danh mục)
-                header("Location: " . $this->baseUrl . "admin?qldanhmuc");
+            case 3: // doanh nghiệp
+                // Điều hướng tới trang chủ cho doanh nghiệp
+                $redirectUrl = rtrim($this->baseUrl, '/') . '/index.php';
+                error_log("Redirect Debug - Doanh nghiệp (role 3) redirect đến: " . $redirectUrl);
+                header("Location: " . $redirectUrl);
                 break;
             case 4: // adcontent
                 header("Location: " . $this->baseUrl . "admin?qlbanner");
@@ -250,6 +262,7 @@ class LoginLogoutController {
                 header("Location: " . $this->baseUrl . "admin");
                 break;
             default:
+                error_log("Redirect Debug - Role không hợp lệ: " . $role);
                 $this->redirectWithError('login', 'Lỗi: Quyền không hợp lệ!');
         }
         exit;

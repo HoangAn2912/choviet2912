@@ -97,7 +97,11 @@ if (isset($_GET['qldonhang']) && isset($_GET['action']) && $_GET['action'] === '
     exit;
 }
 
-if ($_SESSION['role'] != 1 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5) {
+// Kiểm tra quyền truy cập admin
+// Cho phép: admin (1), moderator (3), adcontent (4), adbusiness (5)
+// KHÔNG cho phép: user thường (2)
+if (!isset($_SESSION['role']) || ($_SESSION['role'] != 1 && $_SESSION['role'] != 3 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5)) {
+    error_log("Admin Access Denied - User ID: " . ($_SESSION['user_id'] ?? 'N/A') . ", Role: " . ($_SESSION['role'] ?? 'N/A'));
     echo "<script>
         alert('Bạn không đủ thẩm quyền truy cập!');
         
