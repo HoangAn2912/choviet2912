@@ -41,7 +41,6 @@ if (!$account) {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #ffff;
             min-height: 100vh;
-            padding: 20px;
         }
         
         .container {
