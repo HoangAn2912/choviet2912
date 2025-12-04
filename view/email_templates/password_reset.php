@@ -65,7 +65,7 @@
             <p><strong>Chợ Việt</strong> - Nơi trao đổi hàng hóa</p>
             <p>&copy; <?php echo date('Y'); ?> Chợ Việt</p>
             <p style="margin-top: 10px;">
-                Cần hỗ trợ? Liên hệ: security@choviet.com
+                Cần hỗ trợ? Liên hệ: <?php echo getConfig('support_email', 'support@choviet.site'); ?>
             </p>
         </div>
     </div>

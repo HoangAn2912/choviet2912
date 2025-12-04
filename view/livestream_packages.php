@@ -41,6 +41,8 @@ if ($user_id > 0) {
     $activeRegistration = $packageModel->getActiveRegistration($user_id);
 }
 
+$actionLabel = $is_business ? 'gia hạn' : 'đăng ký';
+
 // Include header
 include_once __DIR__ . '/header.php';
 ?>
@@ -356,6 +358,125 @@ include_once __DIR__ . '/header.php';
                 transform: scale(1);
             }
         }
+
+        .purchase-confirm-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .purchase-confirm-modal.is-visible {
+            display: flex;
+            pointer-events: auto;
+        }
+
+        .purchase-confirm-modal .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            z-index: 0;
+            pointer-events: auto;
+        }
+
+        .purchase-confirm-modal .modal-dialog {
+            position: relative;
+            background: #fff;
+            border-radius: 20px;
+            padding: 32px;
+            width: min(90%, 480px);
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.35);
+            animation: fadeUp 0.3s ease;
+            z-index: 1;
+            pointer-events: auto;
+        }
+
+        .purchase-confirm-modal .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            border: none;
+            background: transparent;
+            font-size: 1.5rem;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .purchase-confirm-modal h3 {
+            margin-bottom: 10px;
+            color: #0f172a;
+        }
+
+        .purchase-confirm-modal p {
+            margin-bottom: 0;
+            color: #475569;
+        }
+
+        .purchase-confirm-modal .modal-summary {
+            margin-top: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+
+        .purchase-confirm-modal .modal-summary div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .purchase-confirm-modal .modal-summary div:last-child {
+            margin-bottom: 0;
+        }
+
+        .purchase-confirm-modal .modal-summary span {
+            color: #64748b;
+        }
+
+        .purchase-confirm-modal .modal-actions {
+            margin-top: 25px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .purchase-confirm-modal .modal-actions .btn-modal {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 22px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .purchase-confirm-modal .btn-cancel {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .purchase-confirm-modal .btn-confirm {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.25);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
     </style>
 
 <div class="page-background">
@@ -398,6 +519,11 @@ include_once __DIR__ . '/header.php';
 
         <div class="packages-grid">
             <?php foreach ($packages as $package): ?>
+            <?php
+                $packageNameAttr = htmlspecialchars($package['package_name'], ENT_QUOTES, 'UTF-8');
+                $packagePriceAttr = htmlspecialchars(number_format($package['price']) . 'đ', ENT_QUOTES, 'UTF-8');
+                $actionLabelAttr = htmlspecialchars($actionLabel, ENT_QUOTES, 'UTF-8');
+            ?>
             <div class="package-card <?= $package['id'] == 3 ? 'vip' : '' ?>">
                 <?php if ($package['id'] == 1): ?>
                     <div class="package-badge"><i class="fas fa-bolt mr-1"></i>Gói Thử Nghiệm</div>
@@ -428,7 +554,14 @@ include_once __DIR__ . '/header.php';
                     <?php if ($user_id > 0): ?>
                         <?php if ($is_business): ?>
                             <!-- Tài khoản doanh nghiệp: Gia hạn gói -->
-                            <form method="POST" action="index.php?action=purchase-livestream-package-wallet" style="margin-bottom: 10px;">
+                            <form class="package-purchase-form"
+                                  method="POST"
+                                  action="index.php?action=purchase-livestream-package-wallet"
+                                  style="margin-bottom: 10px;"
+                                  data-package-name="<?= $packageNameAttr ?>"
+                                  data-package-price="<?= $packagePriceAttr ?>"
+                                  data-payment-label="Ví nội bộ"
+                                  data-action-label="<?= $actionLabelAttr ?>">
                                 <?= Security::csrfField() ?>
                                 <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
                                 <button type="submit" class="btn-purchase btn-wallet">
@@ -436,7 +569,13 @@ include_once __DIR__ . '/header.php';
                                 </button>
                             </form>
                             
-                            <form method="POST" action="index.php?action=purchase-livestream-package-vnpay">
+                            <form class="package-purchase-form"
+                                  method="POST"
+                                  action="index.php?action=purchase-livestream-package-vnpay"
+                                  data-package-name="<?= $packageNameAttr ?>"
+                                  data-package-price="<?= $packagePriceAttr ?>"
+                                  data-payment-label="VNPay"
+                                  data-action-label="<?= $actionLabelAttr ?>">
                                 <?= Security::csrfField() ?>
                                 <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
                                 <button type="submit" class="btn-purchase btn-vnpay">
@@ -445,7 +584,14 @@ include_once __DIR__ . '/header.php';
                             </form>
                         <?php else: ?>
                             <!-- Tài khoản cá nhân: Đăng ký gói -->
-                            <form method="POST" action="index.php?action=purchase-livestream-package-wallet" style="margin-bottom: 10px;">
+                            <form class="package-purchase-form"
+                                  method="POST"
+                                  action="index.php?action=purchase-livestream-package-wallet"
+                                  style="margin-bottom: 10px;"
+                                  data-package-name="<?= $packageNameAttr ?>"
+                                  data-package-price="<?= $packagePriceAttr ?>"
+                                  data-payment-label="Ví nội bộ"
+                                  data-action-label="<?= $actionLabelAttr ?>">
                                 <?= Security::csrfField() ?>
                                 <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
                                 <button type="submit" class="btn-purchase btn-wallet">
@@ -453,7 +599,13 @@ include_once __DIR__ . '/header.php';
                                 </button>
                             </form>
                             
-                            <form method="POST" action="index.php?action=purchase-livestream-package-vnpay">
+                            <form class="package-purchase-form"
+                                  method="POST"
+                                  action="index.php?action=purchase-livestream-package-vnpay"
+                                  data-package-name="<?= $packageNameAttr ?>"
+                                  data-package-price="<?= $packagePriceAttr ?>"
+                                  data-payment-label="VNPay"
+                                  data-action-label="<?= $actionLabelAttr ?>">
                                 <?= Security::csrfField() ?>
                                 <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
                                 <button type="submit" class="btn-purchase btn-vnpay">
@@ -492,11 +644,105 @@ include_once __DIR__ . '/header.php';
             <p><strong><i class="fas fa-phone mr-2"></i>Hỗ trợ:</strong></p>
             <p>Nếu gặp vấn đề, vui lòng liên hệ <strong>support@choviet29.com</strong> hoặc hotline <strong>1900 xxxx</strong></p>
         </div>
+        <div class="purchase-confirm-modal" id="purchaseConfirmModal" aria-hidden="true">
+            <div class="modal-backdrop" data-modal-close></div>
+            <div class="modal-dialog" role="dialog" aria-modal="true">
+                <button type="button" class="modal-close" aria-label="Đóng" data-modal-close>&times;</button>
+                <h3><i class="fas fa-question-circle mr-2"></i>Xác nhận thanh toán</h3>
+                <p>Bạn có chắc chắn muốn <span data-modal-action></span> gói livestream này?</p>
+                <div class="modal-summary">
+                    <div>
+                        <span>Gói:</span>
+                        <strong data-modal-package></strong>
+                    </div>
+                    <div>
+                        <span>Giá:</span>
+                        <strong data-modal-price></strong>
+                    </div>
+                    <div>
+                        <span>Phương thức:</span>
+                        <strong data-modal-payment></strong>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal btn-cancel" data-modal-close>Hủy</button>
+                    <button type="button" class="btn-modal btn-confirm" data-modal-confirm>Xác nhận</button>
+                </div>
+            </div>
+        </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('purchaseConfirmModal');
+    if (!modal) {
+        return;
+    }
+
+    const body = document.body;
+    const packageEl = modal.querySelector('[data-modal-package]');
+    const priceEl = modal.querySelector('[data-modal-price]');
+    const paymentEl = modal.querySelector('[data-modal-payment]');
+    const actionEl = modal.querySelector('[data-modal-action]');
+    const confirmBtn = modal.querySelector('[data-modal-confirm]');
+    const closeTargets = modal.querySelectorAll('[data-modal-close]');
+    let pendingForm = null;
+
+    const openModal = (form) => {
+        pendingForm = form;
+        packageEl.textContent = form.dataset.packageName || '';
+        priceEl.textContent = form.dataset.packagePrice || '';
+        paymentEl.textContent = form.dataset.paymentLabel || '';
+        actionEl.textContent = form.dataset.actionLabel || 'thanh toán';
+        modal.classList.add('is-visible');
+        modal.setAttribute('aria-hidden', 'false');
+        body.classList.add('modal-open');
+        confirmBtn.focus();
+    };
+
+    const closeModal = () => {
+        modal.classList.remove('is-visible');
+        modal.setAttribute('aria-hidden', 'true');
+        body.classList.remove('modal-open');
+        pendingForm = null;
+    };
+
+    document.querySelectorAll('.package-purchase-form').forEach((form) => {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            openModal(form);
+        });
+    });
+
+    confirmBtn.addEventListener('click', function () {
+        if (pendingForm) {
+            const formToSubmit = pendingForm;
+            closeModal();
+            formToSubmit.submit();
+        }
+    });
+
+    closeTargets.forEach((btn) => {
+        btn.addEventListener('click', closeModal);
+    });
+
+    modal.addEventListener('click', function (event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal.classList.contains('is-visible')) {
+            closeModal();
+        }
+    });
+});
+</script>
 
 <?php include_once __DIR__ . '/footer.php'; ?>
 

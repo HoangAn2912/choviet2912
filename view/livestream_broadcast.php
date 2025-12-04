@@ -420,10 +420,98 @@ function unpinProduct(productId) {
     });
 }
 
-function addProduct() {
-    // Show modal to add products
+const addProductModalState = {
+    backdropEl: null,
+    isManualOpen: false,
+    scrollBarCompensation: ''
+};
+
+function canUseBootstrapModal() {
+    return typeof window.jQuery !== 'undefined'
+        && typeof window.jQuery.fn !== 'undefined'
+        && typeof window.jQuery.fn.modal === 'function';
+}
+
+function showAddProductModal() {
+    const modal = document.getElementById('addProductModal');
+    if (!modal) {
+        return;
+    }
+
     loadProducts();
-    $('#addProductModal').modal('show');
+
+    if (canUseBootstrapModal()) {
+        window.jQuery('#addProductModal').modal('show');
+        return;
+    }
+
+    modal.classList.add('show');
+    modal.style.display = 'block';
+    modal.setAttribute('aria-hidden', 'false');
+    modal.setAttribute('aria-modal', 'true');
+    modal.dataset.manualOpen = 'true';
+    addProductModalState.isManualOpen = true;
+    if (typeof window.innerWidth === 'number') {
+        const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+        if (scrollBarWidth > 0) {
+            addProductModalState.scrollBarCompensation = document.body.style.paddingRight;
+            document.body.style.paddingRight = scrollBarWidth + 'px';
+        }
+    }
+    document.body.classList.add('modal-open');
+
+    if (!addProductModalState.backdropEl) {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.addEventListener('click', hideAddProductModal);
+        addProductModalState.backdropEl = backdrop;
+    }
+
+    document.body.appendChild(addProductModalState.backdropEl);
+}
+
+function hideAddProductModal() {
+    const modal = document.getElementById('addProductModal');
+    if (!modal) {
+        return;
+    }
+
+    if (canUseBootstrapModal()) {
+        window.jQuery('#addProductModal').modal('hide');
+        return;
+    }
+
+    if (!addProductModalState.isManualOpen) {
+        return;
+    }
+
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.removeAttribute('aria-modal');
+    delete modal.dataset.manualOpen;
+    addProductModalState.isManualOpen = false;
+    document.body.classList.remove('modal-open');
+    if (addProductModalState.scrollBarCompensation !== '') {
+        document.body.style.paddingRight = addProductModalState.scrollBarCompensation;
+        addProductModalState.scrollBarCompensation = '';
+    } else {
+        document.body.style.paddingRight = '';
+    }
+
+    if (addProductModalState.backdropEl && addProductModalState.backdropEl.parentNode) {
+        addProductModalState.backdropEl.parentNode.removeChild(addProductModalState.backdropEl);
+    }
+}
+
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && addProductModalState.isManualOpen) {
+        hideAddProductModal();
+    }
+});
+
+function addProduct() {
+    showAddProductModal();
 }
 
 // Update product display without reload
@@ -616,12 +704,12 @@ initWs();
 </script>
 
 <!-- Add Product Modal -->
-<div class="modal fade" id="addProductModal" tabindex="-1">
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Thêm sản phẩm vào livestream</h5>
-                <button type="button" class="close" data-dismiss="modal">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Đóng" onclick="hideAddProductModal()">
                     <span>&times;</span>
                 </button>
             </div>
@@ -662,7 +750,7 @@ initWs();
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="hideAddProductModal()">Hủy</button>
                 <button type="button" class="btn btn-primary" onclick="addProductToLivestream()" id="add-product-btn" disabled>Thêm sản phẩm</button>
             </div>
         </div>

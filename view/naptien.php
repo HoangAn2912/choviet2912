@@ -8,7 +8,10 @@ if (!isset($_SESSION['role'])) {
     exit;
 }
 ?>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 65997a0 (up len web)
 <?php include_once("view/header.php"); ?>   
 <?php
     include_once("controller/VietQR_payment/index.php");

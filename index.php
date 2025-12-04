@@ -1,4 +1,3 @@
-
 <?php
 // Xử lý action trước khi include các file khác để tránh output
 if (isset($_GET['action']) && $_GET['action'] == 'capNhatTrangThai') {
@@ -78,12 +77,14 @@ $controller = new cDetailProduct();
 </head>
 
 <body>
+
     <?php
+      
         if (isset($_GET['action']) && $_GET['action'] == 'dangTin') {
             include_once "controller/cPost.php";
             $post = new cPost();
             $post->dangTin();
-            exit; 
+            exit;
         } else if (isset($_GET['quan-ly-tin']) && isset($_GET['sua'])) {
             include_once("controller/cPost.php");
             $ctrl = new cPost();

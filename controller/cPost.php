@@ -58,7 +58,7 @@ class cPost {
 
                     // Generate safe filename
                     $newFileName = Security::generateSafeFilename($file['name'], 'product_');
-                    $targetDir = "img/";
+                    $targetDir = __DIR__ . "/../img/";
                     $targetFile = $targetDir . $newFileName;
 
                     if (move_uploaded_file($file['tmp_name'], $targetFile)) {
@@ -77,8 +77,8 @@ class cPost {
             $model = new mPost();
             $soLuong = $model->demSoLuongTin($idNguoiDang);
 
-            if ($soLuong >= 3) {
-                            $thongTin = $model->layThongTinNguoiDung($idNguoiDang);
+            if ($soLuong >= 2) {
+            $thongTin = $model->layThongTinNguoiDung($idNguoiDang);
             $soDu = intval($thongTin['balance'] ?? 0);
 
                 if ($soDu < 11000) {

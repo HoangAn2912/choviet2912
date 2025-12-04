@@ -32,7 +32,7 @@ class mPost {
         $soLuong = (int)$rowCount['quantity'];
         $stmtCount->close();
     
-        // Bước 2: ✅ FIXED - 2 bài đầu miễn phí, từ bài thứ 3 trở đi tính phí
+        // Bước 2: FIXED - 2 bài đầu miễn phí, từ bài thứ 3 trở đi tính phí
         // Nếu đã có >= 2 bài (tức đang đăng bài thứ 3 trở lên) => trừ phí
         if ($soLuong >= 2) {
             // Trừ số dư trong tài khoản
