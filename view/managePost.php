@@ -233,7 +233,7 @@ function getNoProductText($status) {
     <div class="d-flex align-items-center">
       <?php 
       $avatarPath = 'img/';
-      $avatarFile = !empty($user['avatar']) ? $user['avatar'] : 'default-avatar.png';
+      $avatarFile = !empty($user['avatar']) ? $user['avatar'] : 'default-avatar.jpg';
       // Đảm bảo avatar không chứa đường dẫn đầy đủ
       if (strpos($avatarFile, 'img/') === 0) {
           $avatarFile = str_replace('img/', '', $avatarFile);
@@ -243,7 +243,7 @@ function getNoProductText($status) {
       <img src="<?= $avatarFullPath ?>" 
            class="mr-3 avatar-square-lg" 
            alt="Avatar" 
-           onerror="this.onerror=null; this.src='img/default-avatar.png';">
+           onerror="this.onerror=null; this.src='img/default-avatar.jpg';">
       <div><div class="font-weight-bold"><?= htmlspecialchars($user['username'] ?? 'Người dùng') ?></div></div>
     </div>
     <div class="d-flex align-items-center">

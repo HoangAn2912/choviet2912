@@ -1,5 +1,6 @@
 <?php
-if ($_SESSION['role'] != 1 && $_SESSION['role'] !=4) {
+// Cho phép role: 1 (admin), 3 (moderator), 4 (adcontent)
+if (!in_array($_SESSION['role'], [1, 3, 4])) {
     echo "<script>
         alert('Bạn không đủ thẩm quyền truy cập!');
         

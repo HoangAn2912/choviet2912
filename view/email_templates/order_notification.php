@@ -80,7 +80,7 @@
             <p>&copy; <?php echo date('Y'); ?> Chợ Việt. All rights reserved.</p>
             <p style="margin-top: 10px;">
                 Email này được gửi tự động, vui lòng không reply.<br>
-                Nếu cần hỗ trợ, vui lòng liên hệ: support@choviet.com
+                Nếu cần hỗ trợ, vui lòng liên hệ: <?php echo getConfig('support_email', 'support@choviet.site'); ?>
             </p>
         </div>
     </div>

@@ -651,12 +651,12 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
 </div>
 
 <!-- Add Product Modal -->
-<div class="modal fade" id="addProductModal" tabindex="-1">
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Thêm sản phẩm vào livestream</h5>
-                <button type="button" class="close" data-dismiss="modal">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Đóng" onclick="hideAddProductModal()">
                     <span>&times;</span>
                 </button>
             </div>
@@ -697,7 +697,7 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="hideAddProductModal()">Hủy</button>
                 <button type="button" class="btn btn-primary" onclick="addProduct()" id="add-product-btn" disabled>Thêm sản phẩm</button>
             </div>
         </div>
@@ -920,10 +920,93 @@ function removeProduct(productId) {
     }
 }
 
-function showAddProductModal() {
-    loadProducts();
-    $('#addProductModal').modal('show');
+const addProductModalControl = {
+    backdropEl: null,
+    manuallyOpen: false,
+    scrollBarPadding: ''
+};
+
+function canUseBootstrapModal() {
+    return typeof window.jQuery !== 'undefined'
+        && typeof window.jQuery.fn !== 'undefined'
+        && typeof window.jQuery.fn.modal === 'function';
 }
+
+function showAddProductModal() {
+    const modal = document.getElementById('addProductModal');
+    if (!modal) {
+        return;
+    }
+
+    loadProducts();
+
+    if (canUseBootstrapModal()) {
+        window.jQuery('#addProductModal').modal('show');
+        return;
+    }
+
+    modal.classList.add('show');
+    modal.style.display = 'block';
+    modal.setAttribute('aria-hidden', 'false');
+    modal.setAttribute('aria-modal', 'true');
+    addProductModalControl.manuallyOpen = true;
+    if (typeof window.innerWidth === 'number') {
+        const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+        if (scrollBarWidth > 0) {
+            addProductModalControl.scrollBarPadding = document.body.style.paddingRight;
+            document.body.style.paddingRight = scrollBarWidth + 'px';
+        }
+    }
+    document.body.classList.add('modal-open');
+
+    if (!addProductModalControl.backdropEl) {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.addEventListener('click', hideAddProductModal);
+        addProductModalControl.backdropEl = backdrop;
+    }
+
+    document.body.appendChild(addProductModalControl.backdropEl);
+}
+
+function hideAddProductModal() {
+    const modal = document.getElementById('addProductModal');
+    if (!modal) {
+        return;
+    }
+
+    if (canUseBootstrapModal()) {
+        window.jQuery('#addProductModal').modal('hide');
+        return;
+    }
+
+    if (!addProductModalControl.manuallyOpen) {
+        return;
+    }
+
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.removeAttribute('aria-modal');
+    addProductModalControl.manuallyOpen = false;
+    document.body.classList.remove('modal-open');
+    if (addProductModalControl.scrollBarPadding !== '') {
+        document.body.style.paddingRight = addProductModalControl.scrollBarPadding;
+        addProductModalControl.scrollBarPadding = '';
+    } else {
+        document.body.style.paddingRight = '';
+    }
+
+    if (addProductModalControl.backdropEl && addProductModalControl.backdropEl.parentNode) {
+        addProductModalControl.backdropEl.parentNode.removeChild(addProductModalControl.backdropEl);
+    }
+}
+
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && addProductModalControl.manuallyOpen) {
+        hideAddProductModal();
+    }
+});
 
 function unpinProduct(productId) {
     if (confirm('Bỏ ghim sản phẩm này?')) {

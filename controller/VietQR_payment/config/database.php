@@ -6,12 +6,28 @@
 
 class Database {
     private $host = 'localhost';
-    private $username = 'admin';
-    private $password = '123456';
-    private $database = 'choviet29';
+    private $username = 'choviet_user';
+    private $password = 'Choviet@123456';
+    private $database = 'choviet_db';
     private $connection;
     
     public function __construct() {
+        // Load main config helper if not already loaded
+        if (!function_exists('config')) {
+            $helperPath = __DIR__ . '/../../../helpers/url_helper.php';
+            if (file_exists($helperPath)) {
+                require_once $helperPath;
+            }
+        }
+        
+        // Load config from environment
+        if (function_exists('config')) {
+            $this->host = config('db_host', 'localhost');
+            $this->username = config('db_user', 'root');
+            $this->password = config('db_pass', '');
+            $this->database = config('db_name', 'choviet29');
+        }
+        
         $this->connect();
     }
     
@@ -20,17 +36,18 @@ class Database {
      */
     private function connect() {
         try {
-            $this->connection = new mysqli($this->host, $this->username, $this->password, $this->database);
+            // Enable error reporting for mysqli
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
             
-            if ($this->connection->connect_error) {
-                throw new Exception("Connection failed: " . $this->connection->connect_error);
-            }
+            $this->connection = new mysqli($this->host, $this->username, $this->password, $this->database);
             
             // Set charset to utf8mb4
             $this->connection->set_charset("utf8mb4");
             
         } catch (Exception $e) {
-            die("Database connection error: " . $e->getMessage());
+            // Log error instead of dying if possible, or show generic error
+            error_log("VietQR Database connection error: " . $e->getMessage());
+            die("Lỗi kết nối database thanh toán. Vui lòng thử lại sau.");
         }
     }
     

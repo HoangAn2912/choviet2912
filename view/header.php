@@ -651,38 +651,60 @@ if (isset($_SESSION['user_id'])) {
             display: flex !important;
             align-items: center !important;
             justify-content: space-between !important;
-            transition: all 0.3s ease !important;
+            transition: all 0.25s ease !important;
             background: #fff !important;
-            border-left: 4px solid transparent !important;
+            border: none !important;
+            border-left: none !important;
+            border-radius: 0 !important;
             position: relative;
+        }
+        
+        /* Thanh border vàng bên trái (giống danh mục con) */
+        .navbar-vertical .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #FFD333;
+            transform: scaleY(0);
+            transition: transform 0.25s ease;
         }
         
         .navbar-vertical .nav-link:hover {
             background: linear-gradient(to right, #FFF9E6 0%, #FFE5B4 100%) !important;
             color: #8B6914 !important;
-            padding-left: 24px !important;
-            border-left-color: #FFD333 !important;
-            transform: translateX(3px);
-            box-shadow: 0 2px 8px rgba(255, 211, 51, 0.2);
+            border-radius: 0 !important;
+        }
+        
+        /* Thanh vàng bên trái xuất hiện khi hover */
+        .navbar-vertical .nav-link:hover::before {
+            transform: scaleY(1);
         }
         
         .navbar-vertical .nav-link.show {
             background: linear-gradient(to right, #FFF9E6 0%, #FFE5B4 100%) !important;
             color: #8B6914 !important;
-            border-left-color: #FFD333 !important;
+            border-radius: 0 !important;
         }
+        
+        /* Thanh vàng bên trái xuất hiện khi show */
+        .navbar-vertical .nav-link.show::before {
+            transform: scaleY(1);
+        }
+        
         
         /* Icon góc phải trong danh mục cha */
         .navbar-vertical .nav-link .fa-angle-right {
             font-size: 14px;
-            transition: all 0.3s ease;
-            color: #999;
+            transition: color 0.25s ease;
+            color: #666;
         }
         
         .navbar-vertical .nav-link:hover .fa-angle-right,
         .navbar-vertical .nav-link.show .fa-angle-right {
             color: #8B6914 !important;
-            transform: translateX(5px) rotate(90deg);
         }
         
         /* Category toggle icon animation */
@@ -745,8 +767,12 @@ if (isset($_SESSION['user_id'])) {
         .navbar-vertical .nav-item:not(.dropdown) .nav-link:hover {
             background: linear-gradient(to right, #FFF9E6 0%, #FFE5B4 100%) !important;
             color: #8B6914 !important;
-            padding-left: 24px !important;
-            border-left-color: #FFD333 !important;
+            border-radius: 0 !important;
+        }
+        
+        /* Thanh vàng bên trái xuất hiện khi hover (danh mục không có con) */
+        .navbar-vertical .nav-item:not(.dropdown) .nav-link:hover::before {
+            transform: scaleY(1);
         }
         
         /* Responsive - Mobile */
@@ -1359,7 +1385,7 @@ if (isset($_SESSION['user_id'])) {
                         <span>Danh mục sản phẩm</span>
                         <i class="fa fa-angle-down ml-2" id="category-toggle-icon"></i>
                     </button>
-                <nav class="collapse position-absolute navbar navbar-vertical navbar-light align-items-start p-0 bg-light" id="navbar-vertical" style="width: 280px; z-index: 999; display: none; margin-top: 5px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                <nav class="collapse position-absolute navbar navbar-vertical navbar-light align-items-start p-0 bg-light" id="navbar-vertical" style="width: 280px; z-index: 999; display: none; margin-top: 45px; top: 0; left: 0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                     <div class="w-100">
                         <?php if (!empty($data)) : ?>
                             <?php foreach ($data as $parent) : ?>
@@ -1393,7 +1419,7 @@ if (isset($_SESSION['user_id'])) {
                     </a>
                 </div>
                 
-                <div class="col-lg-6 d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start" style="gap: 10px;">
+                <div class="col-lg-6 d-flex flex-wrap align-items-center justify-content-center justify-content-lg-end ms-lg-auto" style="gap: 8px;">
                 <a href="index.php?tin-nhan" class="nav-link d-flex align-items-center position-relative text-white" style="padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 20px !important; transition: all 0.3s;">
                     <i class="fas fa-envelope mr-2"></i> Tin nhắn
                     <?php if (isset($hasUnread) && $hasUnread): ?>
@@ -1534,9 +1560,9 @@ if (isset($_SESSION['user_id'])) {
 
         <!-- Form Đăng Tin -->
         <div id="form-dang-tin" style="display: none;">
-        <form id="submitForm" action="index.php?action=dangTin" method="POST" enctype="multipart/form-data" data-userid="<?= $_SESSION['user_id'] ?? 0 ?>"
-        >
-                        <input type="hidden" id="idLoaiSanPham" name="category_id" required>
+        <form id="submitForm" action="index.php?action=dangTin" method="POST" enctype="multipart/form-data" data-userid="<?= $_SESSION['user_id'] ?? 0 ?>">
+            <?= Security::csrfField(); ?>
+            <input type="hidden" id="idLoaiSanPham" name="category_id" required>
 
             <!-- Tiêu đề tin đăng -->
             <div class="form-group">

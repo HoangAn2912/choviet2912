@@ -1,37 +1,19 @@
 // ========================================
-// CẤU HÌNH MÔI TRƯỜNG CHO NODE.JS SERVER
+// Auto-generated from env_config.php
+// DO NOT EDIT MANUALLY - Chạy: php config/generate_server_config.php [env]
+// Generated at: 2025-12-03 09:11:46
+// Environment: production
 // ========================================
-// 🔴 Đổi NODE_ENV để chuyển môi trường:
-// - development (local)
-// - production (hosting)
 
-const ENV = process.env.NODE_ENV || 'development';
-
-const config = {
-  development: {
-    // LOCAL (XAMPP)
-    hostname: 'localhost',
-    port: 8080,
-    basePath: '',
-    wsPort: 3000,
-    wsSecret: '',
-    projectRoot: 'D:\\xampp\\htdocs',
-    chatPath: 'D:\\xampp\\htdocs\\chat'
-  },
-  
-  production: {
-    // HOSTING - ⚠️ Cập nhật khi deploy
-    hostname: 'yourdomain.com',
-    port: 8080,
-    basePath: '',
-    wsPort: 3000,
-    wsSecret: '',  // Nên thêm secret cho production
-    projectRoot: '/home/username/public_html',
-    chatPath: '/home/username/public_html/chat'
-  }
+module.exports = {
+    "hostname": "choviet.site",
+    "port": 8080,
+    "basePath": "",
+    "wsHost": "choviet.site",
+    "wsPort": 3000,
+    "wsSecret": "",
+    "chatPath": "/var/www/choviet.site/chat",
+    "sslDomain": "choviet.site",
+    "sslKeyPath": "/etc/letsencrypt/live/choviet.site/privkey.pem",
+    "sslCertPath": "/etc/letsencrypt/live/choviet.site/fullchain.pem"
 };
-
-module.exports = config[ENV] || config.development;
-
-
-

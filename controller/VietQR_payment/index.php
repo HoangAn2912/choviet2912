@@ -41,7 +41,6 @@ if (!$account) {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #ffff;
             min-height: 100vh;
-            padding: 20px;
         }
         
         .container {
@@ -477,7 +476,7 @@ if (!$account) {
                     
                     showDebug('Sending request to API with data: ' + JSON.stringify(requestData));
 
-                    const response = await fetch("api/create_transaction.php", {
+                    const response = await fetch("controller/VietQR_payment/api/create_transaction.php", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(requestData)
@@ -612,7 +611,7 @@ if (!$account) {
             
             showDebug('Checking transaction status for ID: ' + currentTransactionId);
             
-            fetch('api/check_status.php', {
+            fetch('controller/VietQR_payment/api/check_status.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -671,7 +670,7 @@ if (!$account) {
             
             showDebug('Simulating payment for transaction: ' + currentTransactionId);
             
-            fetch('api/simulate_payment.php', {
+            fetch('controller/VietQR_payment/api/simulate_payment.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

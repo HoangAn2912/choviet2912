@@ -88,8 +88,8 @@ class mLivestreamPackage {
             $accountType = strtolower($user['account_type'] ?? '');
             $roleId = intval($user['role_id'] ?? 0);
             if ($accountType !== 'doanh_nghiep' || $roleId === 2) {
-                // role_id=2: người dùng thường -> chuyển sang role_id=5: doanh nghiệp
-                $newRoleId = ($roleId === 2) ? 5 : $roleId;
+                // role_id=2: người dùng thường -> chuyển sang role_id=3: doanh nghiệp
+                $newRoleId = ($roleId === 2) ? 3 : $roleId;
                 
                 $upgrade_sql = "UPDATE users SET account_type = 'doanh_nghiep', role_id = ?, updated_date = NOW() WHERE id = ?";
                 $upgrade_stmt = $this->conn->prepare($upgrade_sql);
@@ -101,27 +101,56 @@ class mLivestreamPackage {
                 $upgrade_stmt->close();
             }
 
-            // 3. Tính ngày hết hạn
-            $duration_days = $package['duration_days'];
-            $expiry_date = date('Y-m-d H:i:s', strtotime("+{$duration_days} days"));
+            // 3. Chuẩn bị thông tin gói đang active (nếu có) để cộng dồn thời hạn
+            $currentActive = $this->getActiveRegistration($user_id);
+            $duration_days = intval($package['duration_days']);
+            $now = new DateTime();
+            $baseDate = clone $now; // Mặc định bắt đầu từ thời điểm hiện tại
+            $currentExpiry = null;
 
-            // 4. Hủy các gói đang active (nếu có) - chỉ cho phép 1 gói active cùng lúc
-            $cancel_sql = "UPDATE livestream_registrations 
-                          SET status = 'cancelled', updated_at = NOW() 
-                          WHERE user_id = ? AND status = 'active'";
-            $cancel_stmt = $this->conn->prepare($cancel_sql);
-            $cancel_stmt->bind_param("i", $user_id);
-            $cancel_stmt->execute();
+            if ($currentActive && isset($currentActive['expiry_date'])) {
+                $currentExpiry = new DateTime($currentActive['expiry_date']);
+                if ($currentExpiry > $now) {
+                    // Nếu gói hiện tại chưa hết hạn, cộng dồn thời hạn mới
+                    $baseDate = clone $currentExpiry;
+                }
+            }
 
-            // 5. Tạo đăng ký mới
-            $register_sql = "INSERT INTO livestream_registrations 
-                           (user_id, package_id, registration_date, expiry_date, status, payment_method, vnpay_txn_ref)
-                           VALUES (?, ?, NOW(), ?, 'active', ?, ?)";
-            $register_stmt = $this->conn->prepare($register_sql);
-            $register_stmt->bind_param("iisss", $user_id, $package_id, $expiry_date, $payment_method, $vnpay_txn_ref);
-            $register_stmt->execute();
-            
-            $registration_id = $this->conn->insert_id;
+            $newExpiry = clone $baseDate;
+            $newExpiry->modify("+{$duration_days} days");
+            $expiry_date = $newExpiry->format('Y-m-d H:i:s');
+
+            $registration_id = null;
+
+            if (
+                $currentActive
+                && $currentExpiry
+                && $currentExpiry > $now
+            ) {
+                // 4a. Cộng thời gian trực tiếp trên bản ghi hiện tại (kể cả khi đổi gói)
+                $extend_sql = "UPDATE livestream_registrations 
+                               SET expiry_date = ?, updated_at = NOW()
+                               WHERE id = ? AND user_id = ?";
+                $extend_stmt = $this->conn->prepare($extend_sql);
+                $extend_stmt->bind_param("sii", $expiry_date, $currentActive['id'], $user_id);
+                if (!$extend_stmt->execute()) {
+                    throw new Exception("Không thể gia hạn gói hiện tại");
+                }
+                $registration_id = $currentActive['id'];
+                $extend_stmt->close();
+            } else {
+                // 4b. Tạo đăng ký mới (khi không còn gói active)
+                $register_sql = "INSERT INTO livestream_registrations 
+                               (user_id, package_id, registration_date, expiry_date, status, payment_method, vnpay_txn_ref)
+                               VALUES (?, ?, NOW(), ?, 'active', ?, ?)";
+                $register_stmt = $this->conn->prepare($register_sql);
+                $register_stmt->bind_param("iisss", $user_id, $package_id, $expiry_date, $payment_method, $vnpay_txn_ref);
+                if (!$register_stmt->execute()) {
+                    throw new Exception("Không thể tạo đăng ký gói mới");
+                }
+                $registration_id = $this->conn->insert_id;
+                $register_stmt->close();
+            }
 
             // 6. Lưu lịch sử thanh toán
             $payment_sql = "INSERT INTO livestream_payment_history 
@@ -133,14 +162,22 @@ class mLivestreamPackage {
                 $package['price'], $payment_method, $vnpay_txn_ref
             );
             $payment_stmt->execute();
+            $payment_stmt->close();
 
             $this->conn->commit();
+
+            $successMessage = "Đăng ký gói '{$package['package_name']}' thành công!";
+            if ($currentActive && $currentExpiry && $currentExpiry > $now) {
+                $successMessage = "Gia hạn gói '{$package['package_name']}' thành công!";
+            }
+
+            $successMessage .= " Hiệu lực đến " . date('d/m/Y H:i', strtotime($expiry_date));
 
             return [
                 'success' => true,
                 'registration_id' => $registration_id,
                 'expiry_date' => $expiry_date,
-                'message' => "Đăng ký gói '{$package['package_name']}' thành công! Hiệu lực đến " . date('d/m/Y H:i', strtotime($expiry_date))
+                'message' => $successMessage
             ];
 
         } catch (Exception $e) {

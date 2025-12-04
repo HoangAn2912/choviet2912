@@ -2,18 +2,18 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-include_once("../controller/cLivestream.php");
-include_once("../model/mLivestream.php");
+include_once(__DIR__ . "/../controller/cLivestream.php");
+include_once(__DIR__ . "/../model/mLivestream.php");
 
 // Kiểm tra đăng nhập
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../index.php?login');
+    header('Location: index.php?login');
     exit;
 }
 
 $livestream_id = $_GET['livestream_id'] ?? null;
 if (!$livestream_id) {
-    header('Location: ../index.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -22,7 +22,7 @@ $cart = $model->getCart($_SESSION['user_id'], $livestream_id);
 $livestream = $model->getLivestreamById($livestream_id);
 
 // Lấy thông tin user
-include_once("../model/mUser.php");
+include_once(__DIR__ . "/../model/mUser.php");
 $mUser = new mUser();
 $user = $mUser->getUserById($_SESSION['user_id']);
 
@@ -32,22 +32,15 @@ if (!$user) {
 }
 
 // Lấy số dư từ transfer_accounts (cùng cơ sở dữ liệu với nạp tiền)
-include_once("../controller/vnpay/connection.php");
-try {
-    $stmt = $pdo->prepare("SELECT balance FROM transfer_accounts WHERE user_id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $account = $stmt->fetch(PDO::FETCH_ASSOC);
-    $user['balance'] = $account ? $account['balance'] : 0;
-} catch(PDOException $e) {
-    $user['balance'] = 0;
-}
+// Lấy số dư từ transfer_accounts
+$user['balance'] = $mUser->getUserBalance($_SESSION['user_id']);
 
 if (empty($cart['items'])) {
-    header('Location: ../index.php');
+    header('Location: index.php');
     exit;
 }
 
-include_once("header.php");
+include_once(__DIR__ . "/header.php");
 ?>
 
 <!-- API địa chỉ Việt Nam -->
@@ -846,7 +839,9 @@ function processCheckout() {
 function sendOrderCreatedNotification(livestreamId, orderData) {
     // Tạo WebSocket connection tạm thời để gửi message
     try {
-        const ws = new WebSocket('ws://localhost:3000');
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.hostname}:3000`;
+        const ws = new WebSocket(wsUrl);
         let messageSent = false;
         
         ws.onopen = function() {

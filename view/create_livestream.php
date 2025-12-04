@@ -327,7 +327,7 @@ input[type="file"].form-control::file-selector-button:hover {
                 </div>
 
                 <!-- Form -->
-                <form id="create-livestream-form">
+                <form id="create-livestream-form" novalidate>
                     <!-- Step 1: Basic Info -->
                     <div class="step-content" id="step-1">
                         <div class="form-group">

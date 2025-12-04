@@ -9,4 +9,13 @@ class mUser extends Connect {
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc();
     }
+
+    public function getUserBalance($user_id) {
+        $conn = $this->connect();
+        $stmt = $conn->prepare("SELECT balance FROM transfer_accounts WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        return $result ? $result['balance'] : 0;
+    }
 }

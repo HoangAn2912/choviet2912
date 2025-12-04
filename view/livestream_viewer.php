@@ -829,7 +829,9 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
 
         // Initialize WebSocket
         function initWebSocket() {
-            ws = new WebSocket('ws://localhost:3000');
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.hostname}:3000`;
+            ws = new WebSocket(wsUrl);
             
             ws.onopen = function() {
                 console.log('Viewer: Đã kết nối WebSocket');

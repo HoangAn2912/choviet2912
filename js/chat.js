@@ -2,16 +2,18 @@
 function getWebSocketURL() {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const hostname = window.location.hostname;
-  const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+  
+  // Lấy port từ config nếu có, fallback về 3000
+  const wsPort = (window.APP_CONFIG && window.APP_CONFIG.wsPort) || 3000;
   
   // Nếu đang chạy trên localhost (development)
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'ws://localhost:3000';
+    return `ws://localhost:${wsPort}`;
   }
   
   // Nếu đang chạy trên hosting (production)
-  // Sử dụng cùng domain nhưng port khác cho WebSocket
-  return `${protocol}//${hostname}:3000`;
+  // Sử dụng cùng domain nhưng port từ config cho WebSocket
+  return `${protocol}//${hostname}:${wsPort}`;
 }
 
 let socket = null;
