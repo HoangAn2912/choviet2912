@@ -419,28 +419,44 @@ switch ($action) {
         }
         
         // Kiểm tra số dư nếu thanh toán bằng ví (từ transfer_accounts)
-        if ($payment_method === 'wallet') {
+        // Chỉ check số dư nếu đơn hàng > 0đ
+        if ($payment_method === 'wallet' && $cart['total'] > 0) {
             try {
                 // Sử dụng PDO connection để kiểm tra số dư từ transfer_accounts
                 $pdo = new PDO("mysql:host=localhost;dbname=choviet29", "admin", "123456");
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $pdo->setAttribute(PDO::ATTR_TIMEOUT, 10);
                 
                 $balance_sql = "SELECT balance FROM transfer_accounts WHERE user_id = ?";
                 $balance_stmt = $pdo->prepare($balance_sql);
                 $balance_stmt->execute([$user_id]);
                 $account = $balance_stmt->fetch(PDO::FETCH_ASSOC);
                 
-                $balance = $account ? $account['balance'] : 0;
+                // Xử lý balance an toàn
+                $balance = ($account && isset($account['balance'])) ? floatval($account['balance']) : 0.0;
+                $cart_total = floatval($cart['total']);
                 
-                if ($balance < $cart['total']) {
+                if ($balance < $cart_total) {
                     echo json_encode([
                         'success' => false, 
-                        'message' => 'Số dư tài khoản không đủ để thanh toán. Số dư hiện tại: ' . number_format($balance) . ' VNĐ, cần: ' . number_format($cart['total']) . ' VNĐ'
+                        'message' => 'Số dư tài khoản không đủ để thanh toán. Số dư hiện tại: ' . number_format($balance) . ' VNĐ, cần: ' . number_format($cart_total) . ' VNĐ'
                     ]);
                     break;
                 }
             } catch (PDOException $e) {
-                error_log("Error checking balance from transfer_accounts: " . $e->getMessage());
+                // Log chi tiết hơn để debug
+                $error_details = [
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'sql_state' => $e->errorInfo[0] ?? null,
+                    'driver_code' => $e->errorInfo[1] ?? null,
+                    'driver_message' => $e->errorInfo[2] ?? null,
+                    'user_id' => $user_id,
+                    'cart_total' => $cart['total'] ?? 0,
+                    'timestamp' => date('Y-m-d H:i:s')
+                ];
+                
+                error_log("Error checking balance from transfer_accounts: " . json_encode($error_details, JSON_UNESCAPED_UNICODE));
                 echo json_encode(['success' => false, 'message' => 'Lỗi khi kiểm tra số dư tài khoản']);
                 break;
             }
@@ -530,8 +546,11 @@ switch ($action) {
             ]);
         } else if ($payment_method === 'wallet') {
             // Thanh toán bằng ví
-            $result = $model->processWalletPayment($order_id, $user_id);
-            if ($result) {
+            // Nếu đơn hàng = 0đ, không cần trừ tiền ví, chỉ cập nhật trạng thái
+            if ($order['total_amount'] <= 0) {
+                // Cập nhật trạng thái đơn hàng thành confirmed
+                $model->updateOrderStatus($order_id, 'confirmed', null);
+                
                 echo json_encode([
                     'success' => true, 
                     'message' => 'Thanh toán thành công',
@@ -541,7 +560,20 @@ switch ($action) {
                     'redirect_url' => 'index.php?my-orders'
                 ]);
             } else {
-                echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi thanh toán']);
+                // Chỉ gọi processWalletPayment() nếu đơn hàng > 0đ
+                $result = $model->processWalletPayment($order_id, $user_id);
+                if ($result) {
+                    echo json_encode([
+                        'success' => true, 
+                        'message' => 'Thanh toán thành công',
+                        'order_id' => $order_id,
+                        'order_code' => $order['order_code'] ?? '',
+                        'total_amount' => $order['total_amount'] ?? 0,
+                        'redirect_url' => 'index.php?my-orders'
+                    ]);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi thanh toán']);
+                }
             }
         } else if ($payment_method === 'cash') {
             // Giao trực tiếp

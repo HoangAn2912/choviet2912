@@ -12,7 +12,7 @@ if ($user_id <= 0) {
 }
 
 // Path to the unread file
-$file_path = __DIR__ . '/../chat/unread_' . $user_id . '.json';
+$file_path = '/var/www/choviet.site/chat/unread_' . $user_id . '.json';
 
 if (file_exists($file_path)) {
     // Read and output the file content

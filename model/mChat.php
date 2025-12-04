@@ -29,6 +29,8 @@ class mChat extends Connect {
 
     public function getConversationUsers($currentUserId) {
         $conn = $this->connect();
+        
+        // Lấy danh sách từ DB
         $stmt = $conn->prepare("SELECT u.id, u.username, u.avatar,
                 (SELECT content FROM messages 
                  WHERE (sender_id = u.id AND receiver_id = ?) OR (sender_id = ? AND receiver_id = u.id)
@@ -53,7 +55,45 @@ class mChat extends Connect {
         );
         
         $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $usersFromDB = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Scan file JSON trong thư mục chat để tìm conversations không có trong DB
+        $chatDir = "/var/www/choviet.site/chat/";
+        $existingUserIds = array_column($usersFromDB, 'id');
+        $files = glob($chatDir . "chat_*_*.json");
+        
+        foreach ($files as $file) {
+            $fileName = basename($file);
+            if (preg_match('/chat_(\d+)_(\d+)\.json/', $fileName, $matches)) {
+                $id1 = intval($matches[1]);
+                $id2 = intval($matches[2]);
+                
+                // Xác định ID của người kia
+                $otherUserId = ($id1 == $currentUserId) ? $id2 : (($id2 == $currentUserId) ? $id1 : null);
+                
+                if ($otherUserId && !in_array($otherUserId, $existingUserIds)) {
+                    // Lấy thông tin user từ DB
+                    $stmtUser = $conn->prepare("SELECT id, username, avatar FROM users WHERE id = ?");
+                    $stmtUser->bind_param("i", $otherUserId);
+                    $stmtUser->execute();
+                    $result = $stmtUser->get_result();
+                    
+                    if ($user = $result->fetch_assoc()) {
+                        // Đọc tin nhắn cuối từ file JSON
+                        $messages = json_decode(file_get_contents($file), true);
+                        if (is_array($messages) && count($messages) > 0) {
+                            $lastMsg = end($messages);
+                            $user['tin_cuoi'] = $lastMsg['content'] ?? '';
+                            $user['created_time'] = ''; // Sẽ được format lại ở controller
+                            $usersFromDB[] = $user;
+                            $existingUserIds[] = $otherUserId;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return $usersFromDB;
     }
     
     public function sendMessage($from, $to, $content, $idSanPham = null) {
@@ -66,7 +106,7 @@ class mChat extends Connect {
     public function readChatFile($from, $to) {
         $ids = [$from, $to];
         sort($ids);
-        $filePath = __DIR__ . "/../chat/chat_{$ids[0]}_{$ids[1]}.json";
+        $filePath = "/var/www/choviet.site/chat/chat_{$ids[0]}_{$ids[1]}.json";
     
         if (!file_exists($filePath)) return [];
     

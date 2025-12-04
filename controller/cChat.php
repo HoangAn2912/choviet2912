@@ -22,7 +22,7 @@ class cChat {
     
         foreach ($users as &$user) {
             $fileName = $this->getChatFileName($current_user_id, $user['id']);
-            $filePath = __DIR__ . "/../chat/" . $fileName;
+            $filePath = "/var/www/choviet.site/chat/" . $fileName;
     
             $last = $this->getLastMessageFromFile($filePath);
     

@@ -56,7 +56,7 @@ if (isset($_GET['qldonhang']) && isset($_GET['action']) && $_GET['action'] === '
     }
     
     // Kiểm tra session cho AJAX request - cho phép role: 1, 3, 4, 5
-    if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], [1, 3, 4, 5])) {
+    if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], [1, 4, 5])) {
         header('Content-Type: application/json');
         echo json_encode(['success' => false, 'message' => 'Không đủ thẩm quyền'], JSON_UNESCAPED_UNICODE);
         exit;
@@ -97,16 +97,9 @@ if (isset($_GET['qldonhang']) && isset($_GET['action']) && $_GET['action'] === '
     exit;
 }
 
-<<<<<<< HEAD
-// Kiểm tra quyền truy cập admin
-// Cho phép: admin (1), moderator (3), adcontent (4), adbusiness (5)
-// KHÔNG cho phép: user thường (2)
-if (!isset($_SESSION['role']) || ($_SESSION['role'] != 1 && $_SESSION['role'] != 3 && $_SESSION['role'] != 4 && $_SESSION['role'] != 5)) {
-    error_log("Admin Access Denied - User ID: " . ($_SESSION['user_id'] ?? 'N/A') . ", Role: " . ($_SESSION['role'] ?? 'N/A'));
-=======
-// Cho phép role: 1 (admin), 3 (moderator), 4 (adcontent), 5 (adbusiness)
-if (!in_array($_SESSION['role'], [1, 3, 4, 5])) {
->>>>>>> 65997a0 (up len web)
+// Cho phép role: 1 (admin),  4 (adcontent), 5 (adbusiness)
+if (!in_array($_SESSION['role'], [1, 4, 5])) {
+
     echo "<script>
         alert('Bạn không đủ thẩm quyền truy cập!');
         

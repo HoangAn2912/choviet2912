@@ -37,27 +37,75 @@ class mProfile extends Connect {
     }
 
 
-    public function capNhatThongTin($id, $email, $phone, $address, $birth_date, $avatar = null) {
-        // Kiểm tra tuổi
-        $dob = new DateTime($birth_date);
-        $today = new DateTime();
-        $age = $today->diff($dob)->y;
-        if ($age < 18) {
+    public function capNhatThongTin($id, $email, $phone = null, $address = null, $birth_date = null, $avatar = null) {
+        $conn = $this->connect();
+        
+        // Xây dựng SQL động dựa trên các trường có giá trị
+        $fields = [];
+        $params = [];
+        $types = '';
+        
+        // Email là bắt buộc
+        $fields[] = "email = ?";
+        $params[] = $email;
+        $types .= "s";
+        
+        // Phone (optional - chỉ update nếu có giá trị)
+        if ($phone !== null && $phone !== '') {
+            $fields[] = "phone = ?";
+            $params[] = $phone;
+            $types .= "s";
+        }
+        
+        // Address (optional - chỉ update nếu có giá trị)
+        if ($address !== null && $address !== '') {
+            $fields[] = "address = ?";
+            $params[] = $address;
+            $types .= "s";
+        }
+        
+        // Birth date (optional - chỉ update nếu có giá trị)
+        if ($birth_date !== null && $birth_date !== '') {
+            $fields[] = "birth_date = ?";
+            $params[] = $birth_date;
+            $types .= "s";
+        }
+        
+        // Avatar (optional - chỉ update nếu có giá trị)
+        if ($avatar !== null && $avatar !== '') {
+            $fields[] = "avatar = ?";
+            $params[] = $avatar;
+            $types .= "s";
+        }
+        
+        // Thêm id vào params
+        $params[] = $id;
+        $types .= "i";
+        
+        // Nếu không có trường nào để update (ngoài email), chỉ update email
+        if (count($fields) == 1) {
+            $sql = "UPDATE users SET email = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            if ($stmt) {
+                $stmt->bind_param("si", $email, $id);
+                $result = $stmt->execute();
+                $stmt->close();
+                return $result;
+            }
             return false;
         }
-
-        $conn = $this->connect();
-        if ($avatar) {
-            $sql = "UPDATE users SET email=?, phone=?, address=?, birth_date=?, avatar=? WHERE id=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sssssi", $email, $phone, $address, $birth_date, $avatar, $id);
-        } else {
-            $sql = "UPDATE users SET email=?, phone=?, address=?, birth_date=? WHERE id=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssi", $email, $phone, $address, $birth_date, $id);
+        
+        $sql = "UPDATE users SET " . implode(", ", $fields) . " WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        
+        if ($stmt) {
+            $stmt->bind_param($types, ...$params);
+            $result = $stmt->execute();
+            $stmt->close();
+            return $result;
         }
-        $stmt->execute();
-        return true;
+        
+        return false;
     }
     
     public function countSanPhamTheoTrangThai($userId, $trangThaiBan) {

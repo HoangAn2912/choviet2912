@@ -923,14 +923,31 @@ class mLivestream {
                 throw new Exception("Không tìm thấy đơn hàng");
             }
             
-            $total_amount = $order['total_amount'];
+            $total_amount = floatval($order['total_amount']); // Convert sang float
             $livestream_id = $order['livestream_id'];
             
+            // Nếu đơn hàng = 0đ, không cần trừ tiền ví, chỉ cập nhật trạng thái
+            if ($total_amount <= 0) {
+                // Cập nhật trạng thái đơn hàng
+                $update_order_sql = "UPDATE livestream_orders SET status = 'confirmed', updated_at = NOW() WHERE id = ?";
+                $update_order_stmt = $this->conn->prepare($update_order_sql);
+                $update_order_stmt->bind_param("i", $order_id);
+                $update_order_stmt->execute();
+                
+                // Commit transaction
+                $this->conn->commit();
+                
+                error_log("Free order processed successfully for order_id: $order_id, user_id: $user_id");
+                return true;
+            }
+            
+            // Nếu đơn hàng > 0đ, mới cần trừ tiền ví
             // Sử dụng PDO connection cho transfer_accounts (giống như phần refund)
             try {
                 // Tạo PDO connection riêng cho transfer_accounts
                 $pdo = new PDO("mysql:host=localhost;dbname=choviet29", "admin", "123456");
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $pdo->setAttribute(PDO::ATTR_TIMEOUT, 10);
                 
                 // Bắt đầu transaction cho transfer_accounts
                 $pdo->beginTransaction();
@@ -950,11 +967,14 @@ class mLivestream {
                     $account = ['balance' => 0];
                 }
                 
+                // Convert balance sang float để so sánh chính xác
+                $balance = floatval($account['balance']);
+                
                 // Kiểm tra số dư
-                if ($account['balance'] < $total_amount) {
+                if ($balance < $total_amount) {
                     $pdo->rollBack();
                     $this->conn->rollback();
-                    throw new Exception("Số dư không đủ. Số dư hiện tại: " . number_format($account['balance']) . " VNĐ, cần: " . number_format($total_amount) . " VNĐ");
+                    throw new Exception("Số dư không đủ. Số dư hiện tại: " . number_format($balance) . " VNĐ, cần: " . number_format($total_amount) . " VNĐ");
                 }
                 
                 // Trừ tiền từ ví
@@ -972,6 +992,7 @@ class mLivestream {
                 }
                 $this->conn->rollback();
                 error_log("Error processing wallet payment (transfer_accounts): " . $e->getMessage());
+                error_log("Order ID: $order_id, User ID: $user_id, Amount: $total_amount");
                 throw new Exception("Lỗi khi xử lý thanh toán: " . $e->getMessage());
             }
             
@@ -980,12 +1001,6 @@ class mLivestream {
             $update_order_stmt = $this->conn->prepare($update_order_sql);
             $update_order_stmt->bind_param("i", $order_id);
             $update_order_stmt->execute();
-            
-            // Xóa giỏ hàng (mysqli)
-            $clear_cart_sql = "DELETE FROM livestream_cart_items WHERE user_id = ? AND livestream_id = ?";
-            $clear_cart_stmt = $this->conn->prepare($clear_cart_sql);
-            $clear_cart_stmt->bind_param("ii", $user_id, $livestream_id);
-            $clear_cart_stmt->execute();
             
             // Commit transaction cho livestream_orders
             $this->conn->commit();
@@ -997,6 +1012,7 @@ class mLivestream {
             $this->conn->rollback();
             error_log("Error processing wallet payment: " . $e->getMessage());
             error_log("Order ID: $order_id, User ID: $user_id");
+            error_log("Stack trace: " . $e->getTraceAsString());
             return false;
         }
     }

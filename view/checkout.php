@@ -52,7 +52,9 @@ include_once(__DIR__ . "/header.php");
     padding: 20px 0;
 }
 
-.container {
+/* Giới hạn chiều rộng container chỉ trong khu vực checkout,
+   tránh ảnh hưởng container ở header/footer */
+.checkout-container .container {
     max-width: 1600px;
 }
 
@@ -486,7 +488,7 @@ include_once(__DIR__ . "/header.php");
     }
     
     /* Responsive cho layout 2 cột */
-    .row .col-lg-6 {
+    .checkout-card .row .col-lg-6 {
         margin-bottom: 30px;
     }
     
@@ -495,22 +497,22 @@ include_once(__DIR__ . "/header.php");
     }
 }
 
-/* Cân đối chiều cao 2 cột */
-.row .col-lg-6 {
+/* Cân đối chiều cao 2 cột - chỉ áp dụng trong card checkout */
+.checkout-card .row .col-lg-6 {
     display: flex;
     flex-direction: column;
 }
 
-.row .col-lg-6:first-child {
+.checkout-card .row .col-lg-6:first-child {
     justify-content: flex-start;
 }
 
-.row .col-lg-6:last-child {
+.checkout-card .row .col-lg-6:last-child {
     justify-content: space-between;
 }
 
 /* Đảm bảo cột phải có chiều cao tối thiểu */
-.row .col-lg-6:last-child {
+.checkout-card .row .col-lg-6:last-child {
     min-height: 600px;
 }
 </style>

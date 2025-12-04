@@ -1419,11 +1419,8 @@ if (isset($_SESSION['user_id'])) {
                     </a>
                 </div>
                 
-<<<<<<< HEAD
-                <div class="col-lg-6 d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start" style="gap: 8px;">
-=======
                 <div class="col-lg-6 d-flex flex-wrap align-items-center justify-content-center justify-content-lg-end ms-lg-auto" style="gap: 8px;">
->>>>>>> 65997a0 (up len web)
+
                 <a href="index.php?tin-nhan" class="nav-link d-flex align-items-center position-relative text-white" style="padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 20px !important; transition: all 0.3s;">
                     <i class="fas fa-envelope mr-2"></i> Tin nhắn
                     <?php if (isset($hasUnread) && $hasUnread): ?>

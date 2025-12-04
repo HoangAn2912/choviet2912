@@ -13,7 +13,7 @@ if ($from === 0 || $to === 0) {
 
 $min = min($from, $to);
 $max = max($from, $to);
-$filePath = __DIR__ . "/../chat/chat_{$min}_{$max}.json";
+$filePath = "/var/www/choviet.site/chat/chat_{$min}_{$max}.json";
 
 if (!file_exists($filePath)) {
     http_response_code(404);
