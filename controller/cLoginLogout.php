@@ -249,9 +249,16 @@ class LoginLogoutController {
                 error_log("Redirect Debug - User thường redirect đến: " . $redirectUrl);
                 header("Location: " . $redirectUrl);
                 break;
+<<<<<<< HEAD
+            case 3: // doanh nghiệp
+                // Điều hướng tới trang chủ cho doanh nghiệp
+                $redirectUrl = rtrim($this->baseUrl, '/') . '/index.php';
+                error_log("Redirect Debug - Doanh nghiệp (role 3) redirect đến: " . $redirectUrl);
+=======
             case 3: // moderator/doanh nghiệp - Điều hướng về trang chủ
                 $redirectUrl = rtrim($this->baseUrl, '/') . '/index.php';
                 error_log("Redirect Debug - Role 3 redirect đến: " . $redirectUrl);
+>>>>>>> 65997a0 (up len web)
                 header("Location: " . $redirectUrl);
                 break;
             case 4: // adcontent

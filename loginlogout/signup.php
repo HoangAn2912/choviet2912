@@ -541,18 +541,34 @@ include_once("controller/cLoginLogout.php");
                         })
                     });
                     
-                    const result = await response.json();
+                    // Kiểm tra response có OK không
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // Lấy text trước để kiểm tra
+                    const responseText = await response.text();
+                    console.log('OTP Response:', responseText); // Debug
+                    
+                    // Parse JSON
+                    let result;
+                    try {
+                        result = JSON.parse(responseText);
+                    } catch (e) {
+                        console.error('Lỗi parse JSON:', e, 'Response:', responseText);
+                        throw new Error('Response không phải JSON hợp lệ');
+                    }
                     
                     if (result.success) {
                         this.showOTPInput();
-                        this.showToast(result.message, 'success');
+                        this.showToast(result.message || 'Mã OTP đã được gửi đến email của bạn', 'success');
                     } else {
-                        this.showToast(result.message, 'error');
+                        this.showToast(result.message || 'Không thể gửi OTP', 'error');
                     }
                     
                 } catch (error) {
                     console.error('Lỗi gửi OTP:', error);
-                    this.showToast('Có lỗi xảy ra khi gửi OTP', 'error');
+                    this.showToast('Có lỗi xảy ra khi gửi OTP: ' + error.message, 'error');
                 } finally {
                     this.sendOtpBtn.disabled = false;
                     this.sendOtpBtn.textContent = 'Gửi lại OTP';

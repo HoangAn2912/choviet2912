@@ -236,7 +236,7 @@ $livestreams = $mLivestream->getLivestreamsByUserId($_SESSION['user_id']);
                 <div class="alert alert-warning text-center shadow-sm" style="border-radius: 16px;">
                     <h4 class="mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Không thể truy cập Livestream của tôi</h4>
                     <p class="mb-3"><?= htmlspecialchars($permission['message'] ?? 'Bạn cần có gói livestream đang hoạt động để sử dụng chức năng này.') ?></p>
-                    <a href="index.php?page=livestream-packages" class="create-livestream-btn">
+                    <a href="index.php?livestream-packages" class="create-livestream-btn">
                         Gia hạn / mua gói livestream
                     </a>
                 </div>
