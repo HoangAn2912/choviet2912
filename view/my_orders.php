@@ -39,6 +39,10 @@ include_once("header.php");
             padding: 2rem;
             border-radius: 16px;
             box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
+            overflow-y: visible;
         }
         
         /* Bỏ padding của container bên trong content-wrapper */
@@ -46,21 +50,49 @@ include_once("header.php");
         .content-wrapper .container-fluid {
             padding-left: 0 !important;
             padding-right: 0 !important;
+            max-width: 100% !important;
+            overflow-x: hidden;
+            width: 100% !important;
+            box-sizing: border-box;
+        }
+        
+        /* Đảm bảo tất cả phần tử trong content-wrapper không tràn */
+        .content-wrapper * {
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
 .orders-container {
     background: transparent;
     min-height: auto;
     padding: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: visible;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+.orders-content {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    padding: 0;
 }
 
 .orders-header {
     background: linear-gradient(135deg, #ffc107, #ff8f00);
     color: #333;
-    padding: 20px 0;
+    padding: 20px;
     margin-bottom: 25px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .orders-header h1 {
@@ -84,6 +116,9 @@ include_once("header.php");
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     border: 1px solid #e0e0e0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .order-card:hover {
@@ -100,6 +135,9 @@ include_once("header.php");
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .order-info h3 {
@@ -301,6 +339,10 @@ include_once("header.php");
 .order-body {
     padding: 15px;
     background: white;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .order-details {
@@ -308,6 +350,9 @@ include_once("header.php");
     grid-template-columns: 1fr 1fr;
     gap: 15px;
     margin-bottom: 15px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .order-detail-item {
@@ -326,10 +371,17 @@ include_once("header.php");
     font-size: 1rem;
     color: #333;
     font-weight: 500;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .order-items {
     margin-top: 15px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .order-items h5 {
@@ -346,17 +398,29 @@ include_once("header.php");
     background: #f8f9fa;
     border-radius: 8px;
     margin-bottom: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    flex-wrap: nowrap;
 }
 
 .order-item-image {
     width: 60px;
+    min-width: 60px;
+    max-width: 60px;
     height: 60px;
     border-radius: 8px;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .order-item-info {
     flex: 1;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .order-item-name {
@@ -364,17 +428,27 @@ include_once("header.php");
     color: #333;
     font-weight: 500;
     margin-bottom: 5px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .order-item-details {
     font-size: 0.9rem;
     color: #666;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .order-item-price {
     font-size: 1.1rem;
     font-weight: 600;
     color: #ffc107;
+    flex-shrink: 0;
+    min-width: fit-content;
+    white-space: nowrap;
+    text-align: right;
 }
 
 .order-total {
@@ -388,6 +462,10 @@ include_once("header.php");
     font-weight: 600;
     margin: 0;
     border-radius: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .empty-orders {
@@ -435,6 +513,10 @@ include_once("header.php");
     padding: 15px;
     background: #f8f9fa;
     border-radius: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .timeline-item {
@@ -505,6 +587,10 @@ include_once("header.php");
         border-radius: 12px;
     }
     
+    .orders-header {
+        padding: 15px 10px;
+    }
+    
     .order-details {
         grid-template-columns: 1fr;
     }
@@ -522,11 +608,30 @@ include_once("header.php");
     .order-item {
         flex-direction: column;
         text-align: center;
+        flex-wrap: wrap;
     }
     
     .order-item-image {
         width: 80px;
         height: 80px;
+        min-width: 80px;
+        max-width: 80px;
+    }
+    
+    .order-item-info {
+        width: 100%;
+        max-width: 100%;
+        margin: 10px 0;
+    }
+    
+    .order-item-price {
+        width: 100%;
+        text-align: center;
+        margin-top: 10px;
+    }
+    
+    div[style*="padding: 0 15px"] {
+        padding: 0 10px !important;
     }
 }
 </style>
@@ -535,37 +640,34 @@ include_once("header.php");
 <div class="page-background">
     <!-- Content Wrapper Start -->
     <div class="content-wrapper">
+        <div class="orders-container">
+            <div class="orders-header">
+                <h1><i class="fas fa-shopping-bag mr-3"></i>Đơn hàng của tôi</h1>
+                <p>Quản lý và theo dõi tất cả đơn hàng của bạn</p>
+                <?php if ($status_filter): ?>
+                    <div class="current-filter">
+                        <i class="fas fa-filter mr-2"></i>
+                        Đang lọc theo: 
+                        <strong>
+                            <?php
+                            $status_names = [
+                                'pending' => 'Chờ xác nhận',
+                                'confirmed' => 'Đã xác nhận', 
+                                'shipping' => 'Đang giao hàng',
+                                'delivered' => 'Đã giao hàng',
+                                'cancelled' => 'Đã hủy'
+                            ];
+                            echo $status_names[$status_filter] ?? $status_filter;
+                            ?>
+                        </strong>
+                        <a href="index.php?my-orders" class="btn btn-sm btn-outline-light ml-2">
+                            <i class="fas fa-times"></i> Xóa lọc
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
 
-<div class="orders-container">
-    <div class="orders-header">
-        <div class="container" style="padding-left: 0; padding-right: 0;">
-            <h1><i class="fas fa-shopping-bag mr-3"></i>Đơn hàng của tôi</h1>
-            <p>Quản lý và theo dõi tất cả đơn hàng của bạn</p>
-            <?php if ($status_filter): ?>
-                <div class="current-filter">
-                    <i class="fas fa-filter mr-2"></i>
-                    Đang lọc theo: 
-                    <strong>
-                        <?php
-                        $status_names = [
-                            'pending' => 'Chờ xác nhận',
-                            'confirmed' => 'Đã xác nhận', 
-                            'shipping' => 'Đang giao hàng',
-                            'delivered' => 'Đã giao hàng',
-                            'cancelled' => 'Đã hủy'
-                        ];
-                        echo $status_names[$status_filter] ?? $status_filter;
-                        ?>
-                    </strong>
-                    <a href="index.php?my-orders" class="btn btn-sm btn-outline-light ml-2">
-                        <i class="fas fa-times"></i> Xóa lọc
-                    </a>
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <div class="container" style="padding-left: 0; padding-right: 0;">
+    <div class="orders-content">
         <?php if (empty($orders)): ?>
             <div class="empty-orders">
                 <i class="fas fa-shopping-cart"></i>
@@ -762,7 +864,6 @@ include_once("header.php");
                             </div>
                             </div>
                         </div>
-                    </div>
 
                         <div class="order-total">
                             <span>Tổng cộng:</span>
@@ -772,10 +873,9 @@ include_once("header.php");
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-</div>
-
+            <?php endif; ?>
+            </div>
+        </div>
     </div>
     <!-- Content Wrapper End -->
 </div>

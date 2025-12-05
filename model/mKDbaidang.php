@@ -115,9 +115,12 @@ class kdbaidang {
         $p = new Connect();
         $conn = $p->connect();
         
-        // Lấy thông tin post trước khi update
-        $getPostSql = "SELECT p.*, u.email, u.username FROM products p 
-                       JOIN users u ON p.user_id = u.id WHERE p.id = ?";
+        // Lấy thông tin post trước khi update (bao gồm category và ngày đăng)
+        $getPostSql = "SELECT p.*, u.email, u.username, pc.category_name, p.created_date 
+                       FROM products p 
+                       JOIN users u ON p.user_id = u.id 
+                       LEFT JOIN product_categories pc ON p.category_id = pc.id
+                       WHERE p.id = ?";
         $getStmt = $conn->prepare($getPostSql);
         $getStmt->bind_param("i", $id);
         $getStmt->execute();
@@ -140,7 +143,9 @@ class kdbaidang {
                 
                 $postData = [
                     'id' => $id,
-                    'title' => $post['title']
+                    'title' => $post['title'],
+                    'category_name' => $post['category_name'] ?? 'Chưa phân loại',
+                    'created_date' => $post['created_date'] ?? date('Y-m-d H:i:s')
                 ];
                 
                 $emailer->sendPostApprovedNotification(
@@ -163,9 +168,12 @@ class kdbaidang {
         $p = new Connect();
         $conn = $p->connect();
         
-        // Lấy thông tin post trước khi update
-        $getPostSql = "SELECT p.*, u.email, u.username FROM products p 
-                       JOIN users u ON p.user_id = u.id WHERE p.id = ?";
+        // Lấy thông tin post trước khi update (bao gồm category và ngày đăng)
+        $getPostSql = "SELECT p.*, u.email, u.username, pc.category_name, p.created_date 
+                       FROM products p 
+                       JOIN users u ON p.user_id = u.id 
+                       LEFT JOIN product_categories pc ON p.category_id = pc.id
+                       WHERE p.id = ?";
         $getStmt = $conn->prepare($getPostSql);
         $getStmt->bind_param("i", $id);
         $getStmt->execute();
@@ -188,7 +196,9 @@ class kdbaidang {
                 
                 $postData = [
                     'id' => $id,
-                    'title' => $post['title']
+                    'title' => $post['title'],
+                    'category_name' => $post['category_name'] ?? 'Chưa phân loại',
+                    'created_date' => $post['created_date'] ?? date('Y-m-d H:i:s')
                 ];
                 
                 $emailer->sendPostRejectedNotification(

@@ -57,7 +57,14 @@ class mLivestream {
             $sql .= " WHERE " . implode(" AND ", $conditions);
         }
         
-        $sql .= " GROUP BY l.id ORDER BY l.created_date DESC";
+        // Sắp xếp: ưu tiên livestream đang live lên đầu, sau đó theo thời gian mới nhất
+        $sql .= " GROUP BY l.id 
+                  ORDER BY 
+                      CASE 
+                          WHEN l.status IN ('dang_live', 'dang_dien_ra', 'dang_phat') THEN 0 
+                          ELSE 1 
+                      END ASC,
+                      COALESCE(l.start_time, l.created_date) DESC";
         
         if ($limit) {
             $sql .= " LIMIT " . intval($limit);
@@ -147,6 +154,63 @@ class mLivestream {
         return $stmt->execute();
     }
 
+    // Cập nhật giá và số lượng sản phẩm trong livestream
+    // $update_special_price: true nếu muốn cập nhật special_price (kể cả set về NULL)
+    public function updateProductInLivestream($livestream_id, $product_id, $special_price = null, $stock_quantity = null, $update_special_price = false) {
+        // Kiểm tra sản phẩm có tồn tại trong livestream không
+        $check_sql = "SELECT id FROM livestream_products WHERE livestream_id = ? AND product_id = ?";
+        $check_stmt = $this->conn->prepare($check_sql);
+        $check_stmt->bind_param("ii", $livestream_id, $product_id);
+        $check_stmt->execute();
+        $result = $check_stmt->get_result();
+        
+        if ($result->num_rows == 0) {
+            return false; // Sản phẩm chưa có trong livestream
+        }
+        
+        // Xây dựng câu SQL động dựa trên các trường cần cập nhật
+        $updates = [];
+        $params = [];
+        $types = '';
+        
+        // Nếu update_special_price = true, cập nhật special_price (kể cả set về NULL)
+        if ($update_special_price) {
+            if ($special_price === null || $special_price === '') {
+                // Set về NULL trong database
+                $updates[] = "special_price = NULL";
+            } else {
+                $updates[] = "special_price = ?";
+                $params[] = floatval($special_price);
+                $types .= 'd'; // double
+            }
+        }
+        
+        if ($stock_quantity !== null) {
+            $updates[] = "stock_quantity = ?";
+            $params[] = intval($stock_quantity);
+            $types .= 'i'; // integer
+        }
+        
+        if (empty($updates)) {
+            return false; // Không có gì để cập nhật
+        }
+        
+        // Không có cột updated_date trong bảng, chỉ cập nhật các trường cần thiết
+        $sql = "UPDATE livestream_products SET " . implode(", ", $updates) . 
+               " WHERE livestream_id = ? AND product_id = ?";
+        
+        // Thêm livestream_id và product_id vào params
+        $params[] = $livestream_id;
+        $params[] = $product_id;
+        $types .= 'ii';
+        
+        $stmt = $this->conn->prepare($sql);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        return $stmt->execute();
+    }
+
     // Lấy danh sách sản phẩm trong livestream
     public function getLivestreamProducts($livestream_id) {
         $sql = "SELECT lp.*, p.title, p.price, p.image, p.description
@@ -222,8 +286,8 @@ class mLivestream {
 
     // Thêm sản phẩm vào giỏ hàng
     public function addToCart($user_id, $livestream_id, $product_id, $quantity = 1) {
-        // Lấy giá sản phẩm (ưu tiên giá đặc biệt)
-        $price_sql = "SELECT COALESCE(lp.special_price, p.price) as price 
+        // Lấy giá và số lượng tồn kho của sản phẩm trong livestream
+        $price_sql = "SELECT COALESCE(lp.special_price, p.price) as price, lp.stock_quantity
                       FROM livestream_products lp 
                       LEFT JOIN products p ON lp.product_id = p.id 
                       WHERE lp.livestream_id = ? AND lp.product_id = ?";
@@ -235,10 +299,11 @@ class mLivestream {
         $price_data = $price_result->fetch_assoc();
         
         if (!$price_data) {
-            return false;
+            return ['success' => false, 'message' => 'Sản phẩm không tồn tại trong livestream'];
         }
         
         $price = $price_data['price'];
+        $stock_quantity = $price_data['stock_quantity'];
         
         // Kiểm tra xem sản phẩm đã có trong giỏ chưa
         $check_sql = "SELECT id, quantity FROM livestream_cart_items 
@@ -248,20 +313,32 @@ class mLivestream {
         $check_stmt->execute();
         $check_result = $check_stmt->get_result();
         
-        if ($existing = $check_result->fetch_assoc()) {
+        $existing = $check_result->fetch_assoc();
+        $new_quantity = $existing ? ($existing['quantity'] + $quantity) : $quantity;
+        
+        // Validate số lượng: nếu có stock_quantity thì kiểm tra
+        if ($stock_quantity !== null && $new_quantity > $stock_quantity) {
+            return [
+                'success' => false, 
+                'message' => 'Số lượng vượt quá số lượng còn lại. Chỉ còn ' . $stock_quantity . ' sản phẩm'
+            ];
+        }
+        
+        if ($existing) {
             // Cập nhật số lượng
-            $new_quantity = $existing['quantity'] + $quantity;
             $update_sql = "UPDATE livestream_cart_items SET quantity = ?, price = ? WHERE id = ?";
             $update_stmt = $this->conn->prepare($update_sql);
             $update_stmt->bind_param("idi", $new_quantity, $price, $existing['id']);
-            return $update_stmt->execute();
+            $result = $update_stmt->execute();
+            return $result ? ['success' => true] : ['success' => false, 'message' => 'Có lỗi xảy ra'];
         } else {
             // Thêm mới
             $insert_sql = "INSERT INTO livestream_cart_items (user_id, livestream_id, product_id, quantity, price) 
                            VALUES (?, ?, ?, ?, ?)";
             $insert_stmt = $this->conn->prepare($insert_sql);
             $insert_stmt->bind_param("iiiid", $user_id, $livestream_id, $product_id, $quantity, $price);
-            return $insert_stmt->execute();
+            $result = $insert_stmt->execute();
+            return $result ? ['success' => true] : ['success' => false, 'message' => 'Có lỗi xảy ra'];
         }
     }
 
@@ -308,13 +385,43 @@ class mLivestream {
             $delete_sql = "DELETE FROM livestream_cart_items WHERE id = ? AND user_id = ? AND livestream_id = ?";
             $delete_stmt = $this->conn->prepare($delete_sql);
             $delete_stmt->bind_param("iii", $item_id, $user_id, $livestream_id);
-            return $delete_stmt->execute();
+            $result = $delete_stmt->execute();
+            return $result ? ['success' => true] : ['success' => false, 'message' => 'Có lỗi xảy ra'];
         } else {
+            // Lấy product_id từ cart item để validate số lượng
+            $item_sql = "SELECT product_id FROM livestream_cart_items WHERE id = ? AND user_id = ? AND livestream_id = ?";
+            $item_stmt = $this->conn->prepare($item_sql);
+            $item_stmt->bind_param("iii", $item_id, $user_id, $livestream_id);
+            $item_stmt->execute();
+            $item_result = $item_stmt->get_result();
+            $item_data = $item_result->fetch_assoc();
+            
+            if ($item_data) {
+                // Validate số lượng tồn kho
+                $stock_sql = "SELECT stock_quantity FROM livestream_products 
+                             WHERE livestream_id = ? AND product_id = ?";
+                $stock_stmt = $this->conn->prepare($stock_sql);
+                $stock_stmt->bind_param("ii", $livestream_id, $item_data['product_id']);
+                $stock_stmt->execute();
+                $stock_result = $stock_stmt->get_result();
+                $stock_data = $stock_result->fetch_assoc();
+                
+                if ($stock_data && $stock_data['stock_quantity'] !== null) {
+                    if ($quantity > $stock_data['stock_quantity']) {
+                        return [
+                            'success' => false,
+                            'message' => 'Số lượng vượt quá số lượng còn lại. Chỉ còn ' . $stock_data['stock_quantity'] . ' sản phẩm'
+                        ];
+                    }
+                }
+            }
+            
             // Cập nhật số lượng
             $update_sql = "UPDATE livestream_cart_items SET quantity = ? WHERE id = ? AND user_id = ? AND livestream_id = ?";
             $update_stmt = $this->conn->prepare($update_sql);
             $update_stmt->bind_param("iiii", $quantity, $item_id, $user_id, $livestream_id);
-            return $update_stmt->execute();
+            $result = $update_stmt->execute();
+            return $result ? ['success' => true] : ['success' => false, 'message' => 'Có lỗi xảy ra'];
         }
     }
 
@@ -349,6 +456,28 @@ class mLivestream {
         $this->conn->begin_transaction();
         
         try {
+            // Validate số lượng trước khi tạo đơn hàng
+            foreach ($cart_items as $item) {
+                $stock_sql = "SELECT stock_quantity FROM livestream_products 
+                             WHERE livestream_id = ? AND product_id = ?";
+                $stock_stmt = $this->conn->prepare($stock_sql);
+                $stock_stmt->bind_param("ii", $livestream_id, $item['product_id']);
+                $stock_stmt->execute();
+                $stock_result = $stock_stmt->get_result();
+                $stock_data = $stock_result->fetch_assoc();
+                
+                if ($stock_data && $stock_data['stock_quantity'] !== null) {
+                    // Kiểm tra số lượng tồn kho
+                    if ($item['quantity'] > $stock_data['stock_quantity']) {
+                        $this->conn->rollback();
+                        return [
+                            'success' => false,
+                            'message' => 'Sản phẩm "' . ($item['title'] ?? '') . '" chỉ còn ' . $stock_data['stock_quantity'] . ' sản phẩm. Vui lòng giảm số lượng.'
+                        ];
+                    }
+                }
+            }
+            
             // Tạo mã đơn hàng
             $order_code = 'LIVE' . date('Ymd') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
             
@@ -400,7 +529,7 @@ class mLivestream {
             // 📧 GỬI EMAIL THÔNG BÁO CHO SELLER
             $this->sendOrderNotificationEmail($order_id, $livestream_id, $order_code, $total_amount, $cart_items, $delivery_name, $delivery_phone);
             
-            return $order_id;
+            return ['success' => true, 'order_id' => $order_id];
             
         } catch (Exception $e) {
             $this->conn->rollback();
@@ -408,8 +537,30 @@ class mLivestream {
             error_log("Order data - User ID: $user_id, Livestream ID: $livestream_id, Payment Method: $payment_method");
             error_log("Address data: " . json_encode($address_data));
             error_log("Cart items: " . json_encode($cart_items));
-            return false;
+            return ['success' => false, 'message' => 'Có lỗi xảy ra khi tạo đơn hàng: ' . $e->getMessage()];
         }
+    }
+
+    // Trừ số lượng sản phẩm sau khi đơn hàng được xác nhận
+    public function deductStockQuantity($livestream_id, $order_id) {
+        // Lấy chi tiết đơn hàng
+        $items_sql = "SELECT product_id, quantity FROM livestream_order_items WHERE order_id = ?";
+        $items_stmt = $this->conn->prepare($items_sql);
+        $items_stmt->bind_param("i", $order_id);
+        $items_stmt->execute();
+        $items_result = $items_stmt->get_result();
+        
+        while ($item = $items_result->fetch_assoc()) {
+            // Trừ số lượng trong livestream_products
+            $update_sql = "UPDATE livestream_products 
+                          SET stock_quantity = GREATEST(0, stock_quantity - ?)
+                          WHERE livestream_id = ? AND product_id = ? AND stock_quantity IS NOT NULL";
+            $update_stmt = $this->conn->prepare($update_sql);
+            $update_stmt->bind_param("iii", $item['quantity'], $livestream_id, $item['product_id']);
+            $update_stmt->execute();
+        }
+        
+        return true;
     }
 
     // Lấy thông tin đơn hàng
@@ -572,8 +723,15 @@ class mLivestream {
                 error_log("Processing wallet refund for order_id: $order_id, amount: " . $order['total_amount']);
                 // Sử dụng PDO connection cho transfer_accounts
                 try {
-                    // Tạo PDO connection riêng cho transfer_accounts (dùng cùng credentials với mConnect.php)
-                    $pdo = new PDO("mysql:host=localhost;dbname=choviet29", "admin", "123456");
+                    // Sử dụng config từ mConnect thay vì hardcode
+                    require_once __DIR__ . '/../helpers/url_helper.php';
+                    $host = config('db_host', 'localhost');
+                    $user = config('db_user', 'admin');
+                    $pass = config('db_pass', '123456');
+                    $dbname = config('db_name', 'choviet29');
+                    
+                    // Tạo PDO connection riêng cho transfer_accounts
+                    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
                     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                     
                     // Bắt đầu transaction cho transfer_accounts
@@ -944,8 +1102,15 @@ class mLivestream {
             // Nếu đơn hàng > 0đ, mới cần trừ tiền ví
             // Sử dụng PDO connection cho transfer_accounts (giống như phần refund)
             try {
+                // Sử dụng config từ mConnect thay vì hardcode
+                require_once __DIR__ . '/../helpers/url_helper.php';
+                $host = config('db_host', 'localhost');
+                $user = config('db_user', 'admin');
+                $pass = config('db_pass', '123456');
+                $dbname = config('db_name', 'choviet29');
+                
                 // Tạo PDO connection riêng cho transfer_accounts
-                $pdo = new PDO("mysql:host=localhost;dbname=choviet29", "admin", "123456");
+                $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $pdo->setAttribute(PDO::ATTR_TIMEOUT, 10);
                 

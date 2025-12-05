@@ -438,6 +438,12 @@ function showAddProductModal() {
         return;
     }
 
+    // Reset danh sách sản phẩm đã chọn khi mở modal
+    selectedProducts = {};
+    updateSelectedProductsList();
+    updateSelectedCount();
+    updateAddButton();
+    
     loadProducts();
 
     if (canUseBootstrapModal()) {
@@ -537,12 +543,17 @@ function updateProductDisplay() {
                 
                 const productImage = product.anh_dau || 'default-product.jpg';
                 
+                // Xác định giá hiển thị: nếu special_price là null hoặc rỗng thì dùng giá gốc
+                const displayPrice = (product.special_price && product.special_price !== null && product.special_price !== '') 
+                    ? product.special_price 
+                    : product.price;
+                
                 productItem.innerHTML = `
                     <div class="product-number">${index++}</div>
                     <img src="img/${productImage}" alt="${product.title}">
                     <div class="product-info">
                         <div class="product-title">${product.title}</div>
-                        <div class="product-price">${new Intl.NumberFormat('vi-VN').format(product.special_price || product.price)} đ</div>
+                        <div class="product-price">${new Intl.NumberFormat('vi-VN').format(displayPrice)} đ</div>
                         <div class="product-actions">
                             ${product.is_pinned ? 
                                 `<button class="btn-unpin" onclick="unpinProduct(${product.product_id})">
@@ -716,82 +727,96 @@ initWs();
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <h6>Danh sách sản phẩm của bạn</h6>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6>Danh sách sản phẩm của bạn</h6>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllProducts()">Chọn tất cả</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllProducts()">Bỏ chọn</button>
+                            </div>
+                        </div>
                         <div class="product-list" id="available-products" style="max-height: 400px; overflow-y: auto;">
                             <!-- Products will be loaded here -->
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <h6>Thông tin sản phẩm</h6>
-                        <form id="add-product-form">
-                            <input type="hidden" id="livestream-id" value="<?= $livestream_id ?>">
-                            <input type="hidden" id="selected-product-id">
-                            
-                            <div class="selected-product-info" id="selected-product-info" style="display: none;">
-                                <div class="product-preview">
-                                    <img id="preview-image" src="" alt="Preview" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-                                    <div class="product-details">
-                                        <h6 id="preview-title"></h6>
-                                        <p id="preview-price" class="text-muted"></p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="special-price">Giá đặc biệt (để trống nếu dùng giá gốc)</label>
-                                <input type="number" class="form-control" id="special-price" placeholder="Nhập giá đặc biệt">
-                            </div>
-                            <div class="form-group">
-                                <label for="stock-quantity">Số lượng còn lại</label>
-                                <input type="number" class="form-control" id="stock-quantity" placeholder="Nhập số lượng">
-                            </div>
-                        </form>
+                        <h6>Sản phẩm đã chọn (<span id="selected-count">0</span>)</h6>
+                        <div id="selected-products-list" style="max-height: 400px; overflow-y: auto;">
+                            <div class="text-center text-muted py-3">Chưa chọn sản phẩm nào</div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="hideAddProductModal()">Hủy</button>
-                <button type="button" class="btn btn-primary" onclick="addProductToLivestream()" id="add-product-btn" disabled>Thêm sản phẩm</button>
+                <button type="button" class="btn btn-primary" onclick="addProductToLivestream()" id="add-product-btn" disabled>Thêm/Cập nhật sản phẩm</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// Load available products (excluding already added products)
+// Lưu danh sách sản phẩm đã chọn
+let selectedProducts = {}; // {productId: {product, specialPrice, stockQuantity}}
+
+// Load available products (including already added products)
 function loadProducts() {
-    fetch('api/livestream-api.php?action=get_available_products')
+    fetch(`api/livestream-api.php?action=get_available_products&livestream_id=${LIVESTREAM_ID}`)
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Get current products in livestream
-            const currentProducts = <?= json_encode(array_column($products, 'product_id')) ?>;
-            
             const container = document.getElementById('available-products');
             container.innerHTML = '';
             
-            // Filter out products that are already in livestream
-            const availableProducts = data.products.filter(product => 
-                !currentProducts.includes(product.id)
-            );
-            
-            if (availableProducts.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted">Tất cả sản phẩm đã được thêm vào livestream</div>';
+            if (data.products.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted">Chưa có sản phẩm nào</div>';
                 return;
             }
             
-            availableProducts.forEach(product => {
+            // Lưu tất cả sản phẩm để có thể truy cập sau
+            allProductsData = data.products;
+            
+            data.products.forEach(product => {
                 const productItem = document.createElement('div');
                 productItem.className = 'product-list-item';
-                productItem.onclick = () => selectProduct(product);
+                productItem.setAttribute('data-product-id', product.id);
+                
+                // Kiểm tra xem sản phẩm đã được chọn chưa
+                const isSelected = selectedProducts[product.id] !== undefined;
+                
+                // Hiển thị badge nếu sản phẩm đã có trong livestream
+                const badgeHtml = product.is_in_livestream 
+                    ? '<span class="badge badge-warning" style="position: absolute; top: 5px; right: 5px; background: #ffd700; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px;">Đã có</span>'
+                    : '';
+                
+                // Hiển thị giá: ưu tiên giá đặc biệt trong livestream, sau đó giá gốc
+                const displayPrice = product.is_in_livestream && product.livestream_special_price 
+                    ? product.livestream_special_price 
+                    : product.price;
                 
                 productItem.innerHTML = `
-                    <img src="img/${product.anh_dau || 'default-product.jpg'}" alt="${product.title}">
-                    <div class="product-info">
-                        <h6>${product.title}</h6>
-                        <p>${new Intl.NumberFormat('vi-VN').format(product.price)} đ</p>
+                    <div style="display: flex; align-items: center; width: 100%;">
+                        <input type="checkbox" class="product-checkbox" data-product-id="${product.id}" 
+                               ${isSelected ? 'checked' : ''} 
+                               onchange="toggleProductSelection(${product.id}, this.checked)" 
+                               onclick="event.stopPropagation();" 
+                               style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                        <div style="position: relative; flex: 1;">
+                            ${badgeHtml}
+                            <img src="img/${product.anh_dau || 'default-product.jpg'}" alt="${product.title}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; margin-right: 15px;">
+                        </div>
+                        <div class="product-info" style="flex: 1;">
+                            <h6>${product.title}</h6>
+                            <p>${new Intl.NumberFormat('vi-VN').format(displayPrice)} đ</p>
+                            ${product.is_in_livestream && product.livestream_stock_quantity !== null 
+                                ? `<small class="text-muted">Còn lại: ${product.livestream_stock_quantity}</small>` 
+                                : ''}
+                        </div>
                     </div>
                 `;
+                
+                if (isSelected) {
+                    productItem.classList.add('selected');
+                }
                 
                 container.appendChild(productItem);
             });
@@ -802,45 +827,277 @@ function loadProducts() {
     });
 }
 
-function selectProduct(product) {
-    // Remove previous selection
-    document.querySelectorAll('.product-list-item').forEach(item => {
-        item.classList.remove('selected');
-    });
+// Lưu tất cả sản phẩm để có thể truy cập khi toggle
+let allProductsData = [];
+
+// Toggle chọn/bỏ chọn sản phẩm
+function toggleProductSelection(productId, isChecked) {
+    const product = allProductsData.find(p => p.id == productId);
+    if (!product) return;
     
-    // Add selection to clicked item
-    event.currentTarget.classList.add('selected');
+    if (isChecked) {
+        // Thêm sản phẩm vào danh sách đã chọn
+        selectedProducts[productId] = {
+            product: product,
+            specialPrice: product.is_in_livestream ? (product.livestream_special_price || '') : '',
+            stockQuantity: product.is_in_livestream ? (product.livestream_stock_quantity || '') : ''
+        };
+    } else {
+        // Xóa sản phẩm khỏi danh sách đã chọn
+        delete selectedProducts[productId];
+    }
     
-    // Update form
-    document.getElementById('selected-product-id').value = product.id;
-    document.getElementById('preview-image').src = `img/${product.anh_dau || 'default-product.jpg'}`;
-    document.getElementById('preview-title').textContent = product.title;
-    document.getElementById('preview-price').textContent = new Intl.NumberFormat('vi-VN').format(product.price) + ' đ';
-    document.getElementById('selected-product-info').style.display = 'block';
-    document.getElementById('add-product-btn').disabled = false;
+    // Cập nhật UI
+    updateSelectedProductsList();
+    updateSelectedCount();
+    updateAddButton();
 }
 
-function addProductToLivestream() {
-    const productId = document.getElementById('selected-product-id').value;
-    const specialPrice = document.getElementById('special-price').value;
-    const stockQuantity = document.getElementById('stock-quantity').value;
+// Hiển thị danh sách sản phẩm đã chọn
+function updateSelectedProductsList() {
+    const container = document.getElementById('selected-products-list');
+    const selectedIds = Object.keys(selectedProducts);
     
-    if (!productId) {
-        alert('Vui lòng chọn sản phẩm');
+    if (selectedIds.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-3">Chưa chọn sản phẩm nào</div>';
         return;
     }
     
+    container.innerHTML = '';
+    
+    selectedIds.forEach(productId => {
+        const selectedData = selectedProducts[productId];
+        const product = selectedData.product;
+        const isInLivestream = product.is_in_livestream;
+        
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'selected-product-item';
+        itemDiv.style.cssText = 'border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #f9f9f9;';
+        
+        itemDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex align-items-center" style="flex: 1;">
+                    <img src="img/${product.anh_dau || 'default-product.jpg'}" alt="${product.title}" 
+                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; margin-right: 10px;">
+                    <div style="flex: 1;">
+                        <h6 style="margin: 0; font-size: 14px;">${product.title}</h6>
+                        <small class="text-muted">Giá gốc: ${new Intl.NumberFormat('vi-VN').format(product.price)} đ</small>
+                        ${isInLivestream ? '<br><span class="badge badge-warning" style="font-size: 10px;">Đã có trong livestream</span>' : ''}
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="toggleProductSelection(${productId}, false)" style="margin-left: 10px;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <label style="font-size: 12px; color: #000; margin-bottom: 4px;">Giá đặc biệt</label>
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control form-control-sm product-special-price" 
+                               data-product-id="${productId}" 
+                               value="${selectedData.specialPrice}" 
+                               placeholder="Để trống = giá gốc"
+                               onchange="updateSelectedProductPrice(${productId}, this.value)">
+                        ${isInLivestream && selectedData.specialPrice ? 
+                            `<div class="input-group-append">
+                                <button type="button" class="btn btn-sm" 
+                                        style="background-color: #e0e0e0; color: #000; border: 1px solid #000; padding: 4px 8px;"
+                                        onmouseover="this.style.backgroundColor='#b0b0b0'" 
+                                        onmouseout="this.style.backgroundColor='#e0e0e0'"
+                                        onclick="resetProductPrice(${productId})">
+                                    <i class="fas fa-undo" style="font-size: 10px;"></i>
+                                </button>
+                            </div>` : ''}
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label style="font-size: 12px; color: #000; margin-bottom: 4px;">Số lượng</label>
+                    <input type="number" class="form-control form-control-sm product-stock-quantity" 
+                           data-product-id="${productId}" 
+                           value="${selectedData.stockQuantity}" 
+                           placeholder="Nhập số lượng"
+                           onchange="updateSelectedProductQuantity(${productId}, this.value)">
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(itemDiv);
+    });
+}
+
+// Cập nhật giá của sản phẩm đã chọn
+function updateSelectedProductPrice(productId, price) {
+    if (selectedProducts[productId]) {
+        selectedProducts[productId].specialPrice = price;
+    }
+}
+
+// Cập nhật số lượng của sản phẩm đã chọn
+function updateSelectedProductQuantity(productId, quantity) {
+    if (selectedProducts[productId]) {
+        selectedProducts[productId].stockQuantity = quantity;
+    }
+}
+
+// Reset giá về giá gốc cho một sản phẩm
+function resetProductPrice(productId) {
+    if (selectedProducts[productId]) {
+        selectedProducts[productId].specialPrice = '';
+        updateSelectedProductsList();
+    }
+}
+
+// Cập nhật số lượng sản phẩm đã chọn
+function updateSelectedCount() {
+    const count = Object.keys(selectedProducts).length;
+    document.getElementById('selected-count').textContent = count;
+}
+
+// Cập nhật trạng thái nút thêm/cập nhật
+function updateAddButton() {
+    const btn = document.getElementById('add-product-btn');
+    const count = Object.keys(selectedProducts).length;
+    
+    if (count > 0) {
+        btn.disabled = false;
+        const hasExistingProducts = Object.values(selectedProducts).some(data => data.product.is_in_livestream);
+        if (hasExistingProducts) {
+            btn.textContent = `Cập nhật ${count} sản phẩm`;
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-warning');
+        } else {
+            btn.textContent = `Thêm ${count} sản phẩm`;
+            btn.classList.remove('btn-warning');
+            btn.classList.add('btn-primary');
+        }
+    } else {
+        btn.disabled = true;
+        btn.textContent = 'Thêm/Cập nhật sản phẩm';
+    }
+}
+
+// Chọn tất cả sản phẩm
+function selectAllProducts() {
+    allProductsData.forEach(product => {
+        if (!selectedProducts[product.id]) {
+            toggleProductSelection(product.id, true);
+        }
+    });
+    // Cập nhật checkbox
+    document.querySelectorAll('.product-checkbox').forEach(cb => {
+        cb.checked = true;
+    });
+}
+
+// Bỏ chọn tất cả sản phẩm
+function deselectAllProducts() {
+    selectedProducts = {};
+    updateSelectedProductsList();
+    updateSelectedCount();
+    updateAddButton();
+    // Cập nhật checkbox
+    document.querySelectorAll('.product-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+    // Cập nhật class selected
+    document.querySelectorAll('.product-list-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+}
+
+// Thêm/Cập nhật nhiều sản phẩm cùng lúc
+function addProductToLivestream() {
+    const selectedIds = Object.keys(selectedProducts);
+    
+    if (selectedIds.length === 0) {
+        alert('Vui lòng chọn ít nhất một sản phẩm');
+        return;
+    }
+    
+    // Validate tất cả sản phẩm đã chọn
+    for (const productId of selectedIds) {
+        const selectedData = selectedProducts[productId];
+        const stockQuantity = selectedData.stockQuantity;
+        const specialPrice = selectedData.specialPrice;
+        
+        // Validate số lượng >= 0
+        if (stockQuantity !== '' && stockQuantity !== null && (isNaN(stockQuantity) || parseInt(stockQuantity) < 0)) {
+            alert(`Sản phẩm "${selectedData.product.title}": Số lượng phải là số lớn hơn hoặc bằng 0`);
+            return;
+        }
+        
+        // Validate giá > 0 nếu có nhập
+        if (specialPrice !== '' && specialPrice !== null && (isNaN(specialPrice) || parseFloat(specialPrice) <= 0)) {
+            alert(`Sản phẩm "${selectedData.product.title}": Giá đặc biệt phải là số lớn hơn 0`);
+            return;
+        }
+    }
+    
+    // Lấy CSRF token
+    let csrfToken = '';
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    if (csrfMeta) {
+        csrfToken = csrfMeta.getAttribute('content');
+    }
+    
+    // Chuẩn bị dữ liệu để gửi
+    const productsData = selectedIds.map(productId => {
+        const selectedData = selectedProducts[productId];
+        return {
+            product_id: productId,
+            special_price: selectedData.specialPrice || '',
+            stock_quantity: selectedData.stockQuantity || ''
+        };
+    });
+    
+    // Gửi request batch update
     fetch('api/livestream-api.php', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/json',
         },
-        body: `action=add_product&livestream_id=${LIVESTREAM_ID}&product_id=${productId}&special_price=${specialPrice}&stock_quantity=${stockQuantity}`
+        body: JSON.stringify({
+            action: 'batch_update_products',
+            livestream_id: LIVESTREAM_ID,
+            products: productsData,
+            csrf_token: csrfToken
+        })
     })
-    .then(response => response.json())
+    .then(response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            return response.text().then(text => {
+                console.error('Response is not JSON:', text);
+                throw new Error('Server trả về dữ liệu không hợp lệ. Vui lòng thử lại.');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            location.reload();
+            // Xóa danh sách đã chọn
+            selectedProducts = {};
+            updateSelectedProductsList();
+            updateSelectedCount();
+            updateAddButton();
+            
+            // Reload danh sách sản phẩm
+            loadProducts();
+            
+            // Cập nhật danh sách sản phẩm trong livestream
+            setTimeout(() => {
+                updateProductDisplay();
+            }, 300);
+            
+            // Đóng modal
+            hideAddProductModal();
+            
+            // Hiển thị thông báo thành công
+            if (typeof showToast === 'function') {
+                showToast(data.message || `Đã cập nhật ${selectedIds.length} sản phẩm thành công`, 'success');
+            } else {
+                alert(data.message || `Đã cập nhật ${selectedIds.length} sản phẩm thành công`);
+            }
         } else {
             alert(data.message || 'Có lỗi xảy ra');
         }

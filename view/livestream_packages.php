@@ -569,19 +569,6 @@ include_once __DIR__ . '/header.php';
                                 </button>
                             </form>
                             
-                            <form class="package-purchase-form"
-                                  method="POST"
-                                  action="index.php?action=purchase-livestream-package-vnpay"
-                                  data-package-name="<?= $packageNameAttr ?>"
-                                  data-package-price="<?= $packagePriceAttr ?>"
-                                  data-payment-label="VNPay"
-                                  data-action-label="<?= $actionLabelAttr ?>">
-                                <?= Security::csrfField() ?>
-                                <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
-                                <button type="submit" class="btn-purchase btn-vnpay">
-                                    <i class="fas fa-university mr-2"></i>Gia Hạn qua VNPay
-                                </button>
-                            </form>
                         <?php else: ?>
                             <!-- Tài khoản cá nhân: Đăng ký gói -->
                             <form class="package-purchase-form"
@@ -599,19 +586,7 @@ include_once __DIR__ . '/header.php';
                                 </button>
                             </form>
                             
-                            <form class="package-purchase-form"
-                                  method="POST"
-                                  action="index.php?action=purchase-livestream-package-vnpay"
-                                  data-package-name="<?= $packageNameAttr ?>"
-                                  data-package-price="<?= $packagePriceAttr ?>"
-                                  data-payment-label="VNPay"
-                                  data-action-label="<?= $actionLabelAttr ?>">
-                                <?= Security::csrfField() ?>
-                                <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
-                                <button type="submit" class="btn-purchase btn-vnpay">
-                                    <i class="fas fa-university mr-2"></i>Đăng Ký qua VNPay
-                                </button>
-                            </form>
+                            
                         <?php endif; ?>
                     <?php else: ?>
                         <button class="btn-purchase btn-disabled" onclick="alert('Vui lòng đăng nhập để đăng ký gói!')">
@@ -638,7 +613,6 @@ include_once __DIR__ . '/header.php';
             <p><strong><i class="fas fa-coins mr-2"></i>Phương thức thanh toán:</strong></p>
             <ul>
                 <li><strong>Ví nội bộ:</strong> Thanh toán ngay lập tức bằng số dư trong ví</li>
-                <li><strong>VNPay:</strong> Thanh toán qua cổng VNPay (ATM, Visa, Mastercard)</li>
             </ul>
             
             <p><strong><i class="fas fa-phone mr-2"></i>Hỗ trợ:</strong></p>

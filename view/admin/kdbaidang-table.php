@@ -1,6 +1,6 @@
 <?php
-// Cho phép role: 1 (admin), 3 (moderator), 4 (adcontent)
-if (!in_array($_SESSION['role'], [1, 3, 4])) {
+// Cho phép role: 1 (admin), 4 (adcontent)
+if (!in_array($_SESSION['role'], [1, 4])) {
     echo "<script>
         alert('Bạn không đủ thẩm quyền truy cập!');
         
@@ -489,22 +489,25 @@ foreach($all_data as $item) {
                                             
                                             // Hiển thị nút Duyệt cho bài viết "Chờ duyệt"
                                             if($trang_thai == "Chờ duyệt"){
-                                                echo '<button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="'.$r['id'].'">
-                                                    Duyệt
+                                                echo '<button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="'.$r['id'].'" style="margin-right: 5px;">
+                                                    <i class="fas fa-check"></i> Duyệt
+                                                </button>';
+                                                echo '<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal" data-id="'.$r['id'].'">
+                                                    <i class="fas fa-times"></i> Từ chối
                                                 </button>';
                                             }
                                             
                                             // Hiển thị nút Duyệt lại cho bài viết "Từ chối duyệt"
                                             if($trang_thai == "Từ chối duyệt"){
                                                 echo '<button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="'.$r['id'].'">
-                                                    Duyệt lại
+                                                    <i class="fas fa-check"></i> Duyệt lại
                                                 </button>';
                                             }
                                             
                                             // Hiển thị nút Ẩn bài cho bài viết đã duyệt và đang bán
                                             if($trang_thai == "Đã duyệt" && $trang_thai_ban == "Đang bán"){
                                                 echo '<button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#hideModal" data-id="'.$r['id'].'">
-                                                    Ẩn bài
+                                                    <i class="fas fa-eye-slash"></i> Ẩn bài
                                                 </button>';
                                             }
                                             

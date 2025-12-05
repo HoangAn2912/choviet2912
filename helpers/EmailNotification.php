@@ -260,31 +260,59 @@ class EmailNotification {
      * Send post approved notification
      */
     public function sendPostApprovedNotification($userEmail, $userName, $postData) {
-        $subject = "Tin đăng của bạn đã được duyệt";
+        // Gửi ngay lập tức cho duyệt/từ chối để tránh nằm trong queue
+        $this->disableQueue();
+
+        $subject = "Bài viết của bạn đã được duyệt - Chợ Việt";
+        
+        // Format ngày đăng
+        $publishDate = '';
+        if (!empty($postData['created_date'])) {
+            $date = new DateTime($postData['created_date']);
+            $publishDate = $date->format('d/m/Y');
+        } else {
+            $publishDate = date('d/m/Y');
+        }
         
         $body = $this->getTemplate('post_approved', [
             'user_name' => $userName,
             'post_title' => $postData['title'],
+            'category_name' => $postData['category_name'] ?? 'Chưa phân loại',
+            'publish_date' => $publishDate,
             'post_url' => $this->joinUrl($this->getBaseUrl(), 'index.php?detail&id=' . $postData['id'])
         ]);
         
-        return $this->send($userEmail, $subject, $body, true);
+        return $this->sendNow($userEmail, $subject, $body, true);
     }
     
     /**
      * Send post rejected notification
      */
     public function sendPostRejectedNotification($userEmail, $userName, $postData, $reason = '') {
-        $subject = "Tin đăng của bạn bị từ chối";
+        // Gửi ngay lập tức cho duyệt/từ chối để tránh nằm trong queue
+        $this->disableQueue();
+
+        $subject = "Thông báo từ chối bài viết - Chợ Việt";
+        
+        // Format ngày đăng
+        $publishDate = '';
+        if (!empty($postData['created_date'])) {
+            $date = new DateTime($postData['created_date']);
+            $publishDate = $date->format('d/m/Y');
+        } else {
+            $publishDate = date('d/m/Y');
+        }
         
         $body = $this->getTemplate('post_rejected', [
             'user_name' => $userName,
             'post_title' => $postData['title'],
-            'reason' => $reason ?: 'Vi phạm quy định đăng tin',
+            'category_name' => $postData['category_name'] ?? 'Chưa phân loại',
+            'publish_date' => $publishDate,
+            'reason' => $reason ?: 'Không đáp ứng tiêu chí xuất bản của chúng tôi',
             'support_url' => $this->joinUrl($this->getBaseUrl(), 'index.php?contact')
         ]);
         
-        return $this->send($userEmail, $subject, $body, true);
+        return $this->sendNow($userEmail, $subject, $body, true);
     }
     
     /**

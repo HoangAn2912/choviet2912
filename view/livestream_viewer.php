@@ -1655,14 +1655,6 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             const productsSection = document.getElementById('products-section');
             if (!productsSection) return;
 
-            // Lưu trạng thái hiện tại của các sản phẩm
-            const currentProducts = Array.from(productsSection.querySelectorAll('.product-item')).map(item => {
-                return {
-                    id: item.dataset.productId,
-                    isPinned: item.classList.contains('pinned')
-                };
-            });
-
             // Cập nhật trạng thái ghim cho từng sản phẩm
             products.forEach((product) => {
                 const productElement = productsSection.querySelector(`[data-product-id="${product.product_id}"]`);
@@ -1690,6 +1682,26 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                         } else {
                             pinButton.classList.remove('pinned');
                             pinButton.innerHTML = '<i class="fas fa-thumbtack"></i> Ghim';
+                        }
+                    }
+
+                    // Cập nhật giá hiển thị (ưu tiên special_price)
+                    const priceContainer = productElement.querySelector('.product-price');
+                    if (priceContainer) {
+                        const displayPrice = (product.special_price && product.special_price !== '' && product.special_price !== null)
+                            ? product.special_price
+                            : product.price;
+
+                        // Render giá với gạch giá gốc nếu có special_price
+                        if (product.special_price && product.special_price !== '' && product.special_price !== null && product.special_price != product.price) {
+                            priceContainer.innerHTML = `
+                                ${new Intl.NumberFormat('vi-VN').format(displayPrice)} đ
+                                <br><small style="color: #ccc; text-decoration: line-through; font-size: 12px; margin-left: 0;">
+                                    ${new Intl.NumberFormat('vi-VN').format(product.price)} đ
+                                </small>
+                            `;
+                        } else {
+                            priceContainer.innerHTML = `${new Intl.NumberFormat('vi-VN').format(displayPrice)} đ`;
                         }
                     }
                 }

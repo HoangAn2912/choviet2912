@@ -1,8 +1,14 @@
 <?php
+// Tắt hiển thị lỗi trên màn hình để tránh làm hỏng JSON response
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 // Log all errors to file
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/api_errors.log');
 error_reporting(E_ALL);
+
+// Đảm bảo không có output nào trước JSON
+ob_start();
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -26,17 +32,39 @@ try {
     exit;
 }
 
+// Lưu JSON body để dùng lại (php://input chỉ đọc được một lần)
+$jsonBody = null;
+$jsonBodyData = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+    // Kiểm tra nếu request là JSON (application/json)
+    if (strpos($contentType, 'application/json') !== false || empty($_POST)) {
+        $jsonBody = file_get_contents('php://input');
+        if (!empty($jsonBody)) {
+            $jsonBodyData = json_decode($jsonBody, true);
+        }
+    }
+}
+
 // Validate CSRF token cho POST requests
 // Bỏ qua CSRF cho các request từ Node.js server (có user_id trong POST và không có session)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
+    // Đọc action từ POST hoặc JSON body
+    $action = $_POST['action'] ?? ($jsonBodyData['action'] ?? '');
+    
     $hasUserIdInPost = isset($_POST['user_id']);
     $hasSession = isset($_SESSION['user_id']);
     
     // Nếu là request từ Node.js (có user_id trong POST nhưng không có session), bỏ qua CSRF
     // Hoặc nếu là action record_interaction từ Node.js
-    if (!($hasUserIdInPost && !$hasSession && $action === 'record_interaction')) {
-        $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    // Hoặc nếu có session user_id và action là add_product/update_product/batch_update_products (đã được authenticate qua session)
+    $skipCSRF = ($hasUserIdInPost && !$hasSession && $action === 'record_interaction') ||
+                ($hasSession && ($action === 'add_product' || $action === 'update_product' || $action === 'batch_update_products'));
+    
+    if (!$skipCSRF) {
+        // Lấy CSRF token từ POST hoặc JSON body hoặc header
+        $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($jsonBodyData['csrf_token'] ?? '');
+        
         if (!Security::validateCSRFToken($token)) {
             echo json_encode(['success' => false, 'message' => 'CSRF token không hợp lệ. Vui lòng refresh trang.']);
             exit;
@@ -45,7 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $model = new mLivestream();
-$action = $_GET['action'] ?? $_POST['action'] ?? '';
+
+// Đọc action từ GET, POST hoặc JSON body
+$action = $_GET['action'] ?? $_POST['action'] ?? ($jsonBodyData['action'] ?? '');
 
 switch ($action) {
     case 'get_livestreams':
@@ -293,11 +323,21 @@ switch ($action) {
         }
         
         $result = $model->addToCart($user_id, $livestream_id, $product_id, $quantity);
-        if ($result) {
-            $cart = $model->getCart($user_id, $livestream_id);
-            echo json_encode(['success' => true, 'cart' => $cart]);
+        if (is_array($result) && isset($result['success'])) {
+            if ($result['success']) {
+                $cart = $model->getCart($user_id, $livestream_id);
+                echo json_encode(['success' => true, 'cart' => $cart]);
+            } else {
+                echo json_encode(['success' => false, 'message' => $result['message'] ?? 'Có lỗi xảy ra']);
+            }
         } else {
-            echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra']);
+            // Fallback cho code cũ
+            if ($result) {
+                $cart = $model->getCart($user_id, $livestream_id);
+                echo json_encode(['success' => true, 'cart' => $cart]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra']);
+            }
         }
         break;
         
@@ -350,12 +390,23 @@ switch ($action) {
         // Sử dụng method public để cập nhật số lượng
         $result = $model->updateCartItemQuantity($item_id, $new_quantity, $user_id, $livestream_id);
         
-        if ($result) {
-            $cart = $model->getCart($user_id, $livestream_id);
-            echo json_encode(['success' => true, 'cart' => $cart]);
+        // Xử lý response mới (có thể là array hoặc boolean)
+        if (is_array($result)) {
+            if ($result['success']) {
+                $cart = $model->getCart($user_id, $livestream_id);
+                echo json_encode(['success' => true, 'cart' => $cart]);
+            } else {
+                echo json_encode(['success' => false, 'message' => $result['message'] ?? 'Có lỗi xảy ra khi cập nhật số lượng']);
+            }
         } else {
-            error_log("Update cart quantity failed for item_id: $item_id, quantity: $new_quantity");
-            echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi cập nhật số lượng']);
+            // Fallback cho code cũ
+            if ($result) {
+                $cart = $model->getCart($user_id, $livestream_id);
+                echo json_encode(['success' => true, 'cart' => $cart]);
+            } else {
+                error_log("Update cart quantity failed for item_id: $item_id, quantity: $new_quantity");
+                echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi cập nhật số lượng']);
+            }
         }
         break;
         
@@ -422,8 +473,14 @@ switch ($action) {
         // Chỉ check số dư nếu đơn hàng > 0đ
         if ($payment_method === 'wallet' && $cart['total'] > 0) {
             try {
-                // Sử dụng PDO connection để kiểm tra số dư từ transfer_accounts
-                $pdo = new PDO("mysql:host=localhost;dbname=choviet29", "admin", "123456");
+                // Sử dụng config từ mConnect thay vì hardcode
+                require_once __DIR__ . '/../helpers/url_helper.php';
+                $host = config('db_host', 'localhost');
+                $user = config('db_user', 'admin');
+                $pass = config('db_pass', '123456');
+                $dbname = config('db_name', 'choviet29');
+                
+                $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $pdo->setAttribute(PDO::ATTR_TIMEOUT, 10);
                 
@@ -432,8 +489,18 @@ switch ($action) {
                 $balance_stmt->execute([$user_id]);
                 $account = $balance_stmt->fetch(PDO::FETCH_ASSOC);
                 
-                // Xử lý balance an toàn
-                $balance = ($account && isset($account['balance'])) ? floatval($account['balance']) : 0.0;
+                // Xử lý balance an toàn - tạo tài khoản nếu chưa có
+                if (!$account) {
+                    // Tạo tài khoản mới với số dư 0
+                    $account_number = 'ACC' . str_pad($user_id, 8, '0', STR_PAD_LEFT);
+                    $create_sql = "INSERT INTO transfer_accounts (account_number, user_id, balance) VALUES (?, ?, 0)";
+                    $create_stmt = $pdo->prepare($create_sql);
+                    $create_stmt->execute([$account_number, $user_id]);
+                    $balance = 0.0;
+                } else {
+                    $balance = floatval($account['balance'] ?? 0);
+                }
+                
                 $cart_total = floatval($cart['total']);
                 
                 if ($balance < $cart_total) {
@@ -457,7 +524,10 @@ switch ($action) {
                 ];
                 
                 error_log("Error checking balance from transfer_accounts: " . json_encode($error_details, JSON_UNESCAPED_UNICODE));
-                echo json_encode(['success' => false, 'message' => 'Lỗi khi kiểm tra số dư tài khoản']);
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Lỗi khi kiểm tra số dư tài khoản: ' . $e->getMessage()
+                ]);
                 break;
             }
         }
@@ -473,7 +543,19 @@ switch ($action) {
             'address' => $_POST['address'] ?? ''
         ];
         
-        $order_id = $model->createOrder($user_id, $livestream_id, $cart['items'], $payment_method, $address_data);
+        $order_result = $model->createOrder($user_id, $livestream_id, $cart['items'], $payment_method, $address_data);
+        
+        // Xử lý response mới (có thể là array hoặc order_id)
+        if (is_array($order_result)) {
+            if (!$order_result['success']) {
+                echo json_encode(['success' => false, 'message' => $order_result['message'] ?? 'Có lỗi xảy ra khi tạo đơn hàng']);
+                break;
+            }
+            $order_id = $order_result['order_id'] ?? null;
+        } else {
+            $order_id = $order_result;
+        }
+        
         if (!$order_id) {
             echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi tạo đơn hàng']);
             break;
@@ -550,6 +632,8 @@ switch ($action) {
             if ($order['total_amount'] <= 0) {
                 // Cập nhật trạng thái đơn hàng thành confirmed
                 $model->updateOrderStatus($order_id, 'confirmed', null);
+                // Trừ số lượng sản phẩm
+                $model->deductStockQuantity($livestream_id, $order_id);
                 
                 echo json_encode([
                     'success' => true, 
@@ -563,6 +647,9 @@ switch ($action) {
                 // Chỉ gọi processWalletPayment() nếu đơn hàng > 0đ
                 $result = $model->processWalletPayment($order_id, $user_id);
                 if ($result) {
+                    // Trừ số lượng sản phẩm sau khi thanh toán thành công
+                    $model->deductStockQuantity($livestream_id, $order_id);
+                    
                     echo json_encode([
                         'success' => true, 
                         'message' => 'Thanh toán thành công',
@@ -615,6 +702,8 @@ switch ($action) {
         
     case 'get_available_products':
         $user_id = $_SESSION['user_id'] ?? null;
+        $livestream_id = $_GET['livestream_id'] ?? null;
+        
         if (!$user_id) {
             echo json_encode(['success' => false, 'message' => 'Vui lòng đăng nhập']);
             break;
@@ -624,6 +713,35 @@ switch ($action) {
         include_once __DIR__ . "/../model/mProduct.php";
         $mProduct = new mProduct();
         $products = $mProduct->getProductsByUserId($user_id);
+        
+        // Nếu có livestream_id, lấy thông tin sản phẩm đã có trong livestream
+        $livestream_products = [];
+        if ($livestream_id) {
+            $livestream_products = $model->getLivestreamProducts($livestream_id);
+        }
+        
+        // Tạo map để tra cứu nhanh
+        $livestream_products_map = [];
+        foreach ($livestream_products as $lp) {
+            $livestream_products_map[$lp['product_id']] = [
+                'special_price' => $lp['special_price'],
+                'stock_quantity' => $lp['stock_quantity'],
+                'is_in_livestream' => true
+            ];
+        }
+        
+        // Gắn thông tin livestream vào từng sản phẩm
+        foreach ($products as &$product) {
+            if (isset($livestream_products_map[$product['id']])) {
+                $product['is_in_livestream'] = true;
+                $product['livestream_special_price'] = $livestream_products_map[$product['id']]['special_price'];
+                $product['livestream_stock_quantity'] = $livestream_products_map[$product['id']]['stock_quantity'];
+            } else {
+                $product['is_in_livestream'] = false;
+                $product['livestream_special_price'] = null;
+                $product['livestream_stock_quantity'] = null;
+            }
+        }
         
         echo json_encode(['success' => true, 'products' => $products]);
         break;
@@ -654,10 +772,83 @@ switch ($action) {
         break;
         
     case 'add_product':
+        try {
+            $livestream_id = $_POST['livestream_id'] ?? null;
+            $product_id = $_POST['product_id'] ?? null;
+            $special_price = $_POST['special_price'] ?? null;
+            $stock_quantity = $_POST['stock_quantity'] ?? 1;
+            $user_id = $_SESSION['user_id'] ?? null;
+            
+            if (!$livestream_id || !$product_id || !$user_id) {
+                echo json_encode(['success' => false, 'message' => 'Thiếu thông tin']);
+                break;
+            }
+            
+            // Kiểm tra quyền (chỉ streamer mới được thêm sản phẩm)
+            $livestream = $model->getLivestreamById($livestream_id);
+            if (!$livestream) {
+                echo json_encode(['success' => false, 'message' => 'Không tìm thấy livestream']);
+                break;
+            }
+            
+            if ($livestream['user_id'] != $user_id) {
+                echo json_encode(['success' => false, 'message' => 'Không có quyền']);
+                break;
+            }
+            
+            // Xử lý giá đặc biệt: nếu là chuỗi rỗng thì set thành null
+            $update_special_price = isset($_POST['special_price']); // Kiểm tra xem có truyền special_price không
+            if ($special_price === '') {
+                $special_price = null;
+            } else if ($special_price !== null) {
+                $special_price = floatval($special_price);
+            }
+            
+            // Xử lý số lượng: nếu là chuỗi rỗng thì set thành null
+            if ($stock_quantity === '') {
+                $stock_quantity = null;
+            } else if ($stock_quantity !== null) {
+                $stock_quantity = intval($stock_quantity);
+            }
+            
+            // Kiểm tra xem sản phẩm đã có trong livestream chưa
+            $existing_products = $model->getLivestreamProducts($livestream_id);
+            $product_exists = false;
+            foreach ($existing_products as $p) {
+                if ($p['product_id'] == $product_id) {
+                    $product_exists = true;
+                    break;
+                }
+            }
+            
+            if ($product_exists) {
+                // Cập nhật sản phẩm đã có - truyền thêm flag update_special_price
+                $result = $model->updateProductInLivestream($livestream_id, $product_id, $special_price, $stock_quantity, $update_special_price);
+                if ($result) {
+                    echo json_encode(['success' => true, 'message' => 'Đã cập nhật sản phẩm trong livestream']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi cập nhật sản phẩm']);
+                }
+            } else {
+                // Thêm sản phẩm mới
+                $result = $model->addProductToLivestream($livestream_id, $product_id, $special_price, $stock_quantity);
+                if ($result) {
+                    echo json_encode(['success' => true, 'message' => 'Đã thêm sản phẩm vào livestream']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi thêm sản phẩm']);
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Error in add_product: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()]);
+        }
+        break;
+        
+    case 'update_product':
         $livestream_id = $_POST['livestream_id'] ?? null;
         $product_id = $_POST['product_id'] ?? null;
         $special_price = $_POST['special_price'] ?? null;
-        $stock_quantity = $_POST['stock_quantity'] ?? 1;
+        $stock_quantity = $_POST['stock_quantity'] ?? null;
         $user_id = $_SESSION['user_id'] ?? null;
         
         if (!$livestream_id || !$product_id || !$user_id) {
@@ -665,18 +856,33 @@ switch ($action) {
             break;
         }
         
-        // Kiểm tra quyền (chỉ streamer mới được thêm sản phẩm)
+        // Kiểm tra quyền (chỉ streamer mới được cập nhật sản phẩm)
         $livestream = $model->getLivestreamById($livestream_id);
         if ($livestream['user_id'] != $user_id) {
             echo json_encode(['success' => false, 'message' => 'Không có quyền']);
             break;
         }
         
-        $result = $model->addProductToLivestream($livestream_id, $product_id, $special_price, $stock_quantity);
+        // Xử lý giá đặc biệt: nếu là chuỗi rỗng thì set thành null
+        $update_special_price = isset($_POST['special_price']); // Kiểm tra xem có truyền special_price không
+        if ($special_price === '') {
+            $special_price = null;
+        } else if ($special_price !== null) {
+            $special_price = floatval($special_price);
+        }
+        
+        // Xử lý số lượng: nếu là chuỗi rỗng thì set thành null
+        if ($stock_quantity === '') {
+            $stock_quantity = null;
+        } else if ($stock_quantity !== null) {
+            $stock_quantity = intval($stock_quantity);
+        }
+        
+        $result = $model->updateProductInLivestream($livestream_id, $product_id, $special_price, $stock_quantity, $update_special_price);
         if ($result) {
-            echo json_encode(['success' => true, 'message' => 'Đã thêm sản phẩm vào livestream']);
+            echo json_encode(['success' => true, 'message' => 'Đã cập nhật sản phẩm trong livestream']);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi thêm sản phẩm']);
+            echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra khi cập nhật sản phẩm']);
         }
         break;
         
@@ -863,6 +1069,114 @@ switch ($action) {
         } catch (Exception $e) {
             error_log("Get realtime stats error: " . $e->getMessage());
             echo json_encode(['success' => false, 'message' => 'Lỗi khi lấy thống kê: ' . $e->getMessage()]);
+        }
+        break;
+
+    case 'batch_update_products':
+        try {
+            $user_id = $_SESSION['user_id'] ?? null;
+            
+            // Sử dụng JSON body đã đọc ở đầu file hoặc đọc từ POST
+            if ($jsonBodyData && !empty($jsonBodyData)) {
+                $livestream_id = $jsonBodyData['livestream_id'] ?? null;
+                $products = $jsonBodyData['products'] ?? [];
+            } else {
+                $livestream_id = $_POST['livestream_id'] ?? null;
+                $products = json_decode($_POST['products'] ?? '[]', true);
+            }
+            
+            if (!$livestream_id || empty($products) || !$user_id) {
+                echo json_encode(['success' => false, 'message' => 'Thiếu thông tin']);
+                break;
+            }
+            
+            // Kiểm tra quyền
+            $livestream = $model->getLivestreamById($livestream_id);
+            if (!$livestream) {
+                echo json_encode(['success' => false, 'message' => 'Không tìm thấy livestream']);
+                break;
+            }
+            
+            if ($livestream['user_id'] != $user_id) {
+                echo json_encode(['success' => false, 'message' => 'Không có quyền']);
+                break;
+            }
+            
+            // Xử lý từng sản phẩm
+            $successCount = 0;
+            $errorCount = 0;
+            $errors = [];
+            
+            foreach ($products as $productData) {
+                $product_id = $productData['product_id'] ?? null;
+                $special_price = $productData['special_price'] ?? null;
+                $stock_quantity = $productData['stock_quantity'] ?? null;
+                
+                if (!$product_id) {
+                    $errorCount++;
+                    continue;
+                }
+                
+                // Xử lý giá đặc biệt
+                $update_special_price = isset($productData['special_price']);
+                $final_special_price = null;
+                if ($special_price !== null && $special_price !== '') {
+                    $final_special_price = floatval($special_price);
+                }
+                
+                // Xử lý số lượng
+                $final_stock_quantity = null;
+                if ($stock_quantity !== null && $stock_quantity !== '') {
+                    $final_stock_quantity = intval($stock_quantity);
+                }
+                
+                // Kiểm tra sản phẩm đã có trong livestream chưa
+                $existing_products = $model->getLivestreamProducts($livestream_id);
+                $product_exists = false;
+                foreach ($existing_products as $p) {
+                    if ($p['product_id'] == $product_id) {
+                        $product_exists = true;
+                        break;
+                    }
+                }
+                
+                if ($product_exists) {
+                    // Cập nhật sản phẩm đã có
+                    // Nếu update_special_price = true, luôn cập nhật special_price (kể cả set về NULL)
+                    $result = $model->updateProductInLivestream($livestream_id, $product_id, $final_special_price, $final_stock_quantity, $update_special_price);
+                    if ($result) {
+                        $successCount++;
+                    } else {
+                        $errorCount++;
+                    }
+                } else {
+                    // Thêm sản phẩm mới
+                    $result = $model->addProductToLivestream($livestream_id, $product_id, $final_special_price, $final_stock_quantity);
+                    if ($result) {
+                        $successCount++;
+                    } else {
+                        $errorCount++;
+                    }
+                }
+            }
+            
+            if ($successCount > 0) {
+                $totalProducts = count($products);
+                if ($successCount === $totalProducts) {
+                    $message = "Đã cập nhật {$successCount} sản phẩm thành công";
+                } else {
+                    $message = "Đã cập nhật {$successCount}/{$totalProducts} sản phẩm";
+                    if ($errorCount > 0) {
+                        $message .= ". Có {$errorCount} sản phẩm lỗi";
+                    }
+                }
+                echo json_encode(['success' => true, 'message' => $message]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Không thể cập nhật sản phẩm nào']);
+            }
+        } catch (Exception $e) {
+            error_log("Error in batch_update_products: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()]);
         }
         break;
 

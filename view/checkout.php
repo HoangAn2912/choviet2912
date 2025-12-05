@@ -670,14 +670,25 @@ include_once(__DIR__ . "/header.php");
                                 <?php foreach ($cart['items'] as $item): ?>
                                 <div class="order-item">
                                     <?php 
-                                    $itemImage = $item['anh_dau'] ?? $item['image'] ?? 'default-product.jpg';
-                                    if (!file_exists('../img/' . $itemImage)) {
+                                    // Lấy ảnh sản phẩm: ưu tiên anh_dau, sau đó image, cuối cùng là default
+                                    $itemImage = '';
+                                    if (!empty($item['anh_dau'])) {
+                                        $itemImage = $item['anh_dau'];
+                                    } else if (!empty($item['image'])) {
+                                        // Nếu image là chuỗi nhiều ảnh, lấy ảnh đầu tiên
+                                        $images = array_map('trim', explode(',', $item['image']));
+                                        $itemImage = $images[0] ?? '';
+                                    }
+                                    
+                                    // Nếu không có ảnh hoặc file không tồn tại, dùng default
+                                    if (empty($itemImage) || !file_exists('img/' . $itemImage)) {
                                         $itemImage = 'default-product.jpg';
                                     }
                                     ?>
-                                    <img src="../img/<?= htmlspecialchars($itemImage) ?>" 
+                                    <img src="img/<?= htmlspecialchars($itemImage) ?>" 
                                          alt="<?= htmlspecialchars($item['title']) ?>" 
-                                         class="order-item-image">
+                                         class="order-item-image"
+                                         onerror="this.src='img/default-product.jpg'">
                                     <div class="order-item-info">
                                         <div class="order-item-name"><?= htmlspecialchars($item['title']) ?></div>
                                         <div class="order-item-details">

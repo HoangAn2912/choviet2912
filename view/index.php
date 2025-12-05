@@ -1,8 +1,8 @@
 
 <?php
-// if(isset($_SESSION['role']) && ($_SESSION['role'] == 1 ||  $_SESSION['role'] == 4 ||  $_SESSION['role'] == 5)){
-//     header("Location: /admin");
-// }
+if(isset($_SESSION['role']) && ($_SESSION['role'] == 1 ||  $_SESSION['role'] == 4 ||  $_SESSION['role'] == 5)){
+    header("Location: /admin");
+}
 ?>
 
 <?php
