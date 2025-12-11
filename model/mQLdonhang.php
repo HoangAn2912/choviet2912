@@ -19,11 +19,13 @@ class mQLdonhang {
                     u.email as buyer_email,
                     u.phone as buyer_phone,
                     seller.username as seller_name,
-                    seller.id as seller_id
+                    seller.id as seller_id,
+                    COALESCE(SUM(loi.quantity), 0) as total_quantity
                 FROM livestream_orders lo
                 LEFT JOIN livestream l ON lo.livestream_id = l.id
                 LEFT JOIN users u ON lo.user_id = u.id
                 LEFT JOIN users seller ON l.user_id = seller.id
+                LEFT JOIN livestream_order_items loi ON lo.id = loi.order_id
                 WHERE 1=1";
         
         $params = [];
@@ -59,7 +61,7 @@ class mQLdonhang {
             $types .= "s";
         }
         
-        $sql .= " ORDER BY lo.created_at DESC LIMIT ? OFFSET ?";
+        $sql .= " GROUP BY lo.id ORDER BY lo.created_at DESC LIMIT ? OFFSET ?";
         $params[] = $limit;
         $params[] = $offset;
         $types .= "ii";

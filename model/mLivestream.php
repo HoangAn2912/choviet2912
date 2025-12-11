@@ -452,7 +452,7 @@ class mLivestream {
     // =============================================
 
     // Tạo đơn hàng từ giỏ hàng
-    public function createOrder($user_id, $livestream_id, $cart_items, $payment_method = 'vnpay', $address_data = []) {
+    public function createOrder($user_id, $livestream_id, $cart_items, $payment_method = 'wallet', $address_data = []) {
         $this->conn->begin_transaction();
         
         try {
@@ -654,11 +654,24 @@ class mLivestream {
 
     // Ghi nhận user join livestream (bao gồm cả guest)
     public function recordViewerJoin($livestream_id, $user_id, $session_id = null) {
-        // Nếu là guest user, sử dụng session_id
-        $identifier = $user_id > 0 ? $user_id : $session_id;
-        $is_guest = $user_id <= 0;
+        // Nếu là user đã đăng nhập, dùng user_id
+        // Nếu là guest, hash session_id thành số integer để tránh conflict
+        if ($user_id > 0) {
+            $identifier = $user_id;
+        } else {
+            // Hash session_id thành số integer duy nhất
+            // Sử dụng crc32 để tạo hash, kết hợp với livestream_id để tránh collision
+            if (!$session_id) {
+                return false;
+            }
+            // Tạo identifier duy nhất cho guest: hash(session_id + livestream_id)
+            // Dùng abs() để đảm bảo số dương, và thêm offset để tránh trùng với user_id thật
+            $hash = abs(crc32($session_id . '_' . $livestream_id));
+            // Thêm offset lớn để tránh trùng với user_id thật (giả sử user_id < 1,000,000,000)
+            $identifier = 1000000000 + ($hash % 999999999);
+        }
         
-        if (!$identifier) {
+        if (!$identifier || $identifier <= 0) {
             return false;
         }
         
@@ -836,23 +849,50 @@ class mLivestream {
 
     // Lấy thống kê livestream
     public function getLivestreamStats($livestream_id) {
-        $sql = "SELECT 
-                    COUNT(DISTINCT lv.user_id) as total_viewers,
-                    COUNT(DISTINCT lo.id) as total_orders,
-                    COALESCE(SUM(lo.total_amount), 0) as total_revenue,
-                    COUNT(DISTINCT CASE WHEN li.action_type = 'like' THEN li.user_id END) as total_likes
-                FROM livestream l
-                LEFT JOIN livestream_viewers lv ON l.id = lv.livestream_id
-                LEFT JOIN livestream_orders lo ON l.id = lo.livestream_id AND lo.status != 'cancelled'
-                LEFT JOIN livestream_interactions li ON l.id = li.livestream_id
-                WHERE l.id = ?";
+        // Tính riêng từng phần để tránh tính trùng lặp khi JOIN nhiều bảng
+        $stats = [];
         
-        $stmt = $this->conn->prepare($sql);
+        // Số người xem
+        $viewers_sql = "SELECT COUNT(DISTINCT user_id) as total_viewers 
+                       FROM livestream_viewers 
+                       WHERE livestream_id = ?";
+        $stmt = $this->conn->prepare($viewers_sql);
         $stmt->bind_param("i", $livestream_id);
         $stmt->execute();
         $result = $stmt->get_result();
+        $stats['total_viewers'] = $result->fetch_assoc()['total_viewers'] ?? 0;
         
-        return $result->fetch_assoc();
+        // Số đơn hàng
+        $orders_sql = "SELECT COUNT(DISTINCT id) as total_orders 
+                      FROM livestream_orders 
+                      WHERE livestream_id = ? AND status != 'cancelled'";
+        $stmt = $this->conn->prepare($orders_sql);
+        $stmt->bind_param("i", $livestream_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stats['total_orders'] = $result->fetch_assoc()['total_orders'] ?? 0;
+        
+        // Doanh thu (chỉ tính đơn hàng đã xác nhận trở lên)
+        $revenue_sql = "SELECT COALESCE(SUM(CASE WHEN status IN ('confirmed', 'shipped', 'delivered') THEN total_amount ELSE 0 END), 0) as total_revenue 
+                       FROM livestream_orders 
+                       WHERE livestream_id = ? AND status != 'cancelled'";
+        $stmt = $this->conn->prepare($revenue_sql);
+        $stmt->bind_param("i", $livestream_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stats['total_revenue'] = $result->fetch_assoc()['total_revenue'] ?? 0;
+        
+        // Lượt thích
+        $likes_sql = "SELECT COUNT(DISTINCT user_id) as total_likes 
+                     FROM livestream_interactions 
+                     WHERE livestream_id = ? AND action_type = 'like'";
+        $stmt = $this->conn->prepare($likes_sql);
+        $stmt->bind_param("i", $livestream_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stats['total_likes'] = $result->fetch_assoc()['total_likes'] ?? 0;
+        
+        return $stats;
     }
 
     // Lấy thống kê real-time cho broadcast page
@@ -879,8 +919,8 @@ class mLivestream {
         $orders_data = $orders_result->fetch_assoc();
         $order_count = $orders_data['order_count'] ?? 0;
         
-        // Doanh thu (tổng số tiền đơn hàng, không tính cancelled)
-        $revenue_sql = "SELECT COALESCE(SUM(total_amount), 0) as total_revenue 
+        // Doanh thu (chỉ tính đơn hàng đã xác nhận trở lên: confirmed, shipped, delivered)
+        $revenue_sql = "SELECT COALESCE(SUM(CASE WHEN status IN ('confirmed', 'shipped', 'delivered') THEN total_amount ELSE 0 END), 0) as total_revenue 
                        FROM livestream_orders 
                        WHERE livestream_id = ? AND status != 'cancelled'";
         $stmt = $this->conn->prepare($revenue_sql);

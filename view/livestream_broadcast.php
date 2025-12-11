@@ -201,9 +201,13 @@ const USERNAME = '<?= isset($_SESSION['username']) ? addslashes($_SESSION['usern
 const log = (m)=>{ document.getElementById('status').textContent = m; console.log('Streamer:', m); };
 
 let localStream=null, broadcastWs=null, pc=null;
+// Map để lưu peer connections cho từng viewer: { viewerId: RTCPeerConnection }
+const viewerPeers = new Map();
 
 function initWs(){
-  broadcastWs = new WebSocket('ws://localhost:3000');
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.hostname}:3000`;
+  broadcastWs = new WebSocket(wsUrl);
   broadcastWs.onopen = ()=>{
     log('WebSocket streamer đã kết nối');
     broadcastWs.send(JSON.stringify({ type:'join_livestream', livestream_id:LIVESTREAM_ID, user_id: USER_ID||('broadcaster_'+Date.now()), user_type:'streamer' }));
@@ -211,34 +215,56 @@ function initWs(){
   broadcastWs.onmessage = (ev)=>{
     const msg = JSON.parse(ev.data||'{}');
     console.log('Streamer nhận message:', msg);
-    if (msg.type==='webrtc_answer' && pc && msg.sdp){ 
-      console.log('Streamer: Nhận answer từ viewer');
-      pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)).catch(()=>{}); 
+    if (msg.type==='webrtc_answer' && msg.sdp){ 
+      const viewerId = msg.user_id || msg.viewer_id || 'unknown';
+      const viewerPc = viewerPeers.get(viewerId);
+      if (viewerPc) {
+        console.log('Streamer: Nhận answer từ viewer', viewerId);
+        viewerPc.setRemoteDescription(new RTCSessionDescription(msg.sdp)).catch(err => {
+          console.error('Error setting remote description for viewer', viewerId, err);
+        }); 
+      } else {
+        console.log('Streamer: Không tìm thấy peer connection cho viewer', viewerId);
+      }
     }
-    else if (msg.type==='webrtc_ice' && pc && msg.candidate){ 
-      console.log('Streamer: Nhận ICE candidate từ viewer');
-      pc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(()=>{}); 
+    else if (msg.type==='webrtc_ice' && msg.candidate){ 
+      const viewerId = msg.user_id || msg.viewer_id || 'unknown';
+      const viewerPc = viewerPeers.get(viewerId);
+      if (viewerPc) {
+        console.log('Streamer: Nhận ICE candidate từ viewer', viewerId);
+        viewerPc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(err => {
+          console.error('Error adding ICE candidate for viewer', viewerId, err);
+        }); 
+      } else {
+        console.log('Streamer: Không tìm thấy peer connection cho viewer', viewerId);
+      }
     }
     else if (msg.type==='request_offer'){ 
-      console.log('Viewer yêu cầu offer, streamer đang gửi...');
-      if (pc && pc.localDescription){
-        console.log('Streamer: Gửi lại offer hiện có cho viewer');
-        broadcastWs.send(JSON.stringify({type:'webrtc_offer', livestream_id:LIVESTREAM_ID, sdp: pc.localDescription}));
-      } else {
-        console.log('Streamer: Chưa có localDescription, tạo offer mới...');
-        // Tạo offer mới nếu chưa có
-        if (pc && localStream) {
-          pc.createOffer().then(offer => {
-            pc.setLocalDescription(offer);
-            broadcastWs.send(JSON.stringify({type:'webrtc_offer', livestream_id:LIVESTREAM_ID, sdp: offer}));
-            console.log('Streamer: Đã tạo offer mới và gửi cho viewer');
-          }).catch(err => {
-            console.error('Error creating offer for viewer:', err);
-          });
-        } else {
-          console.log('Streamer: Không thể tạo offer vì thiếu pc hoặc localStream');
+      const viewerId = msg.user_id || msg.viewer_id || ('viewer_' + Date.now());
+      console.log('Viewer', viewerId, 'yêu cầu offer, streamer đang tạo peer connection mới...');
+      
+      // Kiểm tra xem đã có peer connection cho viewer này chưa
+      if (viewerPeers.has(viewerId)) {
+        const existingPc = viewerPeers.get(viewerId);
+        if (existingPc && existingPc.localDescription) {
+          console.log('Streamer: Gửi lại offer hiện có cho viewer', viewerId);
+          broadcastWs.send(JSON.stringify({
+            type:'webrtc_offer', 
+            livestream_id:LIVESTREAM_ID, 
+            sdp: existingPc.localDescription,
+            viewer_id: viewerId
+          }));
+          return;
         }
       }
+      
+      // Tạo peer connection mới cho viewer này
+      if (!localStream) {
+        console.log('Streamer: Không thể tạo offer vì chưa có localStream');
+        return;
+      }
+      
+      createPeerConnectionForViewer(viewerId);
     }
     else if (msg.type==='livestream_chat'){ 
       const displayName = msg.username || 'Khách';
@@ -253,6 +279,15 @@ function initWs(){
     else if (msg.type==='viewer_joined'){ 
       // Có người mới join, cập nhật số người xem
       updateViewersCount(msg.viewers_count || 0);
+      // Tự động tạo offer cho viewer mới nếu đang live
+      if (localStream && pc && pc.localDescription) {
+        const viewerId = msg.user_id || ('viewer_' + Date.now());
+        console.log('Streamer: Tự động tạo offer cho viewer mới', viewerId);
+        // Chờ một chút để đảm bảo viewer đã sẵn sàng nhận offer
+        setTimeout(() => {
+          createPeerConnectionForViewer(viewerId);
+        }, 100);
+      }
     }
     else if (msg.type==='viewer_left'){ 
       // Có người rời, cập nhật số người xem
@@ -360,8 +395,124 @@ async function startLive(){
   log('Đang phát live...');
 }
 
+// Tạo peer connection riêng cho mỗi viewer
+async function createPeerConnectionForViewer(viewerId) {
+  if (!localStream) {
+    console.log('Streamer: Không thể tạo peer connection vì chưa có localStream');
+    return;
+  }
+  
+  // Nếu đã có peer connection cho viewer này, đóng nó trước
+  if (viewerPeers.has(viewerId)) {
+    const oldPc = viewerPeers.get(viewerId);
+    try {
+      oldPc.close();
+    } catch (e) {
+      console.log('Error closing old peer connection:', e);
+    }
+    viewerPeers.delete(viewerId);
+  }
+  
+  console.log('Streamer: Tạo peer connection mới cho viewer', viewerId);
+  const viewerPc = new RTCPeerConnection({ 
+    iceServers:[
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'}
+    ],
+    iceCandidatePoolSize: 10 // Tăng pool size để có nhiều candidates sẵn sàng hơn
+  });
+  
+  // Thêm tất cả tracks từ localStream vào peer connection
+  localStream.getTracks().forEach(track => {
+    console.log('Adding track to viewer peer:', track.kind);
+    viewerPc.addTrack(track, localStream);
+  });
+  
+  // Xử lý connection state changes
+  viewerPc.onconnectionstatechange = () => {
+    console.log('Viewer', viewerId, 'connection state:', viewerPc.connectionState);
+    if (viewerPc.connectionState === 'disconnected' || viewerPc.connectionState === 'failed') {
+      console.log('Viewer', viewerId, 'connection lost, cleaning up...');
+      try {
+        viewerPc.close();
+      } catch (e) {
+        console.log('Error closing peer connection:', e);
+      }
+      viewerPeers.delete(viewerId);
+    }
+  };
+  
+  // Lưu peer connection
+  viewerPeers.set(viewerId, viewerPc);
+  
+  // Tạo và gửi offer ngay lập tức
+  try {
+    // Tạo offer với iceRestart để có candidates mới
+    const offer = await viewerPc.createOffer({
+      offerToReceiveAudio: true, 
+      offerToReceiveVideo: true,
+      iceRestart: false
+    });
+    await viewerPc.setLocalDescription(offer);
+    console.log('Streamer: Đã tạo offer cho viewer', viewerId);
+    
+    // Gửi offer ngay lập tức
+    broadcastWs.send(JSON.stringify({
+      type:'webrtc_offer', 
+      livestream_id:LIVESTREAM_ID, 
+      sdp: offer,
+      viewer_id: viewerId
+    }));
+    console.log('Streamer: Đã gửi offer cho viewer', viewerId);
+    
+    // Gửi ICE candidates ngay khi có (trickle ICE)
+    viewerPc.onicecandidate = ev => {
+      if (ev.candidate) {
+        console.log('Sending ICE candidate to viewer', viewerId);
+        broadcastWs.send(JSON.stringify({
+          type:'webrtc_ice', 
+          livestream_id:LIVESTREAM_ID, 
+          candidate:ev.candidate,
+          viewer_id: viewerId
+        })); 
+      } else {
+        console.log('ICE gathering completed for viewer', viewerId);
+      }
+    };
+  } catch (err) {
+    console.error('Error creating offer for viewer', viewerId, ':', err);
+    viewerPeers.delete(viewerId);
+    try {
+      viewerPc.close();
+    } catch (e) {
+      console.log('Error closing peer connection on error:', e);
+    }
+  }
+}
+
 function stopLive(){
-  try{ if(pc){ pc.getSenders().forEach(s=> s.track && s.track.stop()); } if(localStream){ localStream.getTracks().forEach(t=>t.stop()); } }catch{}
+  try{ 
+    if(pc){ 
+      pc.getSenders().forEach(s=> s.track && s.track.stop()); 
+      pc.close();
+    } 
+    // Đóng tất cả peer connections của viewers
+    viewerPeers.forEach((viewerPc, viewerId) => {
+      try {
+        viewerPc.close();
+        console.log('Closed peer connection for viewer', viewerId);
+      } catch (e) {
+        console.log('Error closing peer connection for viewer', viewerId, ':', e);
+      }
+    });
+    viewerPeers.clear();
+    
+    if(localStream){ 
+      localStream.getTracks().forEach(t=>t.stop()); 
+    } 
+  }catch(e){
+    console.error('Error stopping live:', e);
+  }
   fetch('api/livestream-api.php',{ method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=update_status&livestream_id='+LIVESTREAM_ID+'&status=da_ket_thuc' }).catch(()=>{});
   document.getElementById('btnStart').style.display='block';
   document.getElementById('btnStop').style.display='none';

@@ -22,13 +22,26 @@ class cChat {
     
         foreach ($users as &$user) {
             $fileName = $this->getChatFileName($current_user_id, $user['id']);
-            $filePath = "/var/www/choviet.site/chat/" . $fileName;
+            $filePath = __DIR__ . "/../chat/" . $fileName;
     
             $last = $this->getLastMessageFromFile($filePath);
     
-            $user['tin_cuoi'] = $last['content'];
-            $user['created_time'] = $last['created_time'];
+            $user['tin_cuoi']      = $last['content'];
+            $user['created_time']  = $last['created_time'];
+            $user['last_ts']       = $last['ts']; // dùng để sắp xếp mới nhất lên đầu
         }
+        unset($user);
+
+        // Sắp xếp theo thời gian tin nhắn mới nhất giảm dần
+        usort($users, function($a, $b) {
+            return ($b['last_ts'] ?? 0) <=> ($a['last_ts'] ?? 0);
+        });
+
+        // Bỏ trường phụ trợ
+        foreach ($users as &$user) {
+            unset($user['last_ts']);
+        }
+        unset($user);
     
         return $users;
     }
@@ -42,16 +55,22 @@ class cChat {
     
     // Đọc dòng cuối từ file JSON
     private function getLastMessageFromFile($filePath) {
-        if (!file_exists($filePath)) return ['content' => '', 'created_time' => ''];
+        if (!file_exists($filePath)) return ['content' => '', 'created_time' => '', 'ts' => 0];
     
         $messages = json_decode(file_get_contents($filePath), true);
-        if (!is_array($messages) || count($messages) === 0) return ['content' => '', 'created_time' => ''];
+        if (!is_array($messages) || count($messages) === 0) return ['content' => '', 'created_time' => '', 'ts' => 0];
     
         $last = end($messages);
         if (!isset($last['content']) && isset($last['noi_dung'])) {
             $last['content'] = $last['noi_dung'];
         }
-        $timestamp = strtotime($last['timestamp']);
+        // Lấy timestamp ưu tiên theo trường timestamp, fallback created_time
+        $timestamp = 0;
+        if (!empty($last['timestamp'])) {
+            $timestamp = strtotime($last['timestamp']);
+        } elseif (!empty($last['created_time'])) {
+            $timestamp = strtotime($last['created_time']);
+        }
         
         // Xử lý tin nhắn sản phẩm - extract tên sản phẩm từ HTML
         $content = $last['content'] ?? '';
@@ -66,7 +85,8 @@ class cChat {
     
         return [
             'content' => $content,
-            'created_time' => $this->formatThoiGian($timestamp)
+            'created_time' => $this->formatThoiGian($timestamp),
+            'ts' => $timestamp
         ];
     }
     

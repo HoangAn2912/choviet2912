@@ -45,15 +45,15 @@ class mProfile extends Connect {
         $params = [];
         $types = '';
         
-        // Email là bắt buộc
-        $fields[] = "email = ?";
-        $params[] = $email;
-        $types .= "s";
-        
         // Phone (optional - chỉ update nếu có giá trị)
         if ($phone !== null && $phone !== '') {
             $fields[] = "phone = ?";
             $params[] = $phone;
+            $types .= "s";
+        } else if ($phone === '') {
+            // Cho phép set phone thành null/empty
+            $fields[] = "phone = ?";
+            $params[] = null;
             $types .= "s";
         }
         
@@ -62,12 +62,22 @@ class mProfile extends Connect {
             $fields[] = "address = ?";
             $params[] = $address;
             $types .= "s";
+        } else if ($address === '') {
+            // Cho phép set address thành null/empty
+            $fields[] = "address = ?";
+            $params[] = null;
+            $types .= "s";
         }
         
         // Birth date (optional - chỉ update nếu có giá trị)
         if ($birth_date !== null && $birth_date !== '') {
             $fields[] = "birth_date = ?";
             $params[] = $birth_date;
+            $types .= "s";
+        } else if ($birth_date === '') {
+            // Cho phép set birth_date thành null/empty
+            $fields[] = "birth_date = ?";
+            $params[] = null;
             $types .= "s";
         }
         
@@ -78,22 +88,14 @@ class mProfile extends Connect {
             $types .= "s";
         }
         
+        // Nếu không có trường nào để update, return true (không có thay đổi)
+        if (count($fields) == 0) {
+            return true;
+        }
+        
         // Thêm id vào params
         $params[] = $id;
         $types .= "i";
-        
-        // Nếu không có trường nào để update (ngoài email), chỉ update email
-        if (count($fields) == 1) {
-            $sql = "UPDATE users SET email = ? WHERE id = ?";
-            $stmt = $conn->prepare($sql);
-            if ($stmt) {
-                $stmt->bind_param("si", $email, $id);
-                $result = $stmt->execute();
-                $stmt->close();
-                return $result;
-            }
-            return false;
-        }
         
         $sql = "UPDATE users SET " . implode(", ", $fields) . " WHERE id = ?";
         $stmt = $conn->prepare($sql);

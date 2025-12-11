@@ -131,6 +131,32 @@ include_once("controller/cLoginLogout.php");
             border-color: #28a745 !important;
         }
         
+        /* CSS cho tooltip lỗi */
+        .field-error-tooltip {
+            position: absolute;
+            background: #dc3545;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 1000;
+            max-width: 300px;
+            word-wrap: break-word;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
         .toast {
             position: fixed;
             top: 20px;
@@ -427,8 +453,30 @@ include_once("controller/cLoginLogout.php");
                 });
                 this.forgotEmail.addEventListener('input', () => this.validateField(this.forgotEmail));
                 this.resetOtp.addEventListener('input', () => this.validateField(this.resetOtp));
-                this.newPassword.addEventListener('input', () => this.validateField(this.newPassword));
-                this.confirmNewPassword.addEventListener('input', () => this.validateField(this.confirmNewPassword));
+                
+                // Validation mật khẩu mới real-time với validation đầy đủ
+                this.newPassword.addEventListener('input', () => {
+                    this.validatePasswordField(this.newPassword);
+                    // Nếu confirm password đã có giá trị, validate lại nó
+                    if (this.confirmNewPassword.value) {
+                        this.validatePasswordField(this.confirmNewPassword);
+                    }
+                });
+                this.confirmNewPassword.addEventListener('input', () => {
+                    this.validatePasswordField(this.confirmNewPassword);
+                });
+                
+                // Validation mật khẩu mới real-time với validation đầy đủ
+                this.newPassword.addEventListener('input', () => {
+                    this.validatePasswordField(this.newPassword);
+                    // Nếu confirm password đã có giá trị, validate lại nó
+                    if (this.confirmNewPassword.value) {
+                        this.validatePasswordField(this.confirmNewPassword);
+                    }
+                });
+                this.confirmNewPassword.addEventListener('input', () => {
+                    this.validatePasswordField(this.confirmNewPassword);
+                });
 
                 // Toggle password visibility
                 if (this.loginPasswordToggle) {
@@ -585,9 +633,20 @@ include_once("controller/cLoginLogout.php");
                     return;
                 }
                 
-                // Kiểm tra mật khẩu mới
+                // Kiểm tra mật khẩu mới với validation đầy đủ
+                const passwordValidation = this.validatePassword(this.newPassword.value);
+                if (!passwordValidation.valid) {
+                    this.showToast(passwordValidation.message, 'error');
+                    this.newPassword.classList.add('error');
+                    this.showFieldError(this.newPassword, passwordValidation.message);
+                    return;
+                }
+                
+                // Kiểm tra mật khẩu nhập lại
                 if (this.newPassword.value !== this.confirmNewPassword.value) {
                     this.showToast('Mật khẩu nhập lại không khớp', 'error');
+                    this.confirmNewPassword.classList.add('error');
+                    this.showFieldError(this.confirmNewPassword, 'Mật khẩu nhập lại không khớp');
                     return;
                 }
                 
@@ -656,16 +715,31 @@ include_once("controller/cLoginLogout.php");
                     isValid = false;
                 }
                 
-                // Kiểm tra mật khẩu
-                if (field === this.newPassword && value && value.length < 6) {
-                    field.classList.add('error');
-                    isValid = false;
+                // Kiểm tra mật khẩu mới với validation đầy đủ
+                if (field === this.newPassword && value) {
+                    const passwordValidation = this.validatePassword(value);
+                    if (!passwordValidation.valid) {
+                        field.classList.add('error');
+                        isValid = false;
+                        // Hiển thị thông báo lỗi
+                        this.showFieldError(field, passwordValidation.message);
+                    } else {
+                        field.classList.add('success');
+                        this.hideFieldError(field);
+                    }
                 }
                 
                 // Kiểm tra nhập lại mật khẩu
-                if (field === this.confirmNewPassword && value && value !== this.newPassword.value) {
-                    field.classList.add('error');
-                    isValid = false;
+                if (field === this.confirmNewPassword && value) {
+                    if (value !== this.newPassword.value) {
+                        field.classList.add('error');
+                        isValid = false;
+                        this.showFieldError(field, 'Mật khẩu nhập lại không khớp');
+                    } else if (this.newPassword.value && this.validatePassword(this.newPassword.value).valid) {
+                        field.classList.add('success');
+                        this.hideFieldError(field);
+                        isValid = true;
+                    }
                 }
                 
                 // Thêm class thành công nếu hợp lệ
@@ -682,6 +756,105 @@ include_once("controller/cLoginLogout.php");
             isValidEmail(email) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 return emailRegex.test(email);
+            }
+            
+            /**
+             * Kiểm tra mật khẩu hợp lệ (giống phần đăng ký)
+             */
+            validatePassword(password) {
+                const errors = [];
+                
+                // Kiểm tra độ dài
+                if (password.length < 8) {
+                    errors.push('Mật khẩu phải có ít nhất 8 ký tự');
+                }
+                
+                // Kiểm tra chứa chữ cái và số
+                if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
+                    errors.push('Mật khẩu phải chứa ít nhất một chữ cái và một số');
+                }
+                
+                // Kiểm tra khoảng trắng
+                if (/\s/.test(password)) {
+                    errors.push('Mật khẩu không được chứa khoảng trắng');
+                }
+                
+                return {
+                    valid: errors.length === 0,
+                    errors: errors,
+                    message: errors.length > 0 ? errors.join(', ') : 'Mật khẩu hợp lệ'
+                };
+            }
+            
+            /**
+             * Kiểm tra trường mật khẩu với validation đầy đủ
+             */
+            validatePasswordField(field) {
+                const value = field.value.trim();
+                
+                // Xóa class lỗi cũ
+                field.classList.remove('error', 'success');
+                this.hideFieldError(field);
+                
+                if (!value) {
+                    return false;
+                }
+                
+                if (field === this.newPassword) {
+                    const passwordValidation = this.validatePassword(value);
+                    if (!passwordValidation.valid) {
+                        field.classList.add('error');
+                        this.showFieldError(field, passwordValidation.message);
+                        return false;
+                    } else {
+                        field.classList.add('success');
+                        return true;
+                    }
+                } else if (field === this.confirmNewPassword) {
+                    if (value !== this.newPassword.value) {
+                        field.classList.add('error');
+                        this.showFieldError(field, 'Mật khẩu nhập lại không khớp');
+                        return false;
+                    } else if (this.newPassword.value && this.validatePassword(this.newPassword.value).valid) {
+                        field.classList.add('success');
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+            
+            /**
+             * Hiển thị lỗi cho trường dữ liệu
+             */
+            showFieldError(field, message) {
+                // Xóa tooltip lỗi cũ nếu có
+                this.hideFieldError(field);
+                
+                const errorTooltip = document.createElement('div');
+                errorTooltip.className = 'field-error-tooltip';
+                errorTooltip.textContent = message;
+                
+                // Đặt vị trí tooltip
+                const rect = field.getBoundingClientRect();
+                errorTooltip.style.left = rect.left + 'px';
+                errorTooltip.style.top = (rect.bottom + 5) + 'px';
+                
+                document.body.appendChild(errorTooltip);
+                field.dataset.errorTooltip = 'true';
+            }
+            
+            /**
+             * Ẩn lỗi cho trường dữ liệu
+             */
+            hideFieldError(field) {
+                if (field.dataset.errorTooltip === 'true') {
+                    const tooltip = document.querySelector('.field-error-tooltip');
+                    if (tooltip) {
+                        tooltip.remove();
+                    }
+                    delete field.dataset.errorTooltip;
+                }
             }
             
             /**

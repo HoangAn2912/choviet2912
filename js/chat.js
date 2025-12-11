@@ -105,9 +105,12 @@ function renderMessage(msg, isFromSocket = false) {
   // Kiểm tra nếu là tin nhắn sản phẩm (có chứa product-card-message)
   const isProductMessage = content.includes('product-card-message');
   
-  // Nếu là tin nhắn sản phẩm, hiển thị HTML trực tiếp, không wrap trong bubble
+  // Kiểm tra nếu là tin nhắn ảnh (có chứa chat-images-container)
+  const isImageMessage = content.includes('chat-images-container');
+  
+  // Nếu là tin nhắn sản phẩm hoặc ảnh, hiển thị HTML trực tiếp, không wrap trong bubble
   let html;
-  if (isProductMessage) {
+  if (isProductMessage || isImageMessage) {
     html = `<div class="${isMe ? 'text-right' : 'text-left'} mb-3">
       <div style="display: inline-block; max-width: 100%;">
         ${content}
@@ -115,7 +118,7 @@ function renderMessage(msg, isFromSocket = false) {
     </div>`;
   } else {
     html = `<div class="${isMe ? 'text-right' : 'text-left'} mb-2">
-      <span class="${isMe ? 'bg-warning text-white chat-bubble-sent' : 'chat-bubble-received'} px-3 py-2 rounded d-inline-block">
+      <span class="${isMe ? 'bg-warning text-white chat-bubble-sent' : 'chat-bubble-received'} px-3 py-2 rounded" style="display: inline-block; width: fit-content !important; max-width: 70%;">
         ${content}
       </span>
     </div>`;

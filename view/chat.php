@@ -41,19 +41,46 @@ const ID_SAN_PHAM = 0;
     color: #212529;
     padding: 10px 15px;
     border-radius: 10px;
-    display: inline-block;
+    display: inline-block !important;
     max-width: 70%;
+    width: fit-content !important;
     word-break: break-word;
     line-height: 1.4;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   }
   .chat-bubble-sent {
-    display: inline-block;
+    display: inline-block !important;
     max-width: 70%;
+    width: fit-content !important;
     word-break: break-word;
     padding: 10px 15px;
     border-radius: 10px;
     line-height: 1.4;
+  }
+  .chat-images-container {
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+  .chat-images-container .row {
+    margin: 0;
+  }
+  .chat-images-container .col-md-4,
+  .chat-images-container .col-md-6,
+  .chat-images-container .col-md-3 {
+    padding: 4px;
+  }
+  .chat-images-container img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+  }
+  .chat-images-container img:hover {
+    transform: scale(1.02);
   }
   .btn-suggestion {
     background-color: #fff;
@@ -90,15 +117,15 @@ const ID_SAN_PHAM = 0;
     border: 2px solid #ffc107 !important;
     background-color: #fff8e1;
   }
-  .chat-wrapper {
-    margin-top: 0 !important; 
-    position: relative;
-    z-index: 1;
-  }
-  
   /* Bỏ margin-bottom của navbar trên trang chat */
   .bg-dark.mb-30 {
     margin-bottom: 0 !important;
+  }
+
+  /* Container bên trong content-wrapper không cần padding thêm */
+  .content-wrapper .container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   .chat-user .unread-dot {
@@ -133,10 +160,92 @@ const ID_SAN_PHAM = 0;
     border-radius: 8px !important;
   }
 
+  /* Page Background - Lớp ngoài cùng */
+  .page-background {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    height: 100vh;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* Content wrapper - Khối trắng bên trong (chiều cao cố định, không tạo thanh cuộn trang) */
+  .content-wrapper {
+    background: #ffffff;
+    max-width: 1400px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Chat container */
+  .chat-container {
+    height: calc(100vh - 80px); /* rút ngắn để không làm tràn ra ngoài */
+    max-height: calc(100vh - 80px);
+    overflow: hidden;
+  }
+
+  /* Khung chat - flex column để form luôn ở dưới */
+  .chat-main-area {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* Chat messages area - chiếm không gian còn lại */
+  #chatMessages {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+  }
+  #chatMessages::-webkit-scrollbar { /* Chrome, Safari */
+    width: 0;
+    height: 0;
+  }
+
+  /* Preview container - giới hạn chiều cao */
+  #imagePreviewContainer {
+    flex-shrink: 0;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  /* Form chat - luôn ở dưới cùng */
+  #formChat {
+    flex-shrink: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .page-background {
+      padding: 0 1rem 1rem 1rem;
+    }
+    
+    .content-wrapper {
+      padding: 1.5rem;
+      border-radius: 12px;
+    }
+
+    .chat-container {
+      height: calc(100vh - 60px); /* điều chỉnh cho mobile padding */
+      max-height: calc(100vh - 60px);
+    }
+  }
+
 </style>
 
-<div class="container-fluid chat-wrapper" style="max-width: 1200px;">
-  <div class="row border rounded shadow-sm" style="height: 84vh; overflow: hidden;">
+<!-- Page Background Start -->
+<div class="page-background">
+  <!-- Content Wrapper Start -->
+  <div class="content-wrapper">
+    <div class="row border rounded shadow-sm chat-container">
     <!-- Danh sách người dùng -->
     <div class="col-md-4 col-lg-3 bg-light p-3 overflow-auto" style="border-right: 1px solid #dee2e6;">
     <input type="text" class="form-control mb-3" placeholder="Tìm người dùng..." id="searchUserInput">
@@ -166,7 +275,7 @@ const ID_SAN_PHAM = 0;
     </div>
 
     <!-- Khung chat -->
-    <div class="col-md-8 col-lg-9 d-flex flex-column p-4 bg-white">
+    <div class="col-md-8 col-lg-9 chat-main-area p-4 bg-white">
       <?php if ($receiver): ?>
       <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
         <a href="index.php?thongtin=<?= (int)($receiver['id'] ?? 0) ?>"
@@ -185,11 +294,22 @@ const ID_SAN_PHAM = 0;
         </button>
       </div>
 
-      <div id="chatMessages" class="flex-grow-1 overflow-auto mb-3" style="max-height: 60vh;"></div>
+      <div id="chatMessages" class="flex-grow-1 overflow-auto mb-2" style="min-height: 0;"></div>
+      
+      <!-- Preview ảnh đã chọn (hiển thị trước khi gửi) -->
+      <div id="imagePreviewContainer" class="mb-2" style="display: none; max-height: 120px; overflow-y: auto;">
+        <div class="d-flex flex-wrap gap-2 p-2 bg-light rounded">
+          <!-- Ảnh preview sẽ được thêm vào đây bằng JavaScript -->
+        </div>
+      </div>
 
-      <form class="d-flex align-items-center" id="formChat" onsubmit="event.preventDefault(); sendMessage(this.content.value); this.content.value='';">
-<input name="content" type="text" class="form-control" placeholder="Nhập tin nhắn..." required>
-        <button class="btn btn-warning text-white ml-2"><i class="fa fa-paper-plane"></i></button>
+      <form class="d-flex align-items-center mt-auto" id="formChat" onsubmit="event.preventDefault(); handleSendMessage();" style="flex-shrink: 0;">
+        <input type="file" id="imageInput" multiple accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+        <button type="button" class="btn btn-warning text-white mr-2" onclick="document.getElementById('imageInput').click()" title="Chọn ảnh">
+          <i class="fas fa-image"></i>
+        </button>
+        <input name="content" type="text" class="form-control" placeholder="Nhập tin nhắn..." id="messageInput">
+        <button type="submit" class="btn btn-warning text-white ml-2"><i class="fa fa-paper-plane"></i></button>
       </form>
       <?php else: ?>
       <div class="text-center text-muted m-auto">
@@ -199,7 +319,9 @@ const ID_SAN_PHAM = 0;
       <?php endif; ?>
     </div>
   </div>
+  <!-- Content Wrapper End -->
 </div>
+<!-- Page Background End -->
 
 <!-- Modal đánh giá người bán -->
 <div class="modal fade" id="modalDanhGia" tabindex="-1" role="dialog" aria-hidden="true">
@@ -247,6 +369,237 @@ const ID_SAN_PHAM = 0;
 
 <script src="js/chat.js"></script>
 <script>
+// Quản lý ảnh đã chọn
+let selectedImages = [];
+
+// Xử lý khi chọn ảnh
+function handleImageSelect(event) {
+  const files = Array.from(event.target.files);
+  
+  files.forEach(file => {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        selectedImages.push({
+          file: file,
+          preview: e.target.result,
+          id: Date.now() + Math.random()
+        });
+        updateImagePreview();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  
+  // Reset input để có thể chọn lại cùng file
+  event.target.value = '';
+}
+
+// Cập nhật preview ảnh
+function updateImagePreview() {
+  const container = document.getElementById('imagePreviewContainer');
+  if (!container) return;
+  
+  const previewDiv = container.querySelector('div');
+  if (!previewDiv) return;
+  
+  if (selectedImages.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  
+  container.style.display = 'block';
+  previewDiv.innerHTML = '';
+  
+  selectedImages.forEach((img, index) => {
+    const imgWrapper = document.createElement('div');
+    imgWrapper.style.position = 'relative';
+    imgWrapper.style.width = '100px';
+    imgWrapper.style.height = '100px';
+    imgWrapper.style.flexShrink = '0';
+    
+    const imgElement = document.createElement('img');
+    imgElement.src = img.preview;
+    imgElement.style.width = '100%';
+    imgElement.style.height = '100%';
+    imgElement.style.objectFit = 'cover';
+    imgElement.style.borderRadius = '8px';
+    imgElement.style.border = '2px solid #ffc107';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-sm btn-danger';
+    removeBtn.style.position = 'absolute';
+    removeBtn.style.top = '-8px';
+    removeBtn.style.right = '-8px';
+    removeBtn.style.width = '24px';
+    removeBtn.style.height = '24px';
+    removeBtn.style.borderRadius = '50%';
+    removeBtn.style.padding = '0';
+    removeBtn.style.display = 'flex';
+    removeBtn.style.alignItems = 'center';
+    removeBtn.style.justifyContent = 'center';
+    removeBtn.innerHTML = '<i class="fas fa-times" style="font-size: 12px;"></i>';
+    removeBtn.onclick = () => {
+      selectedImages.splice(index, 1);
+      updateImagePreview();
+    };
+    
+    imgWrapper.appendChild(imgElement);
+    imgWrapper.appendChild(removeBtn);
+    previewDiv.appendChild(imgWrapper);
+  });
+}
+
+// Xử lý gửi tin nhắn (text hoặc ảnh)
+async function handleSendMessage() {
+  const messageInput = document.getElementById('messageInput');
+  const textContent = messageInput ? messageInput.value.trim() : '';
+  
+  // Nếu có ảnh đã chọn, upload và gửi ảnh
+  if (selectedImages.length > 0) {
+    await sendImages();
+  }
+  
+  // Nếu có text, gửi text
+  if (textContent) {
+    sendMessage(textContent);
+    if (messageInput) messageInput.value = '';
+  }
+  
+  // Nếu không có gì để gửi, không làm gì
+  if (selectedImages.length === 0 && !textContent) {
+    return;
+  }
+}
+
+// Upload và gửi ảnh
+async function sendImages() {
+  if (selectedImages.length === 0) return;
+  
+  const formData = new FormData();
+  selectedImages.forEach((img, index) => {
+    formData.append(`images[${index}]`, img.file);
+  });
+  formData.append('from', CURRENT_USER_ID);
+  formData.append('to', TO_USER_ID);
+  
+  try {
+    const response = await fetch('api/chat-upload-images.php', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success && result.images && result.images.length > 0) {
+      // Tạo HTML để hiển thị ảnh
+      // Tính số cột dựa trên số lượng ảnh
+      let colClass = 'col-md-4'; // Mặc định 3 cột
+      if (result.images.length === 1) {
+        colClass = 'col-md-6'; // 1 ảnh: 2 cột (chiếm 50%)
+      } else if (result.images.length === 2) {
+        colClass = 'col-md-6'; // 2 ảnh: mỗi ảnh 50%
+      } else if (result.images.length === 4) {
+        colClass = 'col-md-3'; // 4 ảnh: mỗi ảnh 25%
+      }
+      
+      const imagesHTML = result.images.map(img => 
+        `<div class="${colClass}">
+          <img src="img/${img}" alt="Ảnh chat" onclick="openImageModal('img/${img}')">
+        </div>`
+      ).join('');
+      
+      const imagesContainer = `<div class="chat-images-container">
+        <div class="row">
+          ${imagesHTML}
+        </div>
+      </div>`;
+      
+      // Gửi qua WebSocket
+      const payload = {
+        type: 'message',
+        from: CURRENT_USER_ID,
+        to: TO_USER_ID,
+        content: imagesContainer,
+        product_id: ID_SAN_PHAM
+      };
+      
+      // Tìm socket từ nhiều nguồn
+      let ws = null;
+      if (typeof socket !== 'undefined' && socket && socket.readyState === WebSocket.OPEN) {
+        ws = socket;
+      } else if (typeof window.socket !== 'undefined' && window.socket && window.socket.readyState === WebSocket.OPEN) {
+        ws = window.socket;
+      }
+      
+      if (ws) {
+        ws.send(JSON.stringify(payload));
+        console.log('Đã gửi ảnh qua WebSocket');
+      } else {
+        // Thêm vào queue nếu socket chưa sẵn sàng
+        if (typeof sendQueue !== 'undefined' && Array.isArray(sendQueue)) {
+          sendQueue.push(payload);
+        } else if (typeof window.sendQueue !== 'undefined' && Array.isArray(window.sendQueue)) {
+          window.sendQueue.push(payload);
+        } else {
+          // Tạo queue mới nếu chưa có
+          window.sendQueue = window.sendQueue || [];
+          window.sendQueue.push(payload);
+        }
+        console.log('Đã thêm ảnh vào queue, chờ WebSocket kết nối');
+      }
+      
+      // Xóa ảnh đã chọn
+      selectedImages = [];
+      updateImagePreview();
+    } else {
+      alert('Lỗi khi upload ảnh: ' + (result.message || 'Không xác định'));
+    }
+  } catch (error) {
+    console.error('Lỗi upload ảnh:', error);
+    alert('Lỗi khi upload ảnh. Vui lòng thử lại.');
+  }
+}
+
+// Mở modal xem ảnh lớn
+function openImageModal(imageSrc) {
+  // Tạo modal nếu chưa có
+  let modal = document.getElementById('imageModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'imageModal';
+    modal.style.cssText = 'display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); cursor: pointer;';
+    modal.onclick = () => closeImageModal();
+    
+    const img = document.createElement('img');
+    img.id = 'modalImage';
+    img.style.cssText = 'margin: auto; display: block; max-width: 90%; max-height: 90%; margin-top: 5%; border-radius: 10px;';
+    
+    const closeBtn = document.createElement('span');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.style.cssText = 'position: absolute; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer;';
+    closeBtn.onclick = (e) => {
+      e.stopPropagation();
+      closeImageModal();
+    };
+    
+    modal.appendChild(closeBtn);
+    modal.appendChild(img);
+    document.body.appendChild(modal);
+  }
+  
+  document.getElementById('modalImage').src = imageSrc;
+  modal.style.display = 'block';
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('imageModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
   // Gợi ý tin nhắn
   const suggestions = [
     "Sản phẩm này còn không?",
@@ -544,13 +897,34 @@ function bootstrapConversationListRealtime() {
 
   // Khi nhận tin nhắn mới qua WebSocket - hiển thị chấm đỏ realtime
   window.onNewChatMessage = (msg) => {
-    const item = document.querySelector(`.chat-user[data-id="${msg.from}"]`) || document.querySelector(`.chat-user[data-id="${msg.to}"]`);
-    if (!item) return;
-    
     // Xác định người gửi (người không phải current user)
     const isFrom = String(msg.from) !== String(CURRENT_USER_ID) ? msg.from : msg.to;
-    const li = document.querySelector(`.chat-user[data-id="${isFrom}"]`);
-    if (!li) return;
+
+    // Tìm hoặc tạo mới item cuộc trò chuyện
+    let li = document.querySelector(`.chat-user[data-id="${isFrom}"]`);
+    if (!li) {
+      const list = document.querySelector('.list-unstyled');
+      if (!list) return;
+      li = document.createElement('li');
+      li.className = 'media p-2 mb-2 rounded chat-user';
+      li.setAttribute('data-id', isFrom);
+      li.style.cursor = 'pointer';
+      li.onclick = () => openConversation(isFrom);
+      li.innerHTML = `
+        <img src="img/default-avatar.jpg" class="mr-3 avatar-square-lg" alt="Avatar">
+        <div class="media-body">
+          <h6 class="mb-0 font-weight-bold d-flex align-items-center justify-content-between">
+            <span class="js-username" title="User ${isFrom}">User ${isFrom}</span>
+            <span>
+              <small class="text-muted js-time"></small>
+              <span class="unread-dot" style="display:none"></span>
+            </span>
+          </h6>
+          <small class="js-last text-muted d-block"></small>
+        </div>
+      `;
+      list.insertBefore(li, list.firstChild);
+    }
     
     // Cập nhật tin cuối và thời gian
     const lastEl = li.querySelector('.js-last');

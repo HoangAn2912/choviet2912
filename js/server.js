@@ -776,6 +776,52 @@ function forwardWebRTCSignal(ws, data) {
     return;
   }
 
+  // Nếu là request_offer từ viewer, chỉ gửi đến streamer
+  if (type === 'request_offer') {
+    const streamer = Object.values(livestreamClients).find(client =>
+      client.livestream_id === livestream_id && client.type === 'streamer'
+    );
+    if (streamer && streamer.ws.readyState === WebSocket.OPEN) {
+      console.log(`Gửi request_offer đến streamer cho livestream ${livestream_id}`);
+      streamer.ws.send(JSON.stringify(data));
+    } else {
+      console.log(`Không tìm thấy streamer đang hoạt động cho livestream ${livestream_id}`);
+    }
+    return;
+  }
+
+  // Nếu là webrtc_offer từ streamer, gửi đến viewer cụ thể (nếu có viewer_id) hoặc tất cả viewers
+  if (type === 'webrtc_offer') {
+    if (data.viewer_id) {
+      // Gửi đến viewer cụ thể
+      const viewer = Object.values(livestreamClients).find(client =>
+        client.livestream_id === livestream_id && 
+        (client.user_id === data.viewer_id || client.user_id.toString() === data.viewer_id.toString())
+      );
+      if (viewer && viewer.ws.readyState === WebSocket.OPEN) {
+        console.log(`Gửi webrtc_offer đến viewer ${data.viewer_id}`);
+        viewer.ws.send(JSON.stringify(data));
+      } else {
+        console.log(`Không tìm thấy viewer ${data.viewer_id}`);
+      }
+    } else {
+      // Gửi đến tất cả viewers (backward compatibility)
+      if (livestreamRooms[livestream_id]) {
+        livestreamRooms[livestream_id].forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN && client.user_type === 'viewer') {
+            try {
+              client.send(JSON.stringify(data));
+            } catch (error) {
+              console.log(`Lỗi gửi offer đến viewer:`, error.message);
+            }
+          }
+        });
+      }
+    }
+    return;
+  }
+
+  // Các loại signal khác: forward đến tất cả clients (trừ người gửi)
   if (livestreamRooms[livestream_id]) {
     console.log(`Tìm thấy ${livestreamRooms[livestream_id].length} clients trong phòng ${livestream_id}`);
     livestreamRooms[livestream_id].forEach((client, index) => {

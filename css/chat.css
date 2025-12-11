@@ -30,11 +30,15 @@
   #chatMessages .text-left span {
     background-color: #f1f1f1;
     color: #333;
+    width: fit-content !important;
+    display: inline-block !important;
   }
   
   #chatMessages .text-right span {
     background-color: #ffc107;
     color: white;
+    width: fit-content !important;
+    display: inline-block !important;
   }
   
   /* Input gửi tin nhắn */

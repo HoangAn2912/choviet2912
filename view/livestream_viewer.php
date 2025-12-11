@@ -59,6 +59,16 @@ if ($livestream['user_id']) {
 // Lấy số lượng viewer hiện tại (bao gồm cả guest)
 $current_viewers = $model->getCurrentViewerCount($livestream_id);
 
+// Lấy thống kê realtime (để lấy sẵn lượt thích)
+$realtime_stats = $model->getRealTimeStats($livestream_id);
+$initial_like_count = $realtime_stats['like_count'] ?? 0;
+
+// Lấy danh sách các livestream đang phát để viewer có thể chuyển (tăng thêm số lượng)
+$live_list = $model->getLivestreams(null, 30);
+$live_list = array_filter($live_list, function($ls) use ($livestream_id) {
+    return in_array($ls['status'], ['dang_live','dang_dien_ra','dang_phat']) && $ls['id'] != $livestream_id;
+});
+
 // Include header
 include_once __DIR__ . "/header.php";
 
@@ -79,6 +89,19 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             border-radius: 10px;
             padding: 16px;
             margin-bottom: 16px;
+        }
+
+        .live-list {
+            max-height: 520px; /* tăng để nhìn thấy khoảng 4 item trước khi cuộn */
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+        .live-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .live-list::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
         }
         
         .panel h5 {
@@ -588,39 +611,49 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             <div class="col-lg-3 col-md-4">
                 <div class="panel">
                     <h5><i class="fas fa-broadcast-tower"></i> Livestream đang phát</h5>
-                    <div class="live-item active">
-                        <div class="live-title"><?= htmlspecialchars($livestream['title']) ?></div>
-                        <div class="live-streamer">
-                            <i class="fas fa-user-circle"></i> 
-                            <?= htmlspecialchars($streamer_info['username'] ?? $streamer_info['full_name'] ?? 'Streamer') ?>
+                    <div class="live-list">
+                        <!-- Livestream hiện tại -->
+                        <div class="live-item active">
+                            <div class="live-title"><?= htmlspecialchars($livestream['title']) ?></div>
+                            <div class="live-streamer">
+                                <i class="fas fa-user-circle"></i> 
+                                <?= htmlspecialchars($streamer_info['username'] ?? $streamer_info['full_name'] ?? 'Streamer') ?>
+                            </div>
+                            <div class="live-viewers">
+                                <i class="fas fa-eye"></i> 
+                                <span id="viewer-count"><?= $current_viewers ?></span> đang xem
+                            </div>
+                            <div class="live-status">
+                                <?php if (in_array($livestream['status'], ['dang_phat','dang_live','dang_dien_ra'])): ?>
+                                    <span class="status-badge live"><i class="fas fa-circle"></i> Đang phát</span>
+                                <?php elseif ($livestream['status'] == 'da_ket_thuc'): ?>
+                                    <span class="status-badge ended"><i class="fas fa-stop-circle"></i> Đã kết thúc</span>
+                                <?php else: ?>
+                                    <span class="status-badge waiting"><i class="fas fa-clock"></i> Chờ phát</span>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                        <div class="live-viewers">
-                            <i class="fas fa-eye"></i> 
-                            <span id="viewer-count"><?= $current_viewers ?></span> đang xem
+
+                        <!-- Các livestream khác đang phát -->
+                        <?php foreach ($live_list as $ls): 
+                            $lsAvatar = !empty($ls['avatar']) && file_exists('img/'.$ls['avatar']) ? $ls['avatar'] : 'default-avatar.jpg';
+                        ?>
+                        <div class="live-item" onclick="window.location.href='index.php?watch&id=<?= (int)$ls['id'] ?>'">
+                            <div class="d-flex align-items-center">
+                                <img src="img/<?= htmlspecialchars($lsAvatar) ?>" alt="avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;">
+                                <div class="flex-grow-1">
+                                    <div class="live-title" title="<?= htmlspecialchars($ls['title']) ?>"><?= htmlspecialchars($ls['title']) ?></div>
+                                    <div class="live-streamer">
+                                        <i class="fas fa-user-circle"></i> 
+                                        <?= htmlspecialchars($ls['username'] ?? 'Streamer') ?>
+                                    </div>
+                                    <div class="live-viewers">
+                                        <i class="fas fa-eye"></i> <?= (int)($ls['current_viewers'] ?? 0) ?> đang xem
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="live-status">
-                            <?php if ($livestream['status'] == 'dang_phat' || $livestream['status'] == 'dang_live'): ?>
-                                <span class="status-badge live"><i class="fas fa-circle"></i> Đang phát</span>
-                            <?php elseif ($livestream['status'] == 'da_ket_thuc'): ?>
-                                <span class="status-badge ended"><i class="fas fa-stop-circle"></i> Đã kết thúc</span>
-                            <?php elseif ($livestream['status'] == 'cho_phat' || $livestream['status'] == 'dang_chuan_bi'): ?>
-                                <span class="status-badge waiting"><i class="fas fa-clock"></i> Chờ phát</span>
-                            <?php else: ?>
-                                <span class="status-badge waiting"><i class="fas fa-clock"></i> Chờ phát</span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    
-                    <div class="live-item">
-                        <div class="live-title">Livestream khác 1</div>
-                        <div class="live-streamer">Streamer 2</div>
-                        <div class="live-viewers"><i class="fas fa-eye"></i> 15 đang xem</div>
-                    </div>
-                    
-                    <div class="live-item">
-                        <div class="live-title">Livestream khác 2</div>
-                        <div class="live-streamer">Streamer 3</div>
-                        <div class="live-viewers"><i class="fas fa-eye"></i> 8 đang xem</div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
                 
@@ -822,8 +855,10 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
         let ws = null;
         let isConnected = false;
         let viewerCount = <?= $current_viewers ?>; // Khởi tạo từ PHP
-        let likeCount = 0;
+        let likeCount = <?= (int)$initial_like_count ?>;
         let viewerPeer;
+        let isProcessingOffer = false; // Flag để tránh xử lý nhiều offer cùng lúc
+        let hasVideoStream = false; // Flag để biết đã có video stream chưa
         
         const LIVESTREAM_ID = <?= $livestream_id ?>;
 
@@ -840,6 +875,8 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                 // Join livestream room as viewer
                 const userId = <?= isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0 ?>;
                 const anonId = userId || ('viewer_' + Date.now());
+                // Lưu viewer ID để dùng khi gửi WebRTC signals
+                window.viewerId = anonId;
                 ws.send(JSON.stringify({
                     type: 'join_livestream',
                     livestream_id: <?= $livestream_id ?>,
@@ -850,30 +887,19 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                 // Ghi nhận viewer vào database (cả guest và user đã đăng nhập)
                 recordViewerJoin();
                 
-                // Yêu cầu trạng thái livestream hiện tại & streamer gửi offer
+                // Yêu cầu trạng thái livestream hiện tại
                 console.log('Viewer: Yêu cầu trạng thái livestream...');
                 ws.send(JSON.stringify({
                     type: 'get_livestream_status',
                     livestream_id: <?= $livestream_id ?>
                 }));
                 
-                // Luôn yêu cầu offer từ streamer khi kết nối
-                console.log('Viewer: Yêu cầu offer từ streamer...');
-                ws.send(JSON.stringify({
-                    type: 'request_offer',
-                    livestream_id: <?= $livestream_id ?>
-                }));
-                
-                // Thêm độ trễ để đảm bảo streamer đã sẵn sàng
-                setTimeout(() => {
-                    if (ws && ws.readyState === WebSocket.OPEN) {
-                        console.log('Viewer: Yêu cầu lại offer từ streamer (sau delay)...');
-                        ws.send(JSON.stringify({
-                            type: 'request_offer',
-                            livestream_id: <?= $livestream_id ?>
-                        }));
-                    }
-                }, 2000);
+                // Yêu cầu offer ngay lập tức sau khi join room
+                // Không cần delay vì WebSocket đã sẵn sàng
+                if (ws && ws.readyState === WebSocket.OPEN && !isProcessingOffer) {
+                    console.log('Viewer: Yêu cầu offer từ streamer ngay lập tức...');
+                    connectToVideoStream();
+                }
                 
                 // Also check if livestream is already live
                 checkLivestreamStatus();
@@ -930,6 +956,11 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                         viewerCount = data.viewers_count;
                         updateViewerCount();
                     }
+                    // Tự động request offer ngay khi join thành công
+                    if (!isProcessingOffer && !hasVideoStream) {
+                        console.log('Viewer: Tự động request offer sau khi join thành công');
+                        connectToVideoStream();
+                    }
                     break;
                 case 'livestream_like_count':
                     // Cập nhật lượt thích real-time
@@ -961,7 +992,22 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                 case 'webrtc_offer':
                     console.log('Received offer from streamer → creating answer...');
                     (async()=>{
+                        // Tránh xử lý nhiều offer cùng lúc
+                        if (isProcessingOffer) {
+                            console.log('Already processing an offer, skipping...');
+                            return;
+                        }
+                        
                         try {
+                            isProcessingOffer = true;
+                            
+                            // Nếu đang có peer connection và không ở trạng thái stable, reset nó
+                            if (viewerPeer && viewerPeer.signalingState !== 'stable') {
+                                console.log('Resetting peer connection due to non-stable state:', viewerPeer.signalingState);
+                                viewerPeer.close();
+                                viewerPeer = null;
+                            }
+                            
                             await ensurePeer();
                             
                             // Kiểm tra trạng thái signaling trước khi xử lý
@@ -973,13 +1019,34 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                                 console.log('Setting local description...');
                                 await viewerPeer.setLocalDescription(answer);
                                 console.log('Sending answer to WebSocket...');
-                                ws.send(JSON.stringify({type:'webrtc_answer', livestream_id: <?= $livestream_id ?>, sdp: answer}));
+                                ws.send(JSON.stringify({
+                                    type:'webrtc_answer', 
+                                    livestream_id: <?= $livestream_id ?>, 
+                                    sdp: answer,
+                                    user_id: window.viewerId || 'unknown',
+                                    viewer_id: window.viewerId || 'unknown'
+                                }));
                                 console.log('Answer sent');
                             } else {
-                                console.log('Signaling state not stable:', viewerPeer.signalingState, '- skipping offer');
+                                console.log('Signaling state not stable:', viewerPeer.signalingState, '- resetting and retrying...');
+                                // Reset và thử lại
+                                viewerPeer.close();
+                                viewerPeer = null;
+                                // Không tự động retry ở đây để tránh loop vô hạn
                             }
                         } catch (error) {
                             console.error('Error in webrtc_offer handling:', error);
+                            // Reset peer connection nếu có lỗi
+                            if (viewerPeer) {
+                                try {
+                                    viewerPeer.close();
+                                } catch (e) {
+                                    console.log('Error closing peer:', e);
+                                }
+                                viewerPeer = null;
+                            }
+                        } finally {
+                            isProcessingOffer = false;
                         }
                     })();
                     break;
@@ -1007,23 +1074,39 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             if (viewerPeer) {
                 console.log('Using existing RTCPeerConnection');
                 return viewerPeer;
+
             }
             console.log('Creating new RTCPeerConnection...');
             viewerPeer = new RTCPeerConnection({
                 iceServers:[
                     {urls:'stun:stun.l.google.com:19302'},
                     {urls:'stun:stun1.l.google.com:19302'}
-                ]
+                ],
+                iceCandidatePoolSize: 10 // Tăng pool size để có nhiều candidates sẵn sàng hơn
             });
             viewerPeer.ontrack = ev => {
                 console.log('Remote track received', ev.streams[0]);
                 const video = document.getElementById('livestream-video');
                 const spinner = document.querySelector('.loading-spinner');
                 if (spinner) spinner.style.display = 'none';
+                
+                // Đảm bảo video được gán stream
                 video.srcObject = ev.streams[0];
                 video.style.display = 'block';
                 document.getElementById('video-placeholder').style.display = 'none';
+                hasVideoStream = true; // Đánh dấu đã có video stream
                 console.log('Video element updated with remote stream');
+                
+                // Đảm bảo video được play
+                video.play().then(() => {
+                    console.log('Video started playing');
+                }).catch(err => {
+                    console.error('Error playing video:', err);
+                    // Thử lại sau 1 giây
+                    setTimeout(() => {
+                        video.play().catch(e => console.error('Retry play failed:', e));
+                    }, 1000);
+                });
                 
                 // Debug audio tracks
                 const stream = ev.streams[0];
@@ -1057,7 +1140,11 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                 if (ev.candidate) {
                     console.log('Sending ICE candidate to streamer');
                     ws && ws.readyState === 1 && ws.send(JSON.stringify({
-                        type:'webrtc_ice', livestream_id: <?= $livestream_id ?>, candidate: ev.candidate
+                        type:'webrtc_ice', 
+                        livestream_id: <?= $livestream_id ?>, 
+                        candidate: ev.candidate,
+                        user_id: window.viewerId || 'unknown',
+                        viewer_id: window.viewerId || 'unknown'
                     }));
                 }
             };
@@ -1065,15 +1152,25 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                 console.log('Connection state:', viewerPeer.connectionState);
                 if (viewerPeer.connectionState === 'disconnected' || viewerPeer.connectionState === 'failed') {
                     console.log('Connection lost, attempting to reconnect...');
+                    // Reset flags
+                    hasVideoStream = false;
                     // Reset peer connection
                     viewerPeer = null;
                     // Request new offer
                     setTimeout(() => {
-                        if (ws && ws.readyState === WebSocket.OPEN) {
+                        if (ws && ws.readyState === WebSocket.OPEN && !isProcessingOffer) {
                             console.log('Requesting new offer...');
-                            ws.send(JSON.stringify({type:'request_offer', livestream_id: <?= $livestream_id ?>}));
+                            ws.send(JSON.stringify({
+                                type:'request_offer', 
+                                livestream_id: <?= $livestream_id ?>,
+                                user_id: window.viewerId || 'unknown',
+                                viewer_id: window.viewerId || 'unknown'
+                            }));
                         }
                     }, 1000);
+                } else if (viewerPeer.connectionState === 'connected') {
+                    console.log('WebRTC connection established successfully');
+                    hasVideoStream = true;
                 }
             };
             viewerPeer.oniceconnectionstatechange = () => {
@@ -1094,21 +1191,46 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
                 return;
             }
             
+            // Nếu đã có video stream đang phát, không yêu cầu thêm
+            if (hasVideoStream) {
+                const video = document.getElementById('livestream-video');
+                if (video && video.srcObject && video.style.display !== 'none') {
+                    console.log('Already have video stream, skipping request...');
+                    return;
+                }
+            }
+            
+            // Nếu đang xử lý offer, không yêu cầu thêm
+            if (isProcessingOffer) {
+                console.log('Already processing offer, skipping request...');
+                return;
+            }
+            
             // Cập nhật thông báo
             const statusEl = document.getElementById('connection-status');
             if (statusEl) statusEl.textContent = 'Đang yêu cầu video từ streamer...';
             
             // Ask streamer for an offer immediately
             console.log('Requesting offer from streamer...');
-            ws.send(JSON.stringify({type:'request_offer', livestream_id: <?= $livestream_id ?>}));
+            ws.send(JSON.stringify({
+                type:'request_offer', 
+                livestream_id: <?= $livestream_id ?>,
+                user_id: window.viewerId || 'unknown',
+                viewer_id: window.viewerId || 'unknown'
+            }));
             
-            // Retry nếu không nhận được offer trong 5 giây
+            // Retry nếu không nhận được offer trong 5 giây (chỉ nếu chưa có video)
             setTimeout(() => {
                 const video = document.getElementById('livestream-video');
-                if (video && video.style.display === 'none') {
+                    if (video && video.style.display === 'none' && !isProcessingOffer && !hasVideoStream) {
                     console.log('No video received, retrying...');
                     if (statusEl) statusEl.textContent = 'Đang thử kết nối lại...';
-                    ws.send(JSON.stringify({type:'request_offer', livestream_id: <?= $livestream_id ?>}));
+                    ws.send(JSON.stringify({
+                        type:'request_offer', 
+                        livestream_id: <?= $livestream_id ?>,
+                        user_id: window.viewerId || 'unknown',
+                        viewer_id: window.viewerId || 'unknown'
+                    }));
                 }
             }, 5000);
         }
@@ -1604,6 +1726,9 @@ echo "<script>document.title = '" . htmlspecialchars($livestream['title']) . " -
             }
             
             initWebSocket();
+            // Load lượt thích ban đầu
+            updateLikeCount();
+            refreshLikeCount();
             loadCart(); // Load giỏ hàng khi trang load
             
             // Tự động kết nối video sau khi WebSocket kết nối

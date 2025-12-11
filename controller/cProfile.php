@@ -20,22 +20,63 @@ class cProfile {
         if (!isset($_SESSION['user_id'])) return;
 
         $id = $_SESSION['user_id'];
-        $email = trim($_POST['email'] ?? '');
+        
+        // Lấy thông tin user hiện tại để so sánh
+        $currentUser = $this->model->getUserById($id);
+        if (!$currentUser) {
+            $profileUrl = $this->getFriendlyUrl($_SESSION['user_id']);
+            header("Location: " . $profileUrl . "?toast=" . urlencode("[Lỗi] Không tìm thấy thông tin người dùng") . "&type=error");
+            exit;
+        }
+        
+        $email = trim($_POST['email'] ?? $currentUser['email'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
         $address = trim($_POST['address'] ?? '');
         $birth_date = trim($_POST['birth_date'] ?? '');
         $avatar = null;
-
-        // Validate email (bắt buộc)
-        if (empty($email)) {
-            $profileUrl = $this->getFriendlyUrl($_SESSION['user_id']);
-            header("Location: " . $profileUrl . "?toast=" . urlencode("[Lỗi] Email không được để trống") . "&type=error");
-            exit;
+        
+        // Kiểm tra xem có thay đổi gì không
+        $hasChanges = false;
+        
+        // So sánh phone (normalize để so sánh)
+        $currentPhone = trim($currentUser['phone'] ?? '');
+        $phone = trim($phone);
+        if ($phone !== $currentPhone) {
+            $hasChanges = true;
         }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        
+        // So sánh address (normalize để so sánh)
+        $currentAddress = trim($currentUser['address'] ?? '');
+        $address = trim($address);
+        if ($address !== $currentAddress) {
+            $hasChanges = true;
+        }
+        
+        // So sánh birth_date (normalize để so sánh)
+        $currentBirthDate = trim($currentUser['birth_date'] ?? '');
+        $birth_date_trimmed = trim($birth_date);
+        // Format birth_date để so sánh (chỉ lấy phần date, bỏ time nếu có)
+        $currentBirthDateFormatted = '';
+        $birthDateFormatted = '';
+        if ($currentBirthDate) {
+            $currentBirthDateFormatted = date('Y-m-d', strtotime($currentBirthDate));
+        }
+        if ($birth_date_trimmed) {
+            $birthDateFormatted = date('Y-m-d', strtotime($birth_date_trimmed));
+        }
+        if ($birthDateFormatted !== $currentBirthDateFormatted) {
+            $hasChanges = true;
+        }
+        
+        // Kiểm tra có upload avatar mới không
+        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] == 0) {
+            $hasChanges = true;
+        }
+        
+        // Nếu không có thay đổi gì, báo thông tin đã được lưu
+        if (!$hasChanges) {
             $profileUrl = $this->getFriendlyUrl($_SESSION['user_id']);
-            header("Location: " . $profileUrl . "?toast=" . urlencode("[Lỗi] Email không hợp lệ") . "&type=error");
+            header("Location: " . $profileUrl . "?toast=" . urlencode("Thông tin của bạn đã được lưu") . "&type=info");
             exit;
         }
 

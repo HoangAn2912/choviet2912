@@ -625,10 +625,6 @@ $status_colors = [
             <h3>Đã Hủy</h3>
             <div class="number"><?php echo number_format($stats['cancelled_orders']); ?></div>
         </div>
-        <div class="stat-card primary">
-            <h3>Tổng Doanh Thu</h3>
-            <div class="number"><?php echo number_format($stats['total_revenue'], 0, ',', '.'); ?> đ</div>
-        </div>
     </div>
 
     <!-- Filters -->

@@ -14,7 +14,12 @@ class mTopUp {
         $stmt->close();
     }
     public function getLichSuChuyenKhoan($userId) {
-        $sql = "SELECT * FROM transfer_history WHERE user_id = ? ORDER BY created_date DESC";
+        // Lấy lịch sử từ bảng transactions, chỉ lấy các giao dịch deposit (nạp tiền)
+        $sql = "SELECT t.*, ta.account_number 
+                FROM transactions t 
+                LEFT JOIN transfer_accounts ta ON t.account_id = ta.id 
+                WHERE t.user_id = ? AND t.transaction_type = 'deposit'
+                ORDER BY t.created_at DESC";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $userId);
         $stmt->execute();

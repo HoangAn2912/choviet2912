@@ -293,8 +293,9 @@ $half = $review['rating'] - $full >= 0.5;
 
     <form method="POST" action="index.php?action=capNhatThongTin" enctype="multipart/form-data">
       <div class="form-group">
-        <label>Email <span class="text-danger">*</span></label>
-        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email']) ?>" required>
+        <label>Email</label>
+        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email']) ?>" readonly disabled style="background-color: #e9ecef; cursor: not-allowed;">
+        <small class="text-muted">Email không thể thay đổi</small>
       </div>
 
       <div class="form-group">

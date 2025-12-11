@@ -2,12 +2,17 @@
 require_once 'config/config.php';
 require_once 'classes/PaymentManager.php';
 require_once 'classes/VietQRGenerator.php';
+require_once __DIR__ . '/../../controller/cTopUp.php';
 
 // Giả sử user_id = 1 cho demo (trong thực tế sẽ lấy từ session)
 $userId = $_SESSION['user_id'];
 
 $paymentManager = new PaymentManager();
 $account = $paymentManager->getAccountByUserId($userId);
+
+// Lấy lịch sử chuyển khoản
+$cTopUp = new cTopUp();
+$lichSuChuyenKhoan = $cTopUp->getLichSu($userId);
 
 ?>
 
@@ -30,13 +35,41 @@ $account = $paymentManager->getAccountByUserId($userId);
             min-height: 100vh;
         }
         
-        .container {
-            max-width: 800px;
+        /* Page background - Lớp ngoài cùng (xám nhẹ) */
+        .page-background {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: calc(100vh - 180px);
+            padding: 0 2rem 2rem 2rem;
+        }
+        
+        /* Content wrapper - Khối trắng bên trong */
+        .content-wrapper {
+            background: #ffffff;
+            max-width: 1400px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
+            overflow: visible;
+        }
+        
+        @media (max-width: 768px) {
+            .page-background {
+                padding: 0 1rem 1rem 1rem;
+            }
+            
+            .content-wrapper {
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
         }
         
         .header {
@@ -90,6 +123,50 @@ $account = $paymentManager->getAccountByUserId($userId);
         
         .content {
             padding: 40px;
+        }
+        
+        .two-column-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 50% : 50% */
+            gap: 30px;
+            margin-top: 20px;
+            align-items: stretch; /* Đảm bảo 2 cột có chiều cao bằng nhau */
+        }
+        
+        .column {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        /* Phần lịch sử có thể cuộn dọc */
+        .column:last-child {
+            max-height: 600px;
+            overflow: hidden;
+        }
+        
+        .history-content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            min-height: 0;
+        }
+        
+        .column h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        @media (max-width: 1024px) {
+            .two-column-layout {
+                grid-template-columns: 1fr;
+            }
         }
         
         .amount-selection {
@@ -294,7 +371,11 @@ $account = $paymentManager->getAccountByUserId($userId);
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Page Background Start -->
+    <div class="page-background">
+        <!-- Content Wrapper Start -->
+        <div class="content-wrapper">
+            <div class="container">
         <div class="header">
             <h1>💳 Nạp Tiền VietQR</h1>
             <p>Nạp tiền nhanh chóng và an toàn</p>
@@ -309,62 +390,275 @@ $account = $paymentManager->getAccountByUserId($userId);
         <div class="content">
             <div id="alert-container"></div>
             
-            <div class="amount-selection">
-                <h2>Chọn số tiền cần nạp:</h2>
-                
-                <div class="amount-grid">
-                    <?php 
-                    // Kiểm tra xem PAYMENT_AMOUNTS có được định nghĩa không
-                    $amounts = defined('PAYMENT_AMOUNTS') ? PAYMENT_AMOUNTS : [
-                        50000, 100000, 200000, 500000, 1000000, 2000000
-                    ];
-                    ?>
-                    <?php foreach ($amounts as $amount): ?>
-                        <div class="amount-btn" data-amount="<?php echo $amount; ?>">
-                            <?php echo number_format($amount, 0, ',', '.'); ?> VND
+            <div class="two-column-layout">
+                <!-- Cột 1: Nạp tiền -->
+                <div class="column">
+                    <h2>💳 Nạp tiền</h2>
+                    
+                    <div class="amount-selection">
+                        <h3 style="color: #333; margin-bottom: 15px; font-size: 1.2rem;">Chọn số tiền cần nạp:</h3>
+                        
+                        <div class="amount-grid">
+                            <?php 
+                            // Kiểm tra xem PAYMENT_AMOUNTS có được định nghĩa không
+                            $amounts = defined('PAYMENT_AMOUNTS') ? PAYMENT_AMOUNTS : [
+                                50000, 100000, 200000, 500000, 1000000, 2000000
+                            ];
+                            ?>
+                            <?php foreach ($amounts as $amount): ?>
+                                <div class="amount-btn" data-amount="<?php echo $amount; ?>">
+                                    <?php echo number_format($amount, 0, ',', '.'); ?> VND
+                                </div>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endforeach; ?>
+                        
+                        <div class="custom-amount">
+                            <input type="number" id="customAmount" placeholder="Hoặc nhập số tiền khác..." min="10000" max="500000000">
+                            <small style="color: #666;">Tối thiểu 10,000 VND - Tối đa 500,000,000 VND</small>
+                        </div>
+                        
+                        <button class="generate-btn" id="generateQR" disabled>
+                            Tạo Mã QR Thanh Toán
+                        </button>
+                    </div>
+                    
+                    <div class="debug-info" id="debugInfo">
+                        <h4>Debug Information:</h4>
+                        <div id="debugContent"></div>
+                    </div>
+                    
+                    <div class="qr-section" id="qrSection">
+                        <h3>Quét mã QR để thanh toán</h3>
+                        <img class="qr-code" id="qrImage" src="" alt="QR Code" style="display: none;">
+                        <div id="qr-loading" style="padding: 20px;">
+                            <div class="spinner"></div>
+                            <p>Đang tải QR Code...</p>
+                        </div>
+                        
+                        <div class="transaction-info" id="transactionInfo">
+                            <!-- Thông tin giao dịch sẽ được load bằng JavaScript -->
+                        </div>
+                        
+                        <div class="status-check">
+                            <button class="status-btn" onclick="checkStatus()">Kiểm tra trạng thái</button>
+                            <button class="status-btn" onclick="location.reload()">Tạo giao dịch mới</button>
+                        </div>
+                        
+                        <div class="loading" id="loading">
+                            <div class="spinner"></div>
+                            <p>Đang kiểm tra thanh toán...</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="custom-amount">
-                    <input type="number" id="customAmount" placeholder="Hoặc nhập số tiền khác..." min="10000" max="500000000">
-                    <small style="color: #666;">Tối thiểu 10,000 VND - Tối đa 500,000,000 VND</small>
-                </div>
-                
-                <button class="generate-btn" id="generateQR" disabled>
-                    Tạo Mã QR Thanh Toán
-                </button>
-            </div>
-            
-            <div class="debug-info" id="debugInfo">
-                <h4>Debug Information:</h4>
-                <div id="debugContent"></div>
-            </div>
-            
-            <div class="qr-section" id="qrSection">
-                <h3>Quét mã QR để thanh toán</h3>
-                <img class="qr-code" id="qrImage" src="" alt="QR Code" style="display: none;">
-                <div id="qr-loading" style="padding: 20px;">
-                    <div class="spinner"></div>
-                    <p>Đang tải QR Code...</p>
-                </div>
-                
-                <div class="transaction-info" id="transactionInfo">
-                    <!-- Thông tin giao dịch sẽ được load bằng JavaScript -->
-                </div>
-                
-                <div class="status-check">
-                    <button class="status-btn" onclick="checkStatus()">Kiểm tra trạng thái</button>
-                    <button class="status-btn" onclick="location.reload()">Tạo giao dịch mới</button>
-                </div>
-                
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <p>Đang kiểm tra thanh toán...</p>
+                <!-- Cột 2: Lịch sử chuyển khoản -->
+                <div class="column">
+                    <h2>📋 Lịch sử chuyển khoản</h2>
+                    
+                    <?php if (empty($lichSuChuyenKhoan)): ?>
+                        <div style="text-align: center; padding: 40px; background: white; border-radius: 10px; color: #666;">
+                            <p style="font-size: 1.1rem;">Chưa có lịch sử chuyển khoản nào</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="history-content-wrapper">
+                            <div class="history-table-wrapper">
+                                <table class="history-table" style="width: 100%; min-width: 800px; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                <thead>
+                                    <tr style="background: linear-gradient(135deg, #ffe139ff 0%, #ffaa0cff 100%); color: black;">
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 0.9rem;">STT</th>
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 0.9rem;">Mã giao dịch</th>
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 0.9rem;">Số tiền</th>
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 0.9rem;">Ghi chú</th>
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 0.9rem;">Trạng thái</th>
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 0.9rem;">Ngày tạo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                    $stt = 1;
+                                    foreach ($lichSuChuyenKhoan as $item): 
+                                        // Xác định màu và text cho trạng thái
+                                        $statusClass = '';
+                                        $statusText = '';
+                                        switch($item['status']) {
+                                            case 'completed':
+                                                $statusClass = 'status-approved';
+                                                $statusText = 'Thành công';
+                                                break;
+                                            case 'pending':
+                                                $statusClass = 'status-pending';
+                                                $statusText = 'Đang chờ';
+                                                break;
+                                            case 'failed':
+                                                $statusClass = 'status-rejected';
+                                                $statusText = 'Thất bại';
+                                                break;
+                                            case 'cancelled':
+                                                $statusClass = 'status-rejected';
+                                                $statusText = 'Đã hủy';
+                                                break;
+                                            default:
+                                                $statusClass = 'status-pending';
+                                                $statusText = $item['status'];
+                                        }
+                                    ?>
+                                    <tr style="border-bottom: 1px solid #e9ecef; transition: background 0.3s ease;" 
+                                        onmouseover="this.style.background='#f8f9fa'" 
+                                        onmouseout="this.style.background='white'">
+                                        <td style="padding: 12px; font-size: 0.9rem;"><?php echo $stt++; ?></td>
+                                        <td style="padding: 12px; font-weight: 600; color: #2196F3; font-size: 0.9rem;" title="<?php echo htmlspecialchars($item['transaction_id']); ?>">
+                                            <?php echo htmlspecialchars($item['transaction_id']); ?>
+                                        </td>
+                                        <td style="padding: 12px; font-weight: 600; color: #28a745; font-size: 0.9rem;" title="<?php echo number_format($item['amount'], 0, ',', '.'); ?> VND">
+                                            <?php echo number_format($item['amount'], 0, ',', '.'); ?> VND
+                                        </td>
+                                        <td style="padding: 12px; color: #666; font-size: 0.9rem;" title="<?php echo !empty($item['notes']) ? htmlspecialchars($item['notes']) : 'Nạp tiền'; ?>">
+                                            <?php echo !empty($item['notes']) ? htmlspecialchars($item['notes']) : 'Nạp tiền'; ?>
+                                        </td>
+                                        <td style="padding: 12px;">
+                                            <span class="status-badge <?php echo $statusClass; ?>" 
+                                                  style="padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; display: inline-block;">
+                                                <?php echo $statusText; ?>
+                                            </span>
+                                        </td>
+                                        <td style="padding: 12px; color: #666; font-size: 0.9rem;">
+                                            <?php 
+                                            $date = new DateTime($item['created_at']);
+                                            echo $date->format('d/m/Y H:i');
+                                            ?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal để xem ảnh lớn -->
+    <div id="imageModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); cursor: pointer;"
+         onclick="closeImageModal()">
+        <span style="position: absolute; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold;">&times;</span>
+        <img id="modalImage" style="margin: auto; display: block; max-width: 90%; max-height: 90%; margin-top: 5%; border-radius: 10px;">
+    </div>
+
+    <style>
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* Style cho bảng lịch sử với thanh cuộn */
+        .history-table-wrapper {
+            overflow-x: auto;
+            overflow-y: visible;
+            max-width: 100%;
+            position: relative;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling trên iOS */
+        }
+        
+        /* Custom scrollbar cho bảng lịch sử */
+        .history-table-wrapper::-webkit-scrollbar {
+            width: 10px; /* Chiều rộng cho scrollbar dọc */
+            height: 10px; /* Chiều cao cho scrollbar ngang */
+        }
+        
+        .history-table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .history-table-wrapper::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #ffe139ff 0%, #ffaa0cff 100%);
+            border-radius: 10px;
+        }
+        
+        .history-table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #ffd700 0%, #ff9500 100%);
+        }
+        
+        /* Firefox scrollbar */
+        .history-table-wrapper {
+            scrollbar-width: thin;
+            scrollbar-color: #ffaa0cff #f1f1f1;
+        }
+        
+        /* Text ellipsis cho các cột dài */
+        .history-table td {
+            max-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* Cột mã giao dịch */
+        .history-table td:nth-child(2) {
+            max-width: 150px;
+        }
+        
+        /* Cột số tiền */
+        .history-table td:nth-child(3) {
+            max-width: 120px;
+        }
+        
+        /* Cột ghi chú */
+        .history-table td:nth-child(4) {
+            max-width: 150px;
+        }
+        
+        /* Cột ngày tạo - không cần ellipsis */
+        .history-table td:nth-child(6) {
+            max-width: none;
+            white-space: normal;
+        }
+        
+        .history-table {
+            width: 100%;
+            min-width: 800px; /* Đảm bảo bảng có chiều rộng tối thiểu để kích hoạt scroll */
+        }
+        
+        @media (max-width: 768px) {
+            .history-table {
+                min-width: 700px;
+                font-size: 0.9rem;
+            }
+            .history-table th, 
+            .history-table td {
+                padding: 10px !important;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .history-table {
+                min-width: 600px;
+            }
+        }
+    </style>
+
+    <script>
+        function showImageModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = 'block';
+            modalImg.src = imageSrc;
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+    </script>
 
     <script>
         let selectedAmount = null;
@@ -683,5 +977,9 @@ $account = $paymentManager->getAccountByUserId($userId);
         }
         <?php endif; ?>
     </script>
+            </div>
+        <!-- Content Wrapper End -->
+    </div>
+    <!-- Page Background End -->
 </body>
 </html>

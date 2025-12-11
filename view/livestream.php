@@ -49,6 +49,36 @@ $allLivestreams = $mLivestream->getLivestreams(null, 50); // Lấy tối đa 50 
             padding-left: 0 !important;
             padding-right: 0 !important;
         }
+
+        /* Category filter buttons - limit text width */
+        .category-filter-btn {
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        /* Section Titles - match homepage */
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #3D464D;
+            position: relative;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #FFD333 0%, #FFB700 100%);
+            border-radius: 999px;
+        }
         
         @media (max-width: 768px) {
             .page-background {
@@ -71,15 +101,13 @@ $allLivestreams = $mLivestream->getLivestreams(null, 50); // Lấy tối đa 50 
     <div class="row px-xl-5">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="section-title position-relative text-uppercase mb-0">
-                    <span class="bg-secondary pr-3" style="color: #3D464D;">
-                        <i class="fas fa-video text-danger mr-2"></i>Tất cả Live Stream
-                    </span>
+                <h2 class="section-title position-relative mb-0" style="text-transform: none; color: #3D464D;">
+                    <i class="fas fa-video text-danger mr-2"></i>Tất cả Livestream
                 </h2>
                 <div class="btn-group" role="group" style="border: 1px solid #FFD333;">
-                    <button type="button" class="btn btn-sm active" onclick="filterLiveStream('all')" style="background-color: #FFD333; color: #3D464D; border: none; border-right: 1px solid #FFD333;">Tất cả</button>
-                    <button type="button" class="btn btn-sm" onclick="filterLiveStream('live')" style="background-color: white; color: #3D464D; border: none; border-right: 1px solid #FFD333;">Đang live</button>
-                    <button type="button" class="btn btn-sm" onclick="filterLiveStream('upcoming')" style="background-color: white; color: #3D464D; border: none;">Sắp live</button>
+                    <button type="button" class="btn btn-sm active category-filter-btn" data-status="all" onclick="filterLiveStream('all', this)" style="background-color: #FFD333; color: #3D464D; border: none; border-right: 1px solid #FFD333;">Tất cả</button>
+                    <button type="button" class="btn btn-sm category-filter-btn" data-status="live" onclick="filterLiveStream('live', this)" style="background-color: white; color: #3D464D; border: none; border-right: 1px solid #FFD333;">Đang live</button>
+                    <button type="button" class="btn btn-sm category-filter-btn" data-status="upcoming" onclick="filterLiveStream('upcoming', this)" style="background-color: white; color: #3D464D; border: none;">Sắp live</button>
                 </div>
             </div>
         </div>
@@ -94,13 +122,13 @@ $allLivestreams = $mLivestream->getLivestreams(null, 50); // Lấy tối đa 50 
                 </h5>
                 <div class="row">
                     <div class="col-md-2 mb-2">
-                        <button class="btn btn-sm w-100 active" onclick="filterByCategory('all')" style="background-color: #FFD333; color: #3D464D; border: 1px solid #FFD333;">
+                        <button class="btn btn-sm w-100 active category-filter-btn" data-category="all" onclick="filterByCategory('all', this)" style="background-color: #FFD333; color: #3D464D; border: 1px solid #FFD333;">
                             Tất cả
                         </button>
                     </div>
                     <?php foreach ($categories as $id_cha => $parent): ?>
                     <div class="col-md-2 mb-2">
-                        <button class="btn btn-sm w-100" onclick="filterByCategory(<?= $id_cha ?>)" style="background-color: #3D464D; color: white; border: 1px solid #FFD333;">
+                        <button class="btn btn-sm w-100 category-filter-btn" data-category="<?= $id_cha ?>" onclick="filterByCategory(<?= $id_cha ?>, this)" style="background-color: #3D464D; color: white; border: 1px solid #FFD333;">
                             <?= htmlspecialchars($parent['ten_cha']) ?>
                         </button>
                     </div>
@@ -280,17 +308,24 @@ function setReminder(livestreamId) {
     }
 }
 
-function filterLiveStream(status) {
+let currentStatus = 'all';
+let currentCategory = 'all';
+
+function filterLiveStream(status, btn = null) {
+    currentStatus = status;
     // Remove active class from all buttons and reset styles
-    document.querySelectorAll('.btn-group .btn').forEach(btn => {
-        btn.classList.remove('active');
-        btn.style.backgroundColor = 'white';
-        btn.style.color = '#3D464D';
+    document.querySelectorAll('.btn-group .btn').forEach(b => {
+        b.classList.remove('active');
+        b.style.backgroundColor = 'white';
+        b.style.color = '#3D464D';
     });
-    // Add active class to clicked button and set active style
-    event.target.classList.add('active');
-    event.target.style.backgroundColor = '#FFD333';
-    event.target.style.color = '#3D464D';
+    // Add active class to clicked button or matched button
+    const target = btn || document.querySelector(`.btn-group .btn[data-status="${status}"]`);
+    if (target) {
+        target.classList.add('active');
+        target.style.backgroundColor = '#FFD333';
+        target.style.color = '#3D464D';
+    }
     
     const cards = document.querySelectorAll('.livestream-card');
     cards.forEach(card => {
@@ -302,19 +337,23 @@ function filterLiveStream(status) {
     });
 }
 
-function filterByCategory(categoryId) {
+function filterByCategory(categoryId, btn = null) {
+    currentCategory = categoryId;
     // Remove active class from all category buttons and reset styles
-    document.querySelectorAll('.bg-light .btn').forEach(btn => {
-        btn.classList.remove('active');
-        btn.style.backgroundColor = '#3D464D';
-        btn.style.color = 'white';
-        btn.style.border = '1px solid #FFD333';
+    document.querySelectorAll('.bg-light .btn').forEach(b => {
+        b.classList.remove('active');
+        b.style.backgroundColor = '#3D464D';
+        b.style.color = 'white';
+        b.style.border = '1px solid #FFD333';
     });
-    // Add active class to clicked button and set active style
-    event.target.classList.add('active');
-    event.target.style.backgroundColor = '#FFD333';
-    event.target.style.color = '#3D464D';
-    event.target.style.border = '1px solid #FFD333';
+    // Add active class to clicked button or matched button
+    const target = btn || document.querySelector(`.bg-light .btn[data-category="${categoryId}"]`);
+    if (target) {
+        target.classList.add('active');
+        target.style.backgroundColor = '#FFD333';
+        target.style.color = '#3D464D';
+        target.style.border = '1px solid #FFD333';
+    }
     
     const cards = document.querySelectorAll('.livestream-card');
     cards.forEach(card => {
@@ -326,13 +365,31 @@ function filterByCategory(categoryId) {
     });
 }
 
-// Auto refresh livestream data every 30 seconds
-setInterval(function() {
-    // Chỉ refresh nếu đang ở trang livestream
-    if (window.location.href.includes('livestream')) {
-        location.reload();
+// Auto refresh livestream grid every 5 seconds (partial, không nháy trang)
+async function refreshLivestreamGrid() {
+    try {
+        const res = await fetch(window.location.href, { cache: 'no-store' });
+        const html = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newGrid = doc.querySelector('#livestream-grid');
+        const grid = document.querySelector('#livestream-grid');
+        if (newGrid && grid) {
+            grid.innerHTML = newGrid.innerHTML;
+            // Re-apply filters hiện tại
+            filterLiveStream(currentStatus);
+            filterByCategory(currentCategory);
+        }
+    } catch (e) {
+        console.error('Refresh livestream grid error:', e);
     }
-}, 30000);
+}
+
+setInterval(() => {
+    if (window.location.href.includes('livestream')) {
+        refreshLivestreamGrid();
+    }
+}, 5000);
 </script>
 
 <?php include_once("view/footer.php"); ?>

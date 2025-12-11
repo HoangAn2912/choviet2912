@@ -46,6 +46,11 @@ if ($livestream['user_id'] != $_SESSION['user_id']) {
 $products = $mLivestream->getLivestreamProducts($livestream_id);
 $pinned_product = $mLivestream->getPinnedProduct($livestream_id);
 $stats = $mLivestream->getLivestreamStats($livestream_id);
+
+// Lấy danh sách đơn hàng từ livestream này
+include_once("model/mQLdonhang.php");
+$mQLdonhang = new mQLdonhang();
+$livestream_orders = $mQLdonhang->getAllOrders(null, $livestream_id, null, null, null, 100, 0);
 ?>
 
 <style>
@@ -114,6 +119,70 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
 .status-ended {
     background: #6c757d;
     color: white;
+}
+
+/* Badge styles cho đơn hàng */
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge-warning {
+    background: #ffc107;
+    color: #333;
+}
+
+.badge-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.badge-primary {
+    background: #007bff;
+    color: white;
+}
+
+.badge-success {
+    background: #28a745;
+    color: white;
+}
+
+.badge-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.badge-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+/* Table styles cho đơn hàng */
+.table-responsive {
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #ffe139ff 0%, #ffaa0cff 100%);
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #ffd700 0%, #ff9500 100%);
 }
 
 .control-panel {
@@ -627,6 +696,105 @@ $stats = $mLivestream->getLivestreamStats($livestream_id);
                             <div class="stat-number" id="likes-count"><?= $stats['total_likes'] ?? 0 ?></div>
                             <div class="stat-label">Lượt thích</div>
                         </div>
+                    </div>
+                    
+                    <!-- Danh sách đơn hàng -->
+                    <div class="mt-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-shopping-cart mr-2"></i>
+                            Đơn hàng khách đã chốt (<?= count($livestream_orders) ?>)
+                        </h5>
+                        
+                        <?php if (empty($livestream_orders)): ?>
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Chưa có đơn hàng nào từ livestream này
+                            </div>
+                        <?php else: ?>
+                            <div class="table-responsive" style="max-height: <?= count($livestream_orders) > 10 ? '600px' : 'auto' ?>; overflow-y: <?= count($livestream_orders) > 10 ? 'auto' : 'visible' ?>;">
+                                <table class="table table-hover" style="background: white; border-radius: 10px; overflow: hidden;">
+                                    <thead style="background: linear-gradient(135deg, #ffe139ff 0%, #ffaa0cff 100%); color: #000;">
+                                        <tr>
+                                            <th style="padding: 12px; font-weight: 600; color: #000;">Mã đơn</th>
+                                            <th style="padding: 12px; font-weight: 600; color: #000;">Người mua</th>
+                                            <th style="padding: 12px; font-weight: 600; color: #000;">SĐT</th>
+                                            <th style="padding: 12px; font-weight: 600; color: #000;">Email</th>
+                                            <th style="padding: 12px; font-weight: 600; color: #000;">Số lượng SP</th>
+                                            <th style="padding: 12px; font-weight: 600; color: #000;">Tổng tiền</th>
+                                            <th style="padding: 12px; font-weight: 600; color: #000;">Trạng thái</th>
+                                            <th style="padding: 12px; font-weight: 600; color: #000;">Ngày đặt</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($livestream_orders as $order): 
+                                            // Xác định màu và text cho trạng thái
+                                            $statusClass = '';
+                                            $statusText = '';
+                                            switch($order['status']) {
+                                                case 'pending':
+                                                    $statusClass = 'warning';
+                                                    $statusText = 'Chờ xác nhận';
+                                                    break;
+                                                case 'confirmed':
+                                                    $statusClass = 'info';
+                                                    $statusText = 'Đã xác nhận';
+                                                    break;
+                                                case 'shipping':
+                                                    $statusClass = 'primary';
+                                                    $statusText = 'Đang giao';
+                                                    break;
+                                                case 'delivered':
+                                                    $statusClass = 'success';
+                                                    $statusText = 'Đã giao';
+                                                    break;
+                                                case 'cancelled':
+                                                    $statusClass = 'danger';
+                                                    $statusText = 'Đã hủy';
+                                                    break;
+                                                default:
+                                                    $statusClass = 'secondary';
+                                                    $statusText = $order['status'];
+                                            }
+                                        ?>
+                                        <tr style="border-bottom: 1px solid #e9ecef; cursor: pointer;" onclick="showOrderDetail(<?= htmlspecialchars(json_encode($order)) ?>)">
+                                            <td style="padding: 12px;">
+                                                <strong style="color: #2196F3;">#<?= htmlspecialchars($order['order_code']) ?></strong>
+                                            </td>
+                                            <td style="padding: 12px;">
+                                                <div>
+                                                    <strong><?= htmlspecialchars($order['buyer_name'] ?? 'N/A') ?></strong>
+                                                </div>
+                                            </td>
+                                            <td style="padding: 12px;">
+                                                <?= htmlspecialchars($order['buyer_phone'] ?? $order['delivery_phone'] ?? 'N/A') ?>
+                                            </td>
+                                            <td style="padding: 12px;">
+                                                <small><?= htmlspecialchars($order['buyer_email'] ?? 'N/A') ?></small>
+                                            </td>
+                                            <td style="padding: 12px; text-align: center;">
+                                                <strong style="color: #007bff;">
+                                                    <?= $order['total_quantity'] ?? 0 ?>
+                                                </strong>
+                                            </td>
+                                            <td style="padding: 12px;">
+                                                <strong style="color: #28a745;">
+                                                    <?= number_format($order['total_amount'], 0, ',', '.') ?> đ
+                                                </strong>
+                                            </td>
+                                            <td style="padding: 12px;">
+                                                <span class="badge badge-<?= $statusClass ?>" style="padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;">
+                                                    <?= $statusText ?>
+                                                </span>
+                                            </td>
+                                            <td style="padding: 12px; color: #666; font-size: 0.9rem;">
+                                                <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -1417,6 +1585,163 @@ function updateOrderCount(count) {
 function updateRevenue(revenue) {
     if (revenue !== undefined) {
         document.getElementById('revenue').textContent = new Intl.NumberFormat('vi-VN').format(revenue);
+    }
+}
+</script>
+
+<!-- Modal Chi tiết đơn hàng -->
+<div id="orderDetailModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); overflow-y:auto; z-index:1050;">
+    <div class="modal-content p-4 rounded" style="background:white; width:700px; margin:50px auto; position:relative; max-width:90%;">
+        <button onclick="closeOrderDetail()" class="btn btn-link p-0" style="position:absolute; top:10px; right:10px; font-size:22px; color:#333;">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <h4 class="font-weight-bold mb-3">
+            <i class="fas fa-shopping-cart mr-2"></i>
+            Chi tiết đơn hàng
+        </h4>
+        
+        <div id="orderDetailContent">
+            <!-- Nội dung sẽ được điền bằng JavaScript -->
+        </div>
+    </div>
+</div>
+
+<script>
+let currentOrderDetail = null;
+
+function showOrderDetail(order) {
+    currentOrderDetail = order;
+    const modal = document.getElementById('orderDetailModal');
+    const content = document.getElementById('orderDetailContent');
+    
+    // Xác định trạng thái
+    let statusClass = '';
+    let statusText = '';
+    switch(order.status) {
+        case 'pending':
+            statusClass = 'warning';
+            statusText = 'Chờ xác nhận';
+            break;
+        case 'confirmed':
+            statusClass = 'info';
+            statusText = 'Đã xác nhận';
+            break;
+        case 'shipping':
+            statusClass = 'primary';
+            statusText = 'Đang giao';
+            break;
+        case 'delivered':
+            statusClass = 'success';
+            statusText = 'Đã giao';
+            break;
+        case 'cancelled':
+            statusClass = 'danger';
+            statusText = 'Đã hủy';
+            break;
+        default:
+            statusClass = 'secondary';
+            statusText = order.status;
+    }
+    
+    // Format địa chỉ
+    const addressParts = [];
+    if (order.delivery_street) addressParts.push(order.delivery_street);
+    if (order.delivery_ward) addressParts.push(order.delivery_ward);
+    if (order.delivery_district) addressParts.push(order.delivery_district);
+    if (order.delivery_province) addressParts.push(order.delivery_province);
+    const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : (order.delivery_address || 'N/A');
+    
+    content.innerHTML = `
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-1">Mã đơn: <strong style="color: #2196F3;">#${order.order_code}</strong></h5>
+                    <span class="badge badge-${statusClass}" style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem;">
+                        ${statusText}
+                    </span>
+                </div>
+                <div class="text-right">
+                    <strong style="color: #28a745; font-size: 1.2rem;">
+                        ${new Intl.NumberFormat('vi-VN').format(order.total_amount)} đ
+                    </strong>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="card p-3" style="background: #f8f9fa; border-radius: 8px;">
+                    <h6 class="font-weight-bold mb-2">
+                        <i class="fas fa-user mr-2" style="color: #007bff;"></i>
+                        Người mua
+                    </h6>
+                    <p class="mb-1"><strong>Tên:</strong> ${order.buyer_name || 'N/A'}</p>
+                    <p class="mb-1"><strong>SĐT:</strong> ${order.buyer_phone || order.delivery_phone || 'N/A'}</p>
+                    <p class="mb-0"><strong>Email:</strong> ${order.buyer_email || 'N/A'}</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card p-3" style="background: #f8f9fa; border-radius: 8px;">
+                    <h6 class="font-weight-bold mb-2">
+                        <i class="fas fa-store mr-2" style="color: #ffc107;"></i>
+                        Người bán
+                    </h6>
+                    <p class="mb-1"><strong>Tên:</strong> ${order.seller_name || 'N/A'}</p>
+                    <p class="mb-0"><strong>ID:</strong> ${order.seller_id || 'N/A'}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card p-3 mb-3" style="background: #f8f9fa; border-radius: 8px;">
+            <h6 class="font-weight-bold mb-2">
+                <i class="fas fa-video mr-2" style="color: #dc3545;"></i>
+                Phiên Livestream
+            </h6>
+            <p class="mb-0"><strong>${order.livestream_title || 'N/A'}</strong></p>
+        </div>
+        
+        <div class="card p-3 mb-3" style="background: #f8f9fa; border-radius: 8px;">
+            <h6 class="font-weight-bold mb-2">
+                <i class="fas fa-map-marker-alt mr-2" style="color: #28a745;"></i>
+                Địa chỉ giao hàng
+            </h6>
+            <p class="mb-1"><strong>Người nhận:</strong> ${order.delivery_name || 'N/A'}</p>
+            <p class="mb-1"><strong>SĐT:</strong> ${order.delivery_phone || 'N/A'}</p>
+            <p class="mb-0"><strong>Địa chỉ:</strong> ${fullAddress}</p>
+        </div>
+        
+        <div class="card p-3 mb-3" style="background: #f8f9fa; border-radius: 8px;">
+            <h6 class="font-weight-bold mb-2">
+                <i class="fas fa-info-circle mr-2" style="color: #17a2b8;"></i>
+                Thông tin đơn hàng
+            </h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Số lượng sản phẩm:</strong> ${order.total_quantity || 0}</p>
+                    <p class="mb-1"><strong>Phương thức thanh toán:</strong> ${order.payment_method || 'N/A'}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Ngày đặt:</strong> ${new Date(order.created_at).toLocaleString('vi-VN')}</p>
+                    <p class="mb-0"><strong>Ngày cập nhật:</strong> ${new Date(order.updated_at).toLocaleString('vi-VN')}</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    modal.style.display = 'block';
+}
+
+function closeOrderDetail() {
+    document.getElementById('orderDetailModal').style.display = 'none';
+    currentOrderDetail = null;
+}
+
+// Đóng modal khi click bên ngoài
+window.onclick = function(event) {
+    const modal = document.getElementById('orderDetailModal');
+    if (event.target == modal) {
+        closeOrderDetail();
     }
 }
 </script>
